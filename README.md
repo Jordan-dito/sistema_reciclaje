@@ -59,4 +59,80 @@ Don't worry about getting started – we've documented how to get started using 
 
 
 
-# sistema_reciclaje
+Sistema de Gestión de Reciclaje – Tesis
+=======================================
+
+Aplicación web en PHP para la gestión de reciclaje: usuarios, sucursales, inventarios y reportes. Incluye autenticación por roles y un esquema de base de datos listo para importar.
+
+Requisitos
+----------
+- PHP 8.1+ (recomendado)
+- MySQL/MariaDB 10+
+- XAMPP/WAMP/LAMP o servidor equivalente
+- Git (opcional)
+
+Instalación rápida (XAMPP)
+--------------------------
+1) Clona o copia este proyecto en `C:\xampp\htdocs\` (Windows) o `~/htdocs/` (Linux/Mac).
+2) Arranca Apache y MySQL desde XAMPP.
+3) Crea la base de datos importando `database.sql` con phpMyAdmin o consola:
+   - phpMyAdmin: Importar → seleccionar `database.sql`.
+   - Consola: `mysql -u root -p < database.sql`
+4) Crea el archivo `.env` en la raíz del proyecto con estas variables:
+
+```
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=sistema_reciclaje
+DB_USER=root
+DB_PASS=
+APP_NAME=Sistema de Gestión de Reciclaje
+APP_ENV=development
+APP_DEBUG=true
+SESSION_LIFETIME=120
+```
+
+5) Abre en el navegador: `http://localhost/tesis reciclaje/` (ajusta si usas otra carpeta).
+
+Credenciales por defecto
+------------------------
+- Administrador: email `admin@sistema.com` / contraseña `Admin123!`
+- Usuario: email `usuario@sistema.com` / contraseña `Usuario123!`
+
+Importante: cambia estas contraseñas luego del primer inicio de sesión.
+
+Estructura principal
+--------------------
+- `index.php`: pantalla de login y flujo de autenticación (fetch a `config/login.php`).
+- `Dashboard.php`: panel principal.
+- `config/database.php`: conexión PDO y carga de `.env`.
+- `config/auth.php`: lógica de autenticación/roles.
+- `config/login.php`: endpoint de login (respuesta JSON).
+- `database.sql`: esquema completo, vistas, triggers, datos de ejemplo.
+- `assets/`: estilos, JS y plugins.
+
+Notas técnicas
+-------------
+- Contraseñas almacenadas con `password_hash()` (bcrypt).
+- Permisos por rol en campo `roles.permisos` (JSON).
+- Manejo robusto de errores: los endpoints devuelven JSON consistente.
+
+Flujo de desarrollo
+-------------------
+1) Crear/editar `.env`.
+2) Importar `database.sql`.
+3) Ver `index.php` → iniciar sesión.
+4) Ajustar módulos/roles según necesidad.
+
+Comandos Git útiles
+-------------------
+```
+git status
+git add .
+git commit -m "Tu mensaje"
+git push origin main
+```
+
+Licencia
+--------
+Uso académico. Ajustar según necesidades del proyecto final.

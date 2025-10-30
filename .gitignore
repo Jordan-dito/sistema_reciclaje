@@ -1,0 +1,36 @@
+# Archivos de configuración sensibles
+.env
+.env.local
+.env.*.local
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+
+# Archivos de sesión
+sessions/
+
+# Archivos de prueba
+test_connection.php
+
+# Archivos de upload (ajustar según necesidad)
+uploads/
+storage/
+
