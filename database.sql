@@ -2,8 +2,11 @@
 -- Base de Datos: Sistema de Gestión de Reciclaje
 -- Tesis de Grado
 -- =====================================================
+-- IMPORTANTE: El nombre de la base de datos debe coincidir
+-- con la variable DB_NAME en tu archivo .env
 
 -- Crear Base de Datos
+-- NOTA: Cambia 'sistema_reciclaje' por el nombre que configuraste en .env
 CREATE DATABASE IF NOT EXISTS sistema_reciclaje CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE sistema_reciclaje;
 
@@ -60,6 +63,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL COMMENT 'Nombre completo del usuario',
     email VARCHAR(150) NOT NULL UNIQUE COMMENT 'Correo electrónico',
+    cedula VARCHAR(20) NOT NULL UNIQUE COMMENT 'Cédula de identidad',
     password VARCHAR(255) NOT NULL COMMENT 'Contraseña hasheada',
     telefono VARCHAR(20) COMMENT 'Teléfono de contacto',
     rol_id INT NOT NULL COMMENT 'ID del rol del usuario',
@@ -68,6 +72,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     INDEX idx_email (email),
+    INDEX idx_cedula (cedula),
     INDEX idx_rol (rol_id),
     INDEX idx_estado (estado)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de usuarios del sistema';
@@ -142,8 +147,11 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
 -- INSERTAR ROLES INICIALES
 -- =====================================================
 INSERT INTO roles (nombre, descripcion, permisos, estado) VALUES
-('administrador', 'Administrador del sistema con acceso completo', 
+('Administrador', 'Administrador del sistema con acceso completo', 
  '{"usuarios": ["crear", "leer", "actualizar", "eliminar"], "sucursales": ["crear", "leer", "actualizar", "eliminar"], "inventarios": ["crear", "leer", "actualizar", "eliminar"], "reportes": ["ver", "exportar"], "configuracion": ["modificar"]}', 
+ 'activo'),
+('Gerente', 'Gerente con permisos de gestión y reportes', 
+ '{"usuarios": ["leer", "actualizar"], "sucursales": ["crear", "leer", "actualizar", "eliminar"], "inventarios": ["crear", "leer", "actualizar", "eliminar"], "reportes": ["ver", "exportar"], "configuracion": ["leer"]}', 
  'activo'),
 ('usuario', 'Usuario normal del sistema con acceso limitado', 
  '{"perfil": ["leer", "actualizar"], "inventarios": ["leer", "actualizar"], "reportes": ["ver"]}', 
@@ -170,9 +178,14 @@ INSERT INTO rol_modulos (rol_id, modulo_id) VALUES
 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6)
 ON DUPLICATE KEY UPDATE rol_id=rol_id;
 
+-- Gerente tiene acceso a gestión y reportes
+INSERT INTO rol_modulos (rol_id, modulo_id) VALUES
+(2, 1), (2, 3), (2, 4), (2, 5)
+ON DUPLICATE KEY UPDATE rol_id=rol_id;
+
 -- Usuario normal tiene acceso limitado
 INSERT INTO rol_modulos (rol_id, modulo_id) VALUES
-(2, 1), (2, 4), (2, 5)
+(3, 1), (3, 4), (3, 5)
 ON DUPLICATE KEY UPDATE rol_id=rol_id;
 
 -- =====================================================
@@ -181,9 +194,10 @@ ON DUPLICATE KEY UPDATE rol_id=rol_id;
 -- Contraseña para admin: Admin123! (hash con password_hash de PHP)
 -- Contraseña para usuario: Usuario123! (hash con password_hash de PHP)
 
-INSERT INTO usuarios (nombre, email, password, telefono, rol_id, estado) VALUES
-('Administrador del Sistema', 'admin@sistema.com', '$2y$10$5NszNfP7qVVqqixWA.cCR.gOg7/z7Cb.L9T2riaoePLUZFNGfTiKS', '1234567890', 1, 'activo'),
-('Usuario Normal', 'usuario@sistema.com', '$2y$10$WPov5lh4ZElFv4KamSOEcukVdHW/4eoSnME.pQYmvz.8MdQU1Anqy', '0987654321', 2, 'activo')
+INSERT INTO usuarios (nombre, email, cedula, password, telefono, rol_id, estado) VALUES
+('Administrador del Sistema', 'admin@sistema.com', '0000000000', '$2y$10$5NszNfP7qVVqqixWA.cCR.gOg7/z7Cb.L9T2riaoePLUZFNGfTiKS', '1234567890', 1, 'activo'),
+('Gerente del Sistema', 'gerente@sistema.com', '0000000001', '$2y$10$WPov5lh4ZElFv4KamSOEcukVdHW/4eoSnME.pQYmvz.8MdQU1Anqy', '0987654321', 2, 'activo'),
+('Usuario Normal', 'usuario@sistema.com', '0000000002', '$2y$10$WPov5lh4ZElFv4KamSOEcukVdHW/4eoSnME.pQYmvz.8MdQU1Anqy', '0987654322', 3, 'activo')
 ON DUPLICATE KEY UPDATE email=email;
 
 -- =====================================================

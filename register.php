@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Iniciar Sesión - Sistema de Reciclaje</title>
+    <title>Registro - Sistema de Reciclaje</title>
     
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -35,7 +35,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            overflow: hidden;
+            overflow-y: auto;
         }
 
         /* Efectos de fondo animado */
@@ -78,17 +78,18 @@
             }
         }
 
-        .login-container {
+        .register-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
             padding: 40px;
             position: relative;
             z-index: 1;
             animation: fadeInUp 0.6s ease-out;
+            margin: 20px 0;
         }
 
         @keyframes fadeInUp {
@@ -102,7 +103,7 @@
             }
         }
 
-        .login-header {
+        .register-header {
             text-align: center;
             margin-bottom: 35px;
         }
@@ -134,21 +135,21 @@
             color: white;
         }
 
-        .login-header h1 {
+        .register-header h1 {
             color: #333;
             font-size: 28px;
             font-weight: 600;
             margin-bottom: 8px;
         }
 
-        .login-header p {
+        .register-header p {
             color: #666;
             font-size: 14px;
             font-weight: 400;
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             position: relative;
         }
 
@@ -215,46 +216,7 @@
             color: #2c9f5f;
         }
 
-        .remember-forgot {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .remember-me input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #2c9f5f;
-        }
-
-        .remember-me label {
-            color: #666;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .forgot-password {
-            color: #2c9f5f;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .forgot-password:hover {
-            color: #1e7e4a;
-            text-decoration: underline;
-        }
-
-        .btn-login {
+        .btn-register {
             width: 100%;
             padding: 14px;
             background: linear-gradient(135deg, #2c9f5f 0%, #1e7e4a 100%);
@@ -271,7 +233,7 @@
             overflow: hidden;
         }
 
-        .btn-login::before {
+        .btn-register::before {
             content: '';
             position: absolute;
             top: 50%;
@@ -284,92 +246,42 @@
             transition: width 0.6s, height 0.6s;
         }
 
-        .btn-login:hover::before {
+        .btn-register:hover::before {
             width: 300px;
             height: 300px;
         }
 
-        .btn-login:hover {
+        .btn-register:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(44, 159, 95, 0.5);
         }
 
-        .btn-login:active {
+        .btn-register:active {
             transform: translateY(0);
         }
 
-        .btn-login span {
+        .btn-register span {
             position: relative;
             z-index: 1;
         }
 
-        .signup-link {
+        .login-link {
             text-align: center;
             margin-top: 25px;
             color: #666;
             font-size: 14px;
         }
 
-        .signup-link a {
+        .login-link a {
             color: #2c9f5f;
             text-decoration: none;
             font-weight: 600;
             transition: color 0.3s;
         }
 
-        .signup-link a:hover {
+        .login-link a:hover {
             color: #1e7e4a;
             text-decoration: underline;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 20px;
-                border-radius: 15px;
-            }
-
-            .login-header h1 {
-                font-size: 24px;
-            }
-
-            .logo-container {
-                width: 70px;
-                height: 70px;
-            }
-
-            .logo-container i {
-                font-size: 35px;
-            }
-
-            .remember-forgot {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-        }
-
-        /* Animación de carga */
-        .btn-login.loading {
-            pointer-events: none;
-        }
-
-        .btn-login.loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        @keyframes spin {
-            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         /* Mensajes de error/éxito */
@@ -408,21 +320,98 @@
                 transform: translateY(0);
             }
         }
+
+        /* Animación de carga */
+        .btn-register.loading {
+            pointer-events: none;
+        }
+
+        .btn-register.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .register-container {
+                padding: 30px 20px;
+                border-radius: 15px;
+            }
+
+            .register-header h1 {
+                font-size: 24px;
+            }
+
+            .logo-container {
+                width: 70px;
+                height: 70px;
+            }
+
+            .logo-container i {
+                font-size: 35px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
+    <div class="register-container">
+        <div class="register-header">
             <div class="logo-container">
                 <i class="fas fa-recycle"></i>
             </div>
-            <h1>Bienvenido</h1>
-            <p>Inicia sesión para continuar</p>
+            <h1>Crear Cuenta</h1>
+            <p>Regístrate para comenzar</p>
         </div>
 
         <div id="alertMessage" class="alert"></div>
 
-        <form id="loginForm" action="Dashboard.php" method="POST">
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="nombre">Nombre completo</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input 
+                        type="text" 
+                        id="nombre" 
+                        name="nombre" 
+                        class="form-control" 
+                        placeholder="Ingresa tu nombre completo"
+                        required
+                        autocomplete="name"
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="cedula">Cédula</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-id-card"></i>
+                    <input 
+                        type="text" 
+                        id="cedula" 
+                        name="cedula" 
+                        class="form-control" 
+                        placeholder="Ingresa tu cédula"
+                        required
+                        pattern="[0-9]{10,20}"
+                        title="Solo números, entre 10 y 20 dígitos"
+                    >
+                </div>
+            </div>
+
             <div class="form-group">
                 <label for="email">Correo electrónico</label>
                 <div class="input-wrapper">
@@ -440,6 +429,21 @@
             </div>
 
             <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-phone"></i>
+                    <input 
+                        type="tel" 
+                        id="telefono" 
+                        name="telefono" 
+                        class="form-control" 
+                        placeholder="Ingresa tu teléfono"
+                        autocomplete="tel"
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="password">Contraseña</label>
                 <div class="input-wrapper">
                     <i class="fas fa-lock"></i>
@@ -448,9 +452,10 @@
                         id="password" 
                         name="password" 
                         class="form-control" 
-                        placeholder="Ingresa tu contraseña"
+                        placeholder="Mínimo 8 caracteres"
                         required
-                        autocomplete="current-password"
+                        minlength="8"
+                        autocomplete="new-password"
                     >
                     <button type="button" class="password-toggle" id="togglePassword">
                         <i class="fas fa-eye"></i>
@@ -458,21 +463,33 @@
                 </div>
             </div>
 
-            <div class="remember-forgot">
-                <div class="remember-me">
-                    <input type="checkbox" id="remember" name="remember">
-                    <label for="remember">Recordarme</label>
+            <div class="form-group">
+                <label for="confirmPassword">Confirmar contraseña</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock"></i>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        class="form-control" 
+                        placeholder="Confirma tu contraseña"
+                        required
+                        minlength="8"
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
                 </div>
-                <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
             </div>
 
-            <button type="submit" class="btn-login">
-                <span>Iniciar Sesión</span>
+            <button type="submit" class="btn-register">
+                <span>Registrarse</span>
             </button>
         </form>
 
-        <div class="signup-link">
-            ¿No tienes una cuenta? <a href="register.php">Regístrate aquí</a>
+        <div class="login-link">
+            ¿Ya tienes una cuenta? <a href="index.php">Inicia sesión aquí</a>
         </div>
     </div>
 
@@ -480,6 +497,8 @@
         // Toggle password visibility
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
+        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
 
         togglePassword.addEventListener('click', function() {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -490,20 +509,33 @@
             icon.classList.toggle('fa-eye-slash');
         });
 
-        // Form submission
-        const loginForm = document.getElementById('loginForm');
-        const alertMessage = document.getElementById('alertMessage');
-        const submitButton = loginForm.querySelector('.btn-login');
+        toggleConfirmPassword.addEventListener('click', function() {
+            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPasswordInput.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
 
-        loginForm.addEventListener('submit', function(e) {
+        // Form submission
+        const registerForm = document.getElementById('registerForm');
+        const alertMessage = document.getElementById('alertMessage');
+        const submitButton = registerForm.querySelector('.btn-register');
+
+        registerForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const nombre = document.getElementById('nombre').value.trim();
+            const cedula = document.getElementById('cedula').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
             const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
 
             // Validación básica
-            if (!email || !password) {
-                showAlert('Por favor, completa todos los campos', 'error');
+            if (!nombre || !cedula || !email || !password || !confirmPassword) {
+                showAlert('Por favor, completa todos los campos obligatorios', 'error');
                 return;
             }
 
@@ -514,34 +546,51 @@
                 return;
             }
 
+            // Validar cédula (solo números)
+            const cedulaRegex = /^[0-9]{10,20}$/;
+            if (!cedulaRegex.test(cedula)) {
+                showAlert('La cédula debe contener solo números (10-20 dígitos)', 'error');
+                return;
+            }
+
+            // Validar contraseña
+            if (password.length < 8) {
+                showAlert('La contraseña debe tener al menos 8 caracteres', 'error');
+                return;
+            }
+
+            // Validar que las contraseñas coincidan
+            if (password !== confirmPassword) {
+                showAlert('Las contraseñas no coinciden', 'error');
+                return;
+            }
+
             // Enviar datos al servidor
             submitButton.classList.add('loading');
             submitButton.disabled = true;
 
             const formData = new FormData();
+            formData.append('nombre', nombre);
+            formData.append('cedula', cedula);
             formData.append('email', email);
+            formData.append('telefono', telefono);
             formData.append('password', password);
 
-            fetch('config/login.php', {
+            fetch('config/register.php', {
                 method: 'POST',
                 body: formData
             })
             .then(async response => {
-                // Leer la respuesta como texto primero
                 const text = await response.text();
-                
-                // Verificar si la respuesta es JSON
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     try {
                         return JSON.parse(text);
                     } catch (e) {
                         console.error('Error al parsear JSON:', e);
-                        console.error('Respuesta recibida:', text.substring(0, 200));
                         throw new Error('Error al procesar la respuesta del servidor');
                     }
                 } else {
-                    // Si no es JSON, mostrar el error
                     console.error('Respuesta no es JSON. Content-Type:', contentType);
                     console.error('Respuesta recibida:', text.substring(0, 200));
                     throw new Error('El servidor devolvió una respuesta inválida');
@@ -552,18 +601,12 @@
                 submitButton.disabled = false;
                 
                 if (data.success) {
-                    showAlert(data.message || 'Inicio de sesión exitoso. Redirigiendo...', 'success');
+                    showAlert(data.message || 'Registro exitoso. Redirigiendo...', 'success');
                     setTimeout(() => {
-                        // Redirigir según el rol
-                        const rol = data.usuario?.rol || '';
-                        if (rol === 'Administrador' || rol === 'Gerente') {
-                            window.location.href = 'Dashboard.php';
-                        } else {
-                            window.location.href = 'Dashboard.php';
-                        }
-                    }, 1000);
+                        window.location.href = 'index.php';
+                    }, 2000);
                 } else {
-                    showAlert(data.message || 'Error al iniciar sesión', 'error');
+                    showAlert(data.message || 'Error al registrarse', 'error');
                 }
             })
             .catch(error => {
@@ -580,20 +623,8 @@
             
             setTimeout(() => {
                 alertMessage.classList.remove('show');
-            }, 3000);
+            }, 5000);
         }
-
-        // Forgot password handler
-        document.querySelector('.forgot-password').addEventListener('click', function(e) {
-            e.preventDefault();
-            showAlert('Funcionalidad de recuperación de contraseña próximamente', 'success');
-        });
-
-        // Signup link handler
-        document.querySelector('.signup-link a').addEventListener('click', function(e) {
-            e.preventDefault();
-            showAlert('Página de registro próximamente', 'success');
-        });
     </script>
 </body>
 </html>

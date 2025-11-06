@@ -57,6 +57,7 @@ class Auth {
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['usuario_nombre'] = $usuario['nombre'];
             $_SESSION['usuario_email'] = $usuario['email'];
+            $_SESSION['usuario_cedula'] = $usuario['cedula'] ?? '';
             $_SESSION['usuario_rol'] = $usuario['rol_nombre'];
             $_SESSION['usuario_permisos'] = json_decode($usuario['rol_permisos'], true);
             $_SESSION['logged_in'] = true;
@@ -147,7 +148,7 @@ class Auth {
         }
 
         // Los administradores tienen todos los permisos
-        if ($_SESSION['usuario_rol'] === 'administrador') {
+        if (strtolower($_SESSION['usuario_rol']) === 'administrador') {
             return true;
         }
 

@@ -75,11 +75,10 @@ Instalación rápida (XAMPP)
 --------------------------
 1) Clona o copia este proyecto en `C:\xampp\htdocs\` (Windows) o `~/htdocs/` (Linux/Mac).
 2) Arranca Apache y MySQL desde XAMPP.
-3) Crea la base de datos importando `database.sql` con phpMyAdmin o consola:
-   - phpMyAdmin: Importar → seleccionar `database.sql`.
-   - Consola: `mysql -u root -p < database.sql`
-4) Crea el archivo `.env` en la raíz del proyecto con estas variables:
-
+3) **IMPORTANTE**: Crea el archivo `.env` en la raíz del proyecto:
+   - Copia el archivo `.env.example` a `.env`
+   - Edita `.env` y completa con tus credenciales de base de datos:
+   
 ```
 DB_HOST=localhost
 DB_PORT=3306
@@ -92,7 +91,17 @@ APP_DEBUG=true
 SESSION_LIFETIME=120
 ```
 
+4) Crea la base de datos importando `database.sql` con phpMyAdmin o consola:
+   - phpMyAdmin: Importar → seleccionar `database.sql`.
+   - Consola: `mysql -u root -p < database.sql`
+   - **Nota**: El nombre de la base de datos en `database.sql` debe coincidir con `DB_NAME` en tu `.env`
+
 5) Abre en el navegador: `http://localhost/tesis reciclaje/` (ajusta si usas otra carpeta).
+
+**⚠️ IMPORTANTE**: 
+- El archivo `.env` es **requerido** y **NO** debe subirse al repositorio (ya está en `.gitignore`)
+- Sin el archivo `.env`, la aplicación no funcionará
+- Asegúrate de que las credenciales en `.env` coincidan con tu servidor MySQL
 
 Credenciales por defecto
 ------------------------
