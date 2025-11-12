@@ -1,3 +1,18 @@
+<?php
+/**
+ * Registro de Compras
+ * Sistema de Gestión de Reciclaje
+ */
+
+// Verificar autenticación
+require_once __DIR__ . '/../config/auth.php';
+
+$auth = new Auth();
+if (!$auth->isAuthenticated()) {
+    header('Location: ../index.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -62,68 +77,11 @@
         </div>
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
-            <ul class="nav nav-secondary">
-              <li class="nav-item">
-                <a href="../Dashboard.php">
-                  <i class="fas fa-home"></i>
-                  <p>Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Administración</h4>
-              </li>
-              <li class="nav-item">
-                <a href="../usuarios/index.php">
-                  <i class="fas fa-users"></i>
-                  <p>Usuarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../sucursales/index.php">
-                  <i class="fas fa-building"></i>
-                  <p>Sucursales</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../inventarios/index.php">
-                  <i class="fas fa-boxes"></i>
-                  <p>Inventarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../clientes/index.php">
-                  <i class="fas fa-user-tie"></i>
-                  <p>Clientes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../proveedores/index.php">
-                  <i class="fas fa-truck"></i>
-                  <p>Proveedores</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Operaciones</h4>
-              </li>
-              <li class="nav-item active">
-                <a href="index.php">
-                  <i class="fas fa-shopping-cart"></i>
-                  <p>Compras</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../ventas/index.php">
-                  <i class="fas fa-cash-register"></i>
-                  <p>Ventas</p>
-                </a>
-              </li>
-            </ul>
+            <?php
+              $basePath = '..';
+              $currentRoute = 'compras';
+              include __DIR__ . '/../includes/sidebar.php';
+            ?>
           </div>
         </div>
       </div>
@@ -203,120 +161,7 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <td>1</td>
-                            <td>2024-11-05</td>
-                            <td>Sucursal Central</td>
-                            <td><strong>PET</strong></td>
-                            <td>150.50</td>
-                            <td>kg</td>
-                            <td>$2.50</td>
-                            <td><strong>$376.25</strong></td>
-                            <td>Reciclajes S.A.</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalVerCompra">
-                                <i class="fa fa-eye"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>2</td>
-                            <td>2024-11-04</td>
-                            <td>Sucursal Norte</td>
-                            <td><strong>ALUMINIO</strong></td>
-                            <td>75.50</td>
-                            <td>kg</td>
-                            <td>$3.20</td>
-                            <td><strong>$241.60</strong></td>
-                            <td>Metales del Norte</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-eye"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>3</td>
-                            <td>2024-11-03</td>
-                            <td>Sucursal Sur</td>
-                            <td><strong>PAPEL</strong></td>
-                            <td>200.00</td>
-                            <td>kg</td>
-                            <td>$1.80</td>
-                            <td><strong>$360.00</strong></td>
-                            <td>Papelería Central</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-eye"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>4</td>
-                            <td>2024-11-02</td>
-                            <td>Sucursal Central</td>
-                            <td><strong>COBRE 3,5</strong></td>
-                            <td>45.50</td>
-                            <td>kg</td>
-                            <td>$4.00</td>
-                            <td><strong>$182.00</strong></td>
-                            <td>Metales Premium</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-eye"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>5</td>
-                            <td>2024-11-01</td>
-                            <td>Sucursal Norte</td>
-                            <td><strong>VIDRIO</strong></td>
-                            <td>120.00</td>
-                            <td>kg</td>
-                            <td>$1.50</td>
-                            <td><strong>$180.00</strong></td>
-                            <td>Vidrios y Más</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-eye"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>6</td>
-                            <td>2024-10-31</td>
-                            <td>Sucursal Sur</td>
-                            <td><strong>CARTON 0,12</strong></td>
-                            <td>95.25</td>
-                            <td>kg</td>
-                            <td>$2.50</td>
-                            <td><strong>$238.13</strong></td>
-                            <td>Reciclajes S.A.</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-eye"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
+                          <!-- Los datos se cargarán dinámicamente desde la base de datos -->
                         </tbody>
                       </table>
                     </div>
@@ -351,64 +196,79 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Fecha de Compra <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control" required>
+                    <input type="date" id="fecha_compra" name="fecha_compra" class="form-control" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Sucursal <span class="text-danger">*</span></label>
-                    <select class="form-control" required>
+                    <select id="sucursal_id" name="sucursal_id" class="form-control" required>
                       <option value="">Seleccione una sucursal</option>
-                      <option value="1">Sucursal Central</option>
-                      <option value="2">Sucursal Norte</option>
-                      <option value="3">Sucursal Sur</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Categoría de Material <span class="text-danger">*</span></label>
-                    <select class="form-control" id="categoriaMaterial" required>
-                      <option value="">Seleccione una categoría</option>
-                      <option>PET</option>
-                      <option>hogar</option>
-                      <option>soplado</option>
-                      <option>CARTON 0,12</option>
-                      <option>PAPEL</option>
-                      <option>COBRE 3,5</option>
-                      <option>cobre 3,2</option>
-                      <option>BRONCE</option>
-                      <option>ALUMINIO</option>
-                      <option>PERFIL</option>
-                      <option>duplex</option>
-                      <option>BATERIA</option>
-                      <option>BATE/PEQ</option>
-                      <option>FILL</option>
-                      <option>PVC</option>
-                      <option>VIDRIO</option>
-                      <option>JABAS</option>
-                      <option>REVISTA</option>
-                      <option>RADIADOR</option>
-                      <option>carton 0,13</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Proveedor <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" placeholder="Nombre del proveedor" required>
+                    <select id="proveedor_id" name="proveedor_id" class="form-control" required>
+                      <option value="">Seleccione un proveedor</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Número de Factura</label>
+                    <input type="text" id="numero_factura" name="numero_factura" class="form-control" placeholder="Opcional">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Tipo de Comprobante</label>
+                    <select id="tipo_comprobante" name="tipo_comprobante" class="form-control">
+                      <option value="factura">Factura</option>
+                      <option value="boleta">Boleta</option>
+                      <option value="recibo">Recibo</option>
+                      <option value="nota_credito">Nota de Crédito</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Nombre del Producto <span class="text-danger">*</span></label>
+                    <input type="text" id="nombre_producto" name="nombre_producto" class="form-control" placeholder="Ej: Papel Reciclado" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Categoría <span class="text-danger">*</span></label>
+                    <select id="categoria" name="categoria" class="form-control" required>
+                      <option value="">Seleccione una categoría</option>
+                      <option value="papel">Papel</option>
+                      <option value="plastico">Plástico</option>
+                      <option value="vidrio">Vidrio</option>
+                      <option value="metal">Metal</option>
+                      <option value="PET">PET</option>
+                      <option value="carton">Cartón</option>
+                      <option value="cobre">Cobre</option>
+                      <option value="aluminio">Aluminio</option>
+                      <option value="bronce">Bronce</option>
+                      <option value="bateria">Batería</option>
+                      <option value="pvc">PVC</option>
+                      <option value="otro">Otro</option>
+                    </select>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" class="form-control" id="cantidadCompra" placeholder="0.00" required>
+                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Unidad <span class="text-danger">*</span></label>
-                    <select class="form-control" required>
+                    <select id="unidad" name="unidad" class="form-control" required>
                       <option value="kg">kg</option>
                       <option value="litros">litros</option>
                       <option value="unidades">unidades</option>
@@ -420,7 +280,29 @@
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Precio Unitario <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" class="form-control" id="precioUnitario" placeholder="0.00" required>
+                    <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>IVA</label>
+                    <input type="number" step="0.01" id="iva" name="iva" class="form-control" placeholder="0.00" value="0">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Descuento</label>
+                    <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0.00" value="0">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label>Estado</label>
+                    <select id="estado" name="estado" class="form-control">
+                      <option value="pendiente">Pendiente</option>
+                      <option value="completada" selected>Completada</option>
+                      <option value="cancelada">Cancelada</option>
+                    </select>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -428,13 +310,13 @@
                     <i class="fas fa-info-circle"></i> 
                     <strong>Total:</strong> <span id="totalCompra">$0.00</span>
                     <br>
-                    <small>El inventario y Kardex se actualizarán automáticamente con método PEPS (Primero en Entrar, Primero en Salir)</small>
+                    <small>El inventario se actualizará automáticamente cuando el estado sea "Completada"</small>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Observaciones</label>
-                    <textarea class="form-control" rows="2" placeholder="Notas adicionales sobre la compra"></textarea>
+                    <label>Notas</label>
+                    <textarea id="notas" name="notas" class="form-control" rows="2" placeholder="Notas adicionales sobre la compra"></textarea>
                   </div>
                 </div>
               </div>
@@ -442,7 +324,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Registrar Compra</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarCompra">Registrar Compra</button>
           </div>
         </div>
       </div>
@@ -498,21 +380,215 @@
     <script src="../assets/js/setting-demo.js"></script>
     <script>
       $(document).ready(function() {
-        $('#comprasTable').DataTable({
+        var table = $('#comprasTable').DataTable({
           "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
           },
           "order": [[0, "desc"]]
         });
-
+        
+        // Establecer fecha actual por defecto
+        $('#fecha_compra').val(new Date().toISOString().split('T')[0]);
+        
+        // Cargar sucursales y proveedores
+        function cargarDatos() {
+          // Cargar sucursales
+          $.ajax({
+            url: '../sucursales/api.php?action=activas',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                var select = $('#sucursal_id');
+                select.empty().append('<option value="">Seleccione una sucursal</option>');
+                response.data.forEach(function(sucursal) {
+                  select.append('<option value="' + sucursal.id + '">' + sucursal.nombre + '</option>');
+                });
+              }
+            }
+          });
+          
+          // Cargar proveedores
+          $.ajax({
+            url: '../proveedores/api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                var select = $('#proveedor_id');
+                select.empty().append('<option value="">Seleccione un proveedor</option>');
+                response.data.forEach(function(proveedor) {
+                  if (proveedor.estado === 'activo') {
+                    select.append('<option value="' + proveedor.id + '">' + proveedor.nombre + '</option>');
+                  }
+                });
+              }
+            }
+          });
+        }
+        
+        window.cargarCompras = cargarCompras;
+        
+        // Cargar compras
+        function cargarCompras() {
+          $.ajax({
+            url: 'api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                table.clear();
+                response.data.forEach(function(compra) {
+                  // Obtener el primer detalle para mostrar en la tabla
+                  var detalle = compra.detalles && compra.detalles.length > 0 ? compra.detalles[0] : null;
+                  
+                  if (detalle) {
+                    var badgeEstado = '';
+                    if (compra.estado === 'completada') {
+                      badgeEstado = '<span class="badge badge-success">Completada</span>';
+                    } else if (compra.estado === 'pendiente') {
+                      badgeEstado = '<span class="badge badge-warning">Pendiente</span>';
+                    } else {
+                      badgeEstado = '<span class="badge badge-danger">Cancelada</span>';
+                    }
+                    
+                    table.row.add([
+                      compra.id,
+                      compra.fecha_compra,
+                      compra.sucursal_nombre,
+                      '<span class="badge badge-info">' + detalle.categoria + '</span>',
+                      detalle.cantidad,
+                      detalle.unidad,
+                      '$' + parseFloat(detalle.precio_unitario).toFixed(2),
+                      '$' + parseFloat(compra.total).toFixed(2),
+                      compra.proveedor_nombre,
+                      '<button class="btn btn-link btn-primary btn-sm" onclick="verCompra(' + compra.id + ')"><i class="fa fa-eye"></i></button> ' +
+                      '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCompra(' + compra.id + ')"><i class="fa fa-times"></i></button>'
+                    ]);
+                  }
+                });
+                table.draw();
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar las compras", "error");
+            }
+          });
+        }
+        
         // Calcular total automáticamente
-        $('#cantidadCompra, #precioUnitario').on('input', function() {
-          var cantidad = parseFloat($('#cantidadCompra').val()) || 0;
-          var precio = parseFloat($('#precioUnitario').val()) || 0;
-          var total = cantidad * precio;
-          $('#totalCompra').text('$' + total.toFixed(2));
+        $('#cantidad, #precio_unitario, #iva, #descuento').on('input', function() {
+          calcularTotal();
         });
+        
+        function calcularTotal() {
+          var cantidad = parseFloat($('#cantidad').val()) || 0;
+          var precio = parseFloat($('#precio_unitario').val()) || 0;
+          var iva = parseFloat($('#iva').val()) || 0;
+          var descuento = parseFloat($('#descuento').val()) || 0;
+          var subtotal = cantidad * precio;
+          var total = subtotal + iva - descuento;
+          $('#totalCompra').text('$' + total.toFixed(2));
+        }
+        
+        // Guardar nueva compra
+        $('#btnGuardarCompra').click(function() {
+          var form = $('#formNuevaCompra')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var cantidad = parseFloat($('#cantidad').val()) || 0;
+          var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
+          var iva = parseFloat($('#iva').val()) || 0;
+          var descuento = parseFloat($('#descuento').val()) || 0;
+          var subtotal = cantidad * precio_unitario;
+          var total = subtotal + iva - descuento;
+          
+          var formData = {
+            proveedor_id: $('#proveedor_id').val(),
+            sucursal_id: $('#sucursal_id').val(),
+            fecha_compra: $('#fecha_compra').val(),
+            numero_factura: $('#numero_factura').val(),
+            tipo_comprobante: $('#tipo_comprobante').val(),
+            subtotal: subtotal,
+            iva: iva,
+            descuento: descuento,
+            total: total,
+            estado: $('#estado').val(),
+            notas: $('#notas').val(),
+            detalles: JSON.stringify([{
+              nombre_producto: $('#nombre_producto').val(),
+              categoria: $('#categoria').val(),
+              cantidad: cantidad,
+              unidad: $('#unidad').val(),
+              precio_unitario: precio_unitario,
+              subtotal: subtotal
+            }]),
+            action: 'crear'
+          };
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalNuevaCompra').modal('hide');
+                $('#formNuevaCompra')[0].reset();
+                $('#fecha_compra').val(new Date().toISOString().split('T')[0]);
+                calcularTotal();
+                cargarCompras();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar la compra';
+              swal("Error", error, "error");
+            }
+          });
+        });
+        
+        // Cargar datos al iniciar
+        cargarDatos();
+        cargarCompras();
       });
+      
+      function verCompra(id) {
+        swal("Próximamente", "La funcionalidad de visualización estará disponible pronto", "info");
+      }
+      
+      function eliminarCompra(id) {
+        swal({
+          title: "¿Está seguro?",
+          text: "La compra será cancelada",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: { id: id, action: 'eliminar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarCompras();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              }
+            });
+          }
+        });
+      }
     </script>
   </body>
 </html>

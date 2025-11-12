@@ -1,3 +1,18 @@
+<?php
+/**
+ * Gestión de Inventarios
+ * Sistema de Gestión de Reciclaje
+ */
+
+// Verificar autenticación
+require_once __DIR__ . '/../config/auth.php';
+
+$auth = new Auth();
+if (!$auth->isAuthenticated()) {
+    header('Location: ../index.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -62,68 +77,11 @@
         </div>
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
-            <ul class="nav nav-secondary">
-              <li class="nav-item">
-                <a href="../Dashboard.php">
-                  <i class="fas fa-home"></i>
-                  <p>Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Administración</h4>
-              </li>
-              <li class="nav-item">
-                <a href="../roles/index.php">
-                  <i class="fas fa-user-shield"></i>
-                  <p>Roles</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../sucursales/index.php">
-                  <i class="fas fa-building"></i>
-                  <p>Sucursales</p>
-                </a>
-              </li>
-              <li class="nav-item active">
-                <a href="index.php">
-                  <i class="fas fa-boxes"></i>
-                  <p>Inventarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../clientes/index.php">
-                  <i class="fas fa-user-tie"></i>
-                  <p>Clientes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../proveedores/index.php">
-                  <i class="fas fa-truck"></i>
-                  <p>Proveedores</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Operaciones</h4>
-              </li>
-              <li class="nav-item">
-                <a href="../compras/index.php">
-                  <i class="fas fa-shopping-cart"></i>
-                  <p>Compras</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../ventas/index.php">
-                  <i class="fas fa-cash-register"></i>
-                  <p>Ventas</p>
-                </a>
-              </li>
-            </ul>
+            <?php
+              $basePath = '..';
+              $currentRoute = 'inventarios';
+              include __DIR__ . '/../includes/sidebar.php';
+            ?>
           </div>
         </div>
       </div>
@@ -183,9 +141,7 @@
                       <div class="card-tools">
                         <select class="form-control form-control-sm" id="filtroSucursal" style="width: 200px; display: inline-block;">
                           <option value="">Todas las Sucursales</option>
-                          <option value="1">Sucursal Central</option>
-                          <option value="2">Sucursal Norte</option>
-                          <option value="3">Sucursal Sur</option>
+                          <!-- Las opciones se cargarán dinámicamente -->
                         </select>
                       </div>
                     </div>
@@ -600,53 +556,48 @@
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Sucursal</label>
-                    <select class="form-control" required>
+                    <label>Sucursal *</label>
+                    <select id="sucursal_id" name="sucursal_id" class="form-control" required>
                       <option value="">Seleccione una sucursal</option>
-                      <option value="1">Sucursal Central</option>
-                      <option value="2">Sucursal Norte</option>
-                      <option value="3">Sucursal Sur</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Categoría</label>
-                    <select class="form-control" required>
+                    <label>Nombre del Producto *</label>
+                    <input type="text" id="nombre_producto" name="nombre_producto" class="form-control" placeholder="Ej: Papel Reciclado" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Categoría *</label>
+                    <select id="categoria" name="categoria" class="form-control" required>
                       <option value="">Seleccione una categoría</option>
-                      <option>PET</option>
-                      <option>hogar</option>
-                      <option>soplado</option>
-                      <option>CARTON 0,12</option>
-                      <option>PAPEL</option>
-                      <option>COBRE 3,5</option>
-                      <option>cobre 3,2</option>
-                      <option>BRONCE</option>
-                      <option>ALUMINIO</option>
-                      <option>PERFIL</option>
-                      <option>duplex</option>
-                      <option>BATERIA</option>
-                      <option>BATE/PEQ</option>
-                      <option>FILL</option>
-                      <option>PVC</option>
-                      <option>VIDRIO</option>
-                      <option>JABAS</option>
-                      <option>REVISTA</option>
-                      <option>RADIADOR</option>
-                      <option>carton 0,13</option>
+                      <option value="papel">Papel</option>
+                      <option value="plastico">Plástico</option>
+                      <option value="vidrio">Vidrio</option>
+                      <option value="metal">Metal</option>
+                      <option value="PET">PET</option>
+                      <option value="carton">Cartón</option>
+                      <option value="cobre">Cobre</option>
+                      <option value="aluminio">Aluminio</option>
+                      <option value="bronce">Bronce</option>
+                      <option value="bateria">Batería</option>
+                      <option value="pvc">PVC</option>
+                      <option value="otro">Otro</option>
                     </select>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
-                    <label>Cantidad</label>
-                    <input type="number" step="0.01" class="form-control" placeholder="0.00" required>
+                    <label>Cantidad *</label>
+                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <div class="form-group">
-                    <label>Unidad</label>
-                    <select class="form-control" required>
+                    <label>Unidad *</label>
+                    <select id="unidad" name="unidad" class="form-control" required>
                       <option value="kg">kg</option>
                       <option value="litros">litros</option>
                       <option value="unidades">unidades</option>
@@ -655,37 +606,38 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="form-group">
-                    <label>Precio Unitario</label>
-                    <input type="number" step="0.01" class="form-control" placeholder="0.00" required>
+                    <label>Precio Unitario *</label>
+                    <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Stock Mínimo</label>
-                    <input type="number" step="0.01" class="form-control" placeholder="0.00">
+                    <input type="number" step="0.01" id="stock_minimo" name="stock_minimo" class="form-control" placeholder="0.00">
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Stock Máximo</label>
-                    <input type="number" step="0.01" class="form-control" placeholder="0.00">
+                    <input type="number" step="0.01" id="stock_maximo" name="stock_maximo" class="form-control" placeholder="0.00">
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Descripción</label>
-                    <textarea class="form-control" rows="2" placeholder="Descripción adicional"></textarea>
+                    <textarea id="descripcion" name="descripcion" class="form-control" rows="2" placeholder="Descripción adicional"></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select class="form-control">
+                    <select id="estado" name="estado" class="form-control">
                       <option value="disponible">Disponible</option>
                       <option value="agotado">Agotado</option>
                       <option value="reservado">Reservado</option>
+                      <option value="inactivo">Inactivo</option>
                     </select>
                   </div>
                 </div>
@@ -694,7 +646,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Guardar Inventario</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarInventario">Guardar Inventario</button>
           </div>
         </div>
       </div>
@@ -797,6 +749,7 @@
                       <option value="disponible" selected>Disponible</option>
                       <option value="agotado">Agotado</option>
                       <option value="reservado">Reservado</option>
+                      <option value="inactivo">Inactivo</option>
                     </select>
                   </div>
                 </div>
@@ -822,13 +775,181 @@
     <script src="../assets/js/setting-demo.js"></script>
     <script>
       $(document).ready(function() {
-        $('#inventariosTable').DataTable({
+        var table = $('#inventariosTable').DataTable({
           "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
           },
           "order": [[0, "desc"]]
         });
+        
+        // Cargar sucursales para el filtro y formularios
+        function cargarSucursales() {
+          $.ajax({
+            url: '../sucursales/api.php?action=activas',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                // Llenar filtro
+                var filtro = $('#filtroSucursal');
+                filtro.empty().append('<option value="">Todas las Sucursales</option>');
+                response.data.forEach(function(sucursal) {
+                  filtro.append('<option value="' + sucursal.id + '">' + sucursal.nombre + '</option>');
+                });
+                
+                // Llenar selects en formularios
+                $('#sucursal_id, #editar_sucursal_id').each(function() {
+                  var select = $(this);
+                  select.empty().append('<option value="">Seleccione una sucursal</option>');
+                  response.data.forEach(function(sucursal) {
+                    select.append('<option value="' + sucursal.id + '">' + sucursal.nombre + '</option>');
+                  });
+                });
+              }
+            }
+          });
+        }
+        
+        window.cargarInventarios = cargarInventarios;
+        
+        // Cargar inventarios
+        function cargarInventarios(sucursal_id = null) {
+          var url = 'api.php?action=listar';
+          if (sucursal_id) {
+            url += '&sucursal_id=' + sucursal_id;
+          }
+          
+          $.ajax({
+            url: url,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                table.clear();
+                response.data.forEach(function(inventario) {
+                  var valorTotal = parseFloat(inventario.cantidad) * parseFloat(inventario.precio_unitario);
+                  var badgeEstado = '';
+                  if (inventario.estado === 'disponible') {
+                    badgeEstado = '<span class="badge badge-success">Disponible</span>';
+                  } else if (inventario.estado === 'agotado') {
+                    badgeEstado = '<span class="badge badge-danger">Agotado</span>';
+                  } else if (inventario.estado === 'reservado') {
+                    badgeEstado = '<span class="badge badge-warning">Reservado</span>';
+                  } else if (inventario.estado === 'inactivo') {
+                    badgeEstado = '<span class="badge badge-secondary">Inactivo</span>';
+                  } else {
+                    badgeEstado = inventario.estado || '';
+                  }
+                  
+                  table.row.add([
+                    inventario.id,
+                    inventario.sucursal_nombre,
+                    '<span class="badge badge-info">' + inventario.categoria + '</span>',
+                    inventario.cantidad,
+                    inventario.unidad,
+                    '$' + parseFloat(inventario.precio_unitario).toFixed(2),
+                    '$' + valorTotal.toFixed(2),
+                    badgeEstado,
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarInventario(' + inventario.id + ')"><i class="fa fa-edit"></i></button> ' +
+                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarInventario(' + inventario.id + ')"><i class="fa fa-times"></i></button>'
+                  ]);
+                });
+                table.draw();
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar los inventarios", "error");
+            }
+          });
+        }
+        
+        // Filtro de sucursales
+        $('#filtroSucursal').change(function() {
+          var sucursal_id = $(this).val();
+          cargarInventarios(sucursal_id || null);
+        });
+        
+        // Guardar nuevo inventario
+        $('#btnGuardarInventario').click(function() {
+          var form = $('#formAgregarInventario')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var formData = {
+            sucursal_id: $('#sucursal_id').val(),
+            nombre_producto: $('#nombre_producto').val(),
+            categoria: $('#categoria').val(),
+            cantidad: $('#cantidad').val(),
+            unidad: $('#unidad').val(),
+            precio_unitario: $('#precio_unitario').val(),
+            stock_minimo: $('#stock_minimo').val() || 0,
+            stock_maximo: $('#stock_maximo').val() || 0,
+            descripcion: $('#descripcion').val(),
+            estado: $('#estado').val(),
+            action: 'crear'
+          };
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalAgregarInventario').modal('hide');
+                $('#formAgregarInventario')[0].reset();
+                cargarInventarios($('#filtroSucursal').val() || null);
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar el inventario';
+              swal("Error", error, "error");
+            }
+          });
+        });
+        
+        // Cargar datos al iniciar
+        cargarSucursales();
+        cargarInventarios();
       });
+      
+      function editarInventario(id) {
+        swal("Próximamente", "La funcionalidad de edición estará disponible pronto", "info");
+      }
+      
+      function eliminarInventario(id) {
+        swal({
+          title: "¿Está seguro?",
+          text: "El inventario será desactivado",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: { id: id, action: 'eliminar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  var sucursalSeleccionada = $('#filtroSucursal').val() || null;
+                  cargarInventarios(sucursalSeleccionada);
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              }
+            });
+          }
+        });
+      }
     </script>
   </body>
 </html>

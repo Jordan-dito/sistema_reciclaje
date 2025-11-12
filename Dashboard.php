@@ -94,68 +94,11 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         </div>
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
-            <ul class="nav nav-secondary">
-              <li class="nav-item active">
-                <a href="Dashboard.php">
-                  <i class="fas fa-home"></i>
-                  <p>Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Administración</h4>
-              </li>
-              <li class="nav-item">
-                <a href="usuarios/index.php">
-                  <i class="fas fa-users"></i>
-                  <p>Usuarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="sucursales/index.php">
-                  <i class="fas fa-building"></i>
-                  <p>Sucursales</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="inventarios/index.php">
-                  <i class="fas fa-boxes"></i>
-                  <p>Inventarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="clientes/index.php">
-                  <i class="fas fa-user-tie"></i>
-                  <p>Clientes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="proveedores/index.php">
-                  <i class="fas fa-truck"></i>
-                  <p>Proveedores</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Operaciones</h4>
-              </li>
-              <li class="nav-item">
-                <a href="compras/index.php">
-                  <i class="fas fa-shopping-cart"></i>
-                  <p>Compras</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="ventas/index.php">
-                  <i class="fas fa-cash-register"></i>
-                  <p>Ventas</p>
-                </a>
-              </li>
-            </ul>
+            <?php
+              $basePath = '';
+              $currentRoute = 'dashboard';
+              include __DIR__ . '/includes/sidebar.php';
+            ?>
           </div>
         </div>
       </div>

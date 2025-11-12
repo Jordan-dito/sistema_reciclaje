@@ -1,3 +1,18 @@
+<?php
+/**
+ * Gestión de Usuarios
+ * Sistema de Gestión de Reciclaje
+ */
+
+// Verificar autenticación
+require_once __DIR__ . '/../config/auth.php';
+
+$auth = new Auth();
+if (!$auth->isAuthenticated()) {
+    header('Location: ../index.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -62,68 +77,11 @@
         </div>
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
-            <ul class="nav nav-secondary">
-              <li class="nav-item">
-                <a href="../Dashboard.php">
-                  <i class="fas fa-home"></i>
-                  <p>Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Administración</h4>
-              </li>
-              <li class="nav-item active">
-                <a href="index.php">
-                  <i class="fas fa-users"></i>
-                  <p>Usuarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../sucursales/index.php">
-                  <i class="fas fa-building"></i>
-                  <p>Sucursales</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../inventarios/index.php">
-                  <i class="fas fa-boxes"></i>
-                  <p>Inventarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../clientes/index.php">
-                  <i class="fas fa-user-tie"></i>
-                  <p>Clientes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../proveedores/index.php">
-                  <i class="fas fa-truck"></i>
-                  <p>Proveedores</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Operaciones</h4>
-              </li>
-              <li class="nav-item">
-                <a href="../compras/index.php">
-                  <i class="fas fa-shopping-cart"></i>
-                  <p>Compras</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../ventas/index.php">
-                  <i class="fas fa-cash-register"></i>
-                  <p>Ventas</p>
-                </a>
-              </li>
-            </ul>
+            <?php
+              $basePath = '..';
+              $currentRoute = 'usuarios';
+              include __DIR__ . '/../includes/sidebar.php';
+            ?>
           </div>
         </div>
       </div>
@@ -198,91 +156,7 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <td>1</td>
-                            <td><strong>Administrador del Sistema</strong></td>
-                            <td>0000000000</td>
-                            <td>admin@sistema.com</td>
-                            <td>1234567890</td>
-                            <td><span class="badge badge-primary">Administrador</span></td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditarUsuario">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>2</td>
-                            <td><strong>Gerente del Sistema</strong></td>
-                            <td>0000000001</td>
-                            <td>gerente@sistema.com</td>
-                            <td>0987654321</td>
-                            <td><span class="badge badge-info">Gerente</span></td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>3</td>
-                            <td><strong>Usuario Normal</strong></td>
-                            <td>0000000002</td>
-                            <td>usuario@sistema.com</td>
-                            <td>0987654322</td>
-                            <td><span class="badge badge-secondary">Usuario</span></td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>4</td>
-                            <td><strong>Juan Pérez</strong></td>
-                            <td>0912345678</td>
-                            <td>juan.perez@email.com</td>
-                            <td>0998765432</td>
-                            <td><span class="badge badge-secondary">Usuario</span></td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>5</td>
-                            <td><strong>María González</strong></td>
-                            <td>0987654321</td>
-                            <td>maria.gonzalez@email.com</td>
-                            <td>0976543210</td>
-                            <td><span class="badge badge-info">Gerente</span></td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
+                          <!-- Los usuarios se cargarán dinámicamente desde la base de datos -->
                         </tbody>
                       </table>
                     </div>
@@ -316,32 +190,32 @@
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre Completo</label>
-                    <input type="text" class="form-control" placeholder="Ej: Juan Pérez" required>
+                    <label>Nombre Completo *</label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Juan Pérez" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Cédula</label>
-                    <input type="text" class="form-control" placeholder="0912345678" required>
+                    <label>Cédula *</label>
+                    <input type="text" id="cedula" name="cedula" class="form-control" placeholder="0912345678" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" class="form-control" placeholder="usuario@email.com" required>
+                    <label>Email *</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="usuario@email.com" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Teléfono</label>
-                    <input type="tel" class="form-control" placeholder="0998765432">
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="0998765432">
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Rol</label>
-                    <select class="form-control" required>
+                    <label>Rol *</label>
+                    <select id="rol_id" name="rol_id" class="form-control" required>
                       <option value="">Seleccione un rol</option>
                       <option value="1">Administrador</option>
                       <option value="2">Gerente</option>
@@ -351,14 +225,14 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" class="form-control" placeholder="Mínimo 8 caracteres" required>
+                    <label>Contraseña *</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Mínimo 8 caracteres" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select class="form-control">
+                    <select id="estado" name="estado" class="form-control">
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
                     </select>
@@ -369,7 +243,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Guardar Usuario</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarUsuario">Guardar Usuario</button>
           </div>
         </div>
       </div>
@@ -457,12 +331,143 @@
     <script src="../assets/js/setting-demo.js"></script>
     <script>
       $(document).ready(function() {
-        $('#usuariosTable').DataTable({
+        // Inicializar DataTable
+        var table = $('#usuariosTable').DataTable({
           "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
           }
         });
+        
+        // Cargar usuarios desde la base de datos
+        function cargarUsuarios() {
+          $.ajax({
+            url: 'api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                table.clear();
+                response.data.forEach(function(usuario) {
+                  var badgeRol = '';
+                  if (usuario.rol_nombre === 'Administrador') {
+                    badgeRol = '<span class="badge badge-primary">Administrador</span>';
+                  } else if (usuario.rol_nombre === 'Gerente') {
+                    badgeRol = '<span class="badge badge-info">Gerente</span>';
+                  } else {
+                    badgeRol = '<span class="badge badge-secondary">Usuario</span>';
+                  }
+                  
+                  var badgeEstado = usuario.estado === 'activo' 
+                    ? '<span class="badge badge-success">Activo</span>'
+                    : '<span class="badge badge-danger">Inactivo</span>';
+                  
+                  table.row.add([
+                    usuario.id,
+                    '<strong>' + usuario.nombre + '</strong>',
+                    usuario.cedula,
+                    usuario.email,
+                    usuario.telefono || '-',
+                    badgeRol,
+                    badgeEstado,
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarUsuario(' + usuario.id + ')"><i class="fa fa-edit"></i></button> ' +
+                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarUsuario(' + usuario.id + ')"><i class="fa fa-times"></i></button>'
+                  ]);
+                });
+                table.draw();
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar los usuarios", "error");
+            }
+          });
+        }
+        
+        // Cargar usuarios al iniciar
+        cargarUsuarios();
+        
+        // Guardar nuevo usuario
+        $('#btnGuardarUsuario').click(function() {
+          var form = $('#formAgregarUsuario')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var formData = {
+            nombre: $('#nombre').val(),
+            cedula: $('#cedula').val(),
+            email: $('#email').val(),
+            telefono: $('#telefono').val(),
+            password: $('#password').val(),
+            rol_id: $('#rol_id').val(),
+            estado: $('#estado').val(),
+            action: 'crear'
+          };
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalAgregarUsuario').modal('hide');
+                $('#formAgregarUsuario')[0].reset();
+                cargarUsuarios();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar el usuario';
+              swal("Error", error, "error");
+            }
+          });
+        });
       });
+      
+      // Función para editar usuario
+      function editarUsuario(id) {
+        // TODO: Implementar edición
+        swal("Próximamente", "La funcionalidad de edición estará disponible pronto", "info");
+      }
+      
+      // Función para eliminar usuario
+      function eliminarUsuario(id) {
+        swal({
+          title: "¿Está seguro?",
+          text: "El usuario será marcado como inactivo",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: {
+                id: id,
+                action: 'eliminar'
+              },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  location.reload();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al eliminar el usuario';
+                swal("Error", error, "error");
+              }
+            });
+          }
+        });
+      }
     </script>
   </body>
 </html>

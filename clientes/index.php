@@ -1,3 +1,18 @@
+<?php
+/**
+ * Gestión de Clientes
+ * Sistema de Gestión de Reciclaje
+ */
+
+// Verificar autenticación
+require_once __DIR__ . '/../config/auth.php';
+
+$auth = new Auth();
+if (!$auth->isAuthenticated()) {
+    header('Location: ../index.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -62,68 +77,11 @@
         </div>
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
-            <ul class="nav nav-secondary">
-              <li class="nav-item">
-                <a href="../Dashboard.php">
-                  <i class="fas fa-home"></i>
-                  <p>Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Administración</h4>
-              </li>
-              <li class="nav-item">
-                <a href="../usuarios/index.php">
-                  <i class="fas fa-users"></i>
-                  <p>Usuarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../sucursales/index.php">
-                  <i class="fas fa-building"></i>
-                  <p>Sucursales</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../inventarios/index.php">
-                  <i class="fas fa-boxes"></i>
-                  <p>Inventarios</p>
-                </a>
-              </li>
-              <li class="nav-item active">
-                <a href="index.php">
-                  <i class="fas fa-user-tie"></i>
-                  <p>Clientes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../proveedores/index.php">
-                  <i class="fas fa-truck"></i>
-                  <p>Proveedores</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Operaciones</h4>
-              </li>
-              <li class="nav-item">
-                <a href="../compras/index.php">
-                  <i class="fas fa-shopping-cart"></i>
-                  <p>Compras</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../ventas/index.php">
-                  <i class="fas fa-cash-register"></i>
-                  <p>Ventas</p>
-                </a>
-              </li>
-            </ul>
+            <?php
+              $basePath = '..';
+              $currentRoute = 'clientes';
+              include __DIR__ . '/../includes/sidebar.php';
+            ?>
           </div>
         </div>
       </div>
@@ -198,108 +156,7 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <td>1</td>
-                            <td><strong>Industrias ABC</strong></td>
-                            <td>0998765432001</td>
-                            <td>contacto@industriasabc.com</td>
-                            <td>02-2345678</td>
-                            <td>Av. Principal 123, Quito</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditarCliente">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>2</td>
-                            <td><strong>Metalúrgica XYZ</strong></td>
-                            <td>0987654321001</td>
-                            <td>ventas@metalurgicaxyz.com</td>
-                            <td>02-3456789</td>
-                            <td>Calle 10 de Agosto 456, Guayaquil</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>3</td>
-                            <td><strong>Papelera del Sur</strong></td>
-                            <td>0976543210001</td>
-                            <td>info@papeleradelsur.com</td>
-                            <td>04-5678901</td>
-                            <td>Av. 9 de Octubre 789, Cuenca</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>4</td>
-                            <td><strong>Cobre y Metales S.A.</strong></td>
-                            <td>0965432109001</td>
-                            <td>compras@cobremetales.com</td>
-                            <td>02-4567890</td>
-                            <td>Av. Colón 321, Quito</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>5</td>
-                            <td><strong>Vidrios Premium</strong></td>
-                            <td>0954321098001</td>
-                            <td>ventas@vidriospremium.com</td>
-                            <td>04-6789012</td>
-                            <td>Calle Bolívar 654, Cuenca</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>6</td>
-                            <td><strong>Cartones del Este</strong></td>
-                            <td>0943210987001</td>
-                            <td>contacto@cartoneseste.com</td>
-                            <td>02-7890123</td>
-                            <td>Av. Amazonas 987, Quito</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
+                          <!-- Los datos se cargarán dinámicamente desde la base de datos -->
                         </tbody>
                       </table>
                     </div>
@@ -334,56 +191,75 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Nombre / Razón Social <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" placeholder="Ej: Industrias ABC" required>
+                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Industrias ABC" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Cédula / RUC <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" placeholder="0998765432001" required>
+                    <label>Cédula / RUC</label>
+                    <input type="text" id="cedula_ruc" name="cedula_ruc" class="form-control" placeholder="0998765432001">
                     <small class="form-text text-muted">Cédula (10 dígitos) o RUC (13 dígitos)</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Tipo</label>
-                    <select class="form-control">
-                      <option value="persona_natural">Persona Natural</option>
-                      <option value="empresa">Empresa</option>
+                    <label>Tipo de Documento</label>
+                    <select id="tipo_documento" name="tipo_documento" class="form-control">
+                      <option value="cedula">Cédula</option>
+                      <option value="ruc">RUC</option>
+                      <option value="pasaporte">Pasaporte</option>
+                      <option value="otro">Otro</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Email</label>
-                    <input type="email" class="form-control" placeholder="cliente@email.com">
+                    <input type="email" id="email" name="email" class="form-control" placeholder="cliente@email.com">
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Teléfono</label>
-                    <input type="tel" class="form-control" placeholder="02-2345678">
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="02-2345678">
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Dirección</label>
-                    <textarea class="form-control" rows="2" placeholder="Dirección completa"></textarea>
+                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa"></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Ciudad</label>
-                    <input type="text" class="form-control" placeholder="Ej: Quito">
+                    <label>Persona de Contacto</label>
+                    <input type="text" id="contacto" name="contacto" class="form-control" placeholder="Ej: Juan Pérez">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Tipo de Cliente</label>
+                    <select id="tipo_cliente" name="tipo_cliente" class="form-control">
+                      <option value="minorista">Minorista</option>
+                      <option value="mayorista">Mayorista</option>
+                      <option value="empresa">Empresa</option>
+                      <option value="institucion">Institución</option>
+                    </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select class="form-control">
+                    <select id="estado" name="estado" class="form-control">
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
                     </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Notas</label>
+                    <textarea id="notas" name="notas" class="form-control" rows="2" placeholder="Notas adicionales"></textarea>
                   </div>
                 </div>
               </div>
@@ -391,7 +267,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Guardar Cliente</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarCliente">Guardar Cliente</button>
           </div>
         </div>
       </div>
@@ -485,12 +361,128 @@
     <script src="../assets/js/setting-demo.js"></script>
     <script>
       $(document).ready(function() {
-        $('#clientesTable').DataTable({
+        var table = $('#clientesTable').DataTable({
           "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
           }
         });
+        
+        // Cargar clientes
+        function cargarClientes() {
+          $.ajax({
+            url: 'api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                table.clear();
+                response.data.forEach(function(cliente) {
+                  var badgeEstado = cliente.estado === 'activo' 
+                    ? '<span class="badge badge-success">Activo</span>'
+                    : '<span class="badge badge-danger">Inactivo</span>';
+                  
+                  table.row.add([
+                    cliente.id,
+                    '<strong>' + cliente.nombre + '</strong>',
+                    cliente.cedula_ruc || '-',
+                    cliente.email || '-',
+                    cliente.telefono || '-',
+                    cliente.direccion || '-',
+                    badgeEstado,
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarCliente(' + cliente.id + ')"><i class="fa fa-edit"></i></button> ' +
+                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCliente(' + cliente.id + ')"><i class="fa fa-times"></i></button>'
+                  ]);
+                });
+                table.draw();
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar los clientes", "error");
+            }
+          });
+        }
+        
+        window.cargarClientes = cargarClientes;
+        
+        // Guardar nuevo cliente
+        $('#btnGuardarCliente').click(function() {
+          var form = $('#formAgregarCliente')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var formData = {
+            nombre: $('#nombre').val(),
+            cedula_ruc: $('#cedula_ruc').val(),
+            tipo_documento: $('#tipo_documento').val(),
+            direccion: $('#direccion').val(),
+            telefono: $('#telefono').val(),
+            email: $('#email').val(),
+            contacto: $('#contacto').val(),
+            tipo_cliente: $('#tipo_cliente').val(),
+            estado: $('#estado').val(),
+            notas: $('#notas').val(),
+            action: 'crear'
+          };
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalAgregarCliente').modal('hide');
+                $('#formAgregarCliente')[0].reset();
+                cargarClientes();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar el cliente';
+              swal("Error", error, "error");
+            }
+          });
+        });
+        
+        // Cargar datos al iniciar
+        cargarClientes();
       });
+      
+      function editarCliente(id) {
+        swal("Próximamente", "La funcionalidad de edición estará disponible pronto", "info");
+      }
+      
+      function eliminarCliente(id) {
+        swal({
+          title: "¿Está seguro?",
+          text: "El cliente será desactivado",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: { id: id, action: 'eliminar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarClientes();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              }
+            });
+          }
+        });
+      }
     </script>
   </body>
 </html>

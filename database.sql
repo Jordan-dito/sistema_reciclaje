@@ -2,14 +2,19 @@
 -- Base de Datos: Sistema de Gestión de Reciclaje
 -- Tesis de Grado
 -- =====================================================
--- IMPORTANTE: El nombre de la base de datos debe coincidir
--- con la variable DB_NAME en tu archivo .env
-
--- Crear Base de Datos
--- NOTA: Cambia 'sistema_reciclaje' por el nombre que configuraste en .env
-CREATE DATABASE IF NOT EXISTS sistema_reciclaje CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE sistema_reciclaje;
-
+-- INSTRUCCIONES PARA HOSTING COMPARTIDO:
+-- 
+-- 1. Crea la base de datos desde el panel de control de tu hosting
+--    (no desde phpMyAdmin, ya que no tienes permisos)
+-- 
+-- 2. Una vez creada, accede a phpMyAdmin
+-- 
+-- 3. Selecciona la base de datos que creaste (haz clic en ella en el menú lateral)
+-- 
+-- 4. Luego importa este archivo SQL
+-- 
+-- IMPORTANTE: El nombre de la base de datos debe coincidir con DB_NAME en tu .env
+-- 
 -- =====================================================
 -- TABLA: roles
 -- =====================================================
@@ -109,7 +114,7 @@ CREATE TABLE IF NOT EXISTS inventarios (
     stock_minimo DECIMAL(10,2) DEFAULT 0 COMMENT 'Stock mínimo para alerta',
     stock_maximo DECIMAL(10,2) DEFAULT 0 COMMENT 'Stock máximo recomendado',
     descripcion TEXT COMMENT 'Descripción adicional',
-    estado ENUM('disponible', 'agotado', 'reservado') DEFAULT 'disponible',
+    estado ENUM('disponible', 'agotado', 'reservado', 'inactivo') DEFAULT 'disponible',
     creado_por INT COMMENT 'ID del usuario que creó el registro',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -144,6 +149,163 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Historial de movimientos de inventario';
 
 -- =====================================================
+-- TABLA: clientes
+-- =====================================================
+CREATE TABLE IF NOT EXISTS clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL COMMENT 'Nombre o razón social del cliente',
+    cedula_ruc VARCHAR(20) COMMENT 'Cédula o RUC del cliente',
+    tipo_documento ENUM('cedula', 'ruc', 'pasaporte', 'otro') DEFAULT 'cedula' COMMENT 'Tipo de documento',
+    direccion TEXT COMMENT 'Dirección completa',
+    telefono VARCHAR(20) COMMENT 'Teléfono de contacto',
+    email VARCHAR(150) COMMENT 'Correo electrónico',
+    contacto VARCHAR(100) COMMENT 'Nombre de persona de contacto',
+    tipo_cliente ENUM('minorista', 'mayorista', 'empresa', 'institucion') DEFAULT 'minorista' COMMENT 'Tipo de cliente',
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    notas TEXT COMMENT 'Notas adicionales sobre el cliente',
+    creado_por INT COMMENT 'ID del usuario que creó el registro',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_nombre (nombre),
+    INDEX idx_cedula_ruc (cedula_ruc),
+    INDEX idx_estado (estado),
+    INDEX idx_tipo_cliente (tipo_cliente),
+    INDEX idx_creado_por (creado_por)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de clientes del sistema';
+
+-- =====================================================
+-- TABLA: proveedores
+-- =====================================================
+CREATE TABLE IF NOT EXISTS proveedores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL COMMENT 'Nombre o razón social del proveedor',
+    cedula_ruc VARCHAR(20) COMMENT 'Cédula o RUC del proveedor',
+    tipo_documento ENUM('cedula', 'ruc', 'pasaporte', 'otro') DEFAULT 'ruc' COMMENT 'Tipo de documento',
+    direccion TEXT COMMENT 'Dirección completa',
+    telefono VARCHAR(20) COMMENT 'Teléfono de contacto',
+    email VARCHAR(150) COMMENT 'Correo electrónico',
+    contacto VARCHAR(100) COMMENT 'Nombre de persona de contacto',
+    tipo_proveedor ENUM('recolector', 'procesador', 'mayorista', 'otro') DEFAULT 'recolector' COMMENT 'Tipo de proveedor',
+    materiales_suministra TEXT COMMENT 'Materiales que suministra el proveedor',
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    notas TEXT COMMENT 'Notas adicionales sobre el proveedor',
+    creado_por INT COMMENT 'ID del usuario que creó el registro',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_nombre (nombre),
+    INDEX idx_cedula_ruc (cedula_ruc),
+    INDEX idx_estado (estado),
+    INDEX idx_tipo_proveedor (tipo_proveedor),
+    INDEX idx_creado_por (creado_por)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de proveedores del sistema';
+
+-- =====================================================
+-- TABLA: compras (Registro de compras de materiales)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS compras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    numero_factura VARCHAR(50) COMMENT 'Número de factura o comprobante',
+    proveedor_id INT NOT NULL COMMENT 'ID del proveedor',
+    sucursal_id INT NOT NULL COMMENT 'ID de la sucursal donde se recibe',
+    fecha_compra DATE NOT NULL COMMENT 'Fecha de la compra',
+    tipo_comprobante ENUM('factura', 'boleta', 'recibo', 'nota_credito', 'otro') DEFAULT 'factura' COMMENT 'Tipo de comprobante',
+    subtotal DECIMAL(10,2) DEFAULT 0 COMMENT 'Subtotal de la compra',
+    iva DECIMAL(10,2) DEFAULT 0 COMMENT 'IVA de la compra',
+    descuento DECIMAL(10,2) DEFAULT 0 COMMENT 'Descuento aplicado',
+    total DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT 'Total de la compra',
+    estado ENUM('pendiente', 'completada', 'cancelada') DEFAULT 'pendiente' COMMENT 'Estado de la compra',
+    notas TEXT COMMENT 'Notas adicionales',
+    creado_por INT COMMENT 'ID del usuario que creó el registro',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proveedor_id) REFERENCES proveedores(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (sucursal_id) REFERENCES sucursales(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_proveedor (proveedor_id),
+    INDEX idx_sucursal (sucursal_id),
+    INDEX idx_fecha_compra (fecha_compra),
+    INDEX idx_estado (estado),
+    INDEX idx_numero_factura (numero_factura),
+    INDEX idx_creado_por (creado_por)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de compras de materiales';
+
+-- =====================================================
+-- TABLA: compras_detalle (Detalle de productos por compra)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS compras_detalle (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    compra_id INT NOT NULL COMMENT 'ID de la compra',
+    inventario_id INT COMMENT 'ID del inventario (si existe)',
+    nombre_producto VARCHAR(150) NOT NULL COMMENT 'Nombre del producto/material',
+    categoria ENUM('papel', 'plastico', 'vidrio', 'metal', 'organico', 'electronico', 'textil', 'otro') NOT NULL COMMENT 'Categoría del material',
+    cantidad DECIMAL(10,2) NOT NULL COMMENT 'Cantidad comprada',
+    unidad ENUM('kg', 'litros', 'unidades', 'toneladas', 'metros') NOT NULL DEFAULT 'kg' COMMENT 'Unidad de medida',
+    precio_unitario DECIMAL(10,2) NOT NULL COMMENT 'Precio por unidad',
+    subtotal DECIMAL(10,2) NOT NULL COMMENT 'Subtotal (cantidad * precio_unitario)',
+    descripcion TEXT COMMENT 'Descripción adicional',
+    FOREIGN KEY (compra_id) REFERENCES compras(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (inventario_id) REFERENCES inventarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_compra (compra_id),
+    INDEX idx_inventario (inventario_id),
+    INDEX idx_categoria (categoria)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Detalle de productos por compra';
+
+-- =====================================================
+-- TABLA: ventas (Registro de ventas de materiales)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS ventas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    numero_factura VARCHAR(50) COMMENT 'Número de factura o comprobante',
+    cliente_id INT NOT NULL COMMENT 'ID del cliente',
+    sucursal_id INT NOT NULL COMMENT 'ID de la sucursal donde se realiza la venta',
+    fecha_venta DATE NOT NULL COMMENT 'Fecha de la venta',
+    tipo_comprobante ENUM('factura', 'boleta', 'recibo', 'nota_credito', 'otro') DEFAULT 'factura' COMMENT 'Tipo de comprobante',
+    subtotal DECIMAL(10,2) DEFAULT 0 COMMENT 'Subtotal de la venta',
+    iva DECIMAL(10,2) DEFAULT 0 COMMENT 'IVA de la venta',
+    descuento DECIMAL(10,2) DEFAULT 0 COMMENT 'Descuento aplicado',
+    total DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT 'Total de la venta',
+    metodo_pago ENUM('efectivo', 'transferencia', 'cheque', 'tarjeta', 'credito', 'otro') DEFAULT 'efectivo' COMMENT 'Método de pago',
+    estado ENUM('pendiente', 'completada', 'cancelada', 'devuelta') DEFAULT 'pendiente' COMMENT 'Estado de la venta',
+    notas TEXT COMMENT 'Notas adicionales',
+    creado_por INT COMMENT 'ID del usuario que creó el registro',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (sucursal_id) REFERENCES sucursales(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_cliente (cliente_id),
+    INDEX idx_sucursal (sucursal_id),
+    INDEX idx_fecha_venta (fecha_venta),
+    INDEX idx_estado (estado),
+    INDEX idx_numero_factura (numero_factura),
+    INDEX idx_metodo_pago (metodo_pago),
+    INDEX idx_creado_por (creado_por)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de ventas de materiales';
+
+-- =====================================================
+-- TABLA: ventas_detalle (Detalle de productos por venta)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS ventas_detalle (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    venta_id INT NOT NULL COMMENT 'ID de la venta',
+    inventario_id INT NOT NULL COMMENT 'ID del inventario vendido',
+    nombre_producto VARCHAR(150) NOT NULL COMMENT 'Nombre del producto/material',
+    categoria ENUM('papel', 'plastico', 'vidrio', 'metal', 'organico', 'electronico', 'textil', 'otro') NOT NULL COMMENT 'Categoría del material',
+    cantidad DECIMAL(10,2) NOT NULL COMMENT 'Cantidad vendida',
+    unidad ENUM('kg', 'litros', 'unidades', 'toneladas', 'metros') NOT NULL DEFAULT 'kg' COMMENT 'Unidad de medida',
+    precio_unitario DECIMAL(10,2) NOT NULL COMMENT 'Precio por unidad',
+    subtotal DECIMAL(10,2) NOT NULL COMMENT 'Subtotal (cantidad * precio_unitario)',
+    descripcion TEXT COMMENT 'Descripción adicional',
+    FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (inventario_id) REFERENCES inventarios(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    INDEX idx_venta (venta_id),
+    INDEX idx_inventario (inventario_id),
+    INDEX idx_categoria (categoria)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Detalle de productos por venta';
+
+-- =====================================================
 -- INSERTAR ROLES INICIALES
 -- =====================================================
 INSERT INTO roles (nombre, descripcion, permisos, estado) VALUES
@@ -166,8 +328,12 @@ INSERT INTO modulos (nombre, descripcion, ruta, icono, orden, estado) VALUES
 ('Usuarios', 'Gestión de usuarios del sistema', 'usuarios/index.php', 'fas fa-users', 2, 'activo'),
 ('Sucursales', 'Gestión de sucursales', 'sucursales/index.php', 'fas fa-building', 3, 'activo'),
 ('Inventarios', 'Control de inventarios', 'inventarios/index.php', 'fas fa-boxes', 4, 'activo'),
-('Reportes', 'Reportes y estadísticas', 'reportes/index.php', 'fas fa-chart-bar', 5, 'activo'),
-('Configuración', 'Configuración del sistema', 'configuracion/index.php', 'fas fa-cog', 6, 'activo')
+('Clientes', 'Gestión de clientes', 'clientes/index.php', 'fas fa-user-tie', 5, 'activo'),
+('Proveedores', 'Gestión de proveedores', 'proveedores/index.php', 'fas fa-truck', 6, 'activo'),
+('Compras', 'Registro de compras de materiales', 'compras/index.php', 'fas fa-shopping-cart', 7, 'activo'),
+('Ventas', 'Registro de ventas de materiales', 'ventas/index.php', 'fas fa-cash-register', 8, 'activo'),
+('Reportes', 'Reportes y estadísticas', 'reportes/index.php', 'fas fa-chart-bar', 9, 'activo'),
+('Configuración', 'Configuración del sistema', 'configuracion/index.php', 'fas fa-cog', 10, 'activo')
 ON DUPLICATE KEY UPDATE nombre=nombre;
 
 -- =====================================================
@@ -175,17 +341,17 @@ ON DUPLICATE KEY UPDATE nombre=nombre;
 -- =====================================================
 -- Administrador tiene acceso a todos los módulos
 INSERT INTO rol_modulos (rol_id, modulo_id) VALUES
-(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6)
+(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10)
 ON DUPLICATE KEY UPDATE rol_id=rol_id;
 
--- Gerente tiene acceso a gestión y reportes
+-- Gerente tiene acceso a gestión, operaciones y reportes
 INSERT INTO rol_modulos (rol_id, modulo_id) VALUES
-(2, 1), (2, 3), (2, 4), (2, 5)
+(2, 1), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (2, 9)
 ON DUPLICATE KEY UPDATE rol_id=rol_id;
 
--- Usuario normal tiene acceso limitado
+-- Usuario normal tiene acceso limitado a inventarios y reportes
 INSERT INTO rol_modulos (rol_id, modulo_id) VALUES
-(3, 1), (3, 4), (3, 5)
+(3, 1), (3, 4), (3, 9)
 ON DUPLICATE KEY UPDATE rol_id=rol_id;
 
 -- =====================================================
@@ -220,6 +386,24 @@ INSERT INTO inventarios (sucursal_id, nombre_producto, categoria, cantidad, unid
 (2, 'Latas de Aluminio', 'metal', 45.50, 'kg', 4.00, 20.00, 150.00, 'Latas de aluminio compactadas', 'disponible', 1),
 (3, 'Botellas PET', 'plastico', 60.00, 'kg', 3.00, 30.00, 200.00, 'Botellas de plástico PET', 'disponible', 2)
 ON DUPLICATE KEY UPDATE nombre_producto=nombre_producto;
+
+-- =====================================================
+-- INSERTAR CLIENTES DE EJEMPLO
+-- =====================================================
+INSERT INTO clientes (nombre, cedula_ruc, tipo_documento, direccion, telefono, email, contacto, tipo_cliente, estado, creado_por) VALUES
+('Empresa ABC S.A.', '1234567890001', 'ruc', 'Av. Principal 123, Ciudad', '555-1001', 'contacto@empresaabc.com', 'Juan Pérez', 'empresa', 'activo', 1),
+('María González', '0987654321', 'cedula', 'Calle 10 #5-20, Ciudad', '555-1002', 'maria.gonzalez@email.com', 'María González', 'minorista', 'activo', 1),
+('Instituto Educativo XYZ', '9876543210001', 'ruc', 'Av. Educativa 456, Ciudad', '555-1003', 'info@institutoxyz.edu', 'Carlos Rodríguez', 'institucion', 'activo', 1)
+ON DUPLICATE KEY UPDATE nombre=nombre;
+
+-- =====================================================
+-- INSERTAR PROVEEDORES DE EJEMPLO
+-- =====================================================
+INSERT INTO proveedores (nombre, cedula_ruc, tipo_documento, direccion, telefono, email, contacto, tipo_proveedor, materiales_suministra, estado, creado_por) VALUES
+('Recicladora del Sur S.A.', '1112223330001', 'ruc', 'Zona Industrial, Calle 50', '555-2001', 'ventas@recicladora.com', 'Pedro Martínez', 'procesador', 'Papel, plástico, vidrio', 'activo', 1),
+('Recolectores Unidos', '4445556660001', 'ruc', 'Barrio Norte, Av. 20', '555-2002', 'info@recolectores.com', 'Ana López', 'recolector', 'Materiales varios', 'activo', 1),
+('Distribuidora de Metales', '7778889990001', 'ruc', 'Polígono Industrial, Sector 5', '555-2003', 'metales@distribuidora.com', 'Luis Fernández', 'mayorista', 'Metales, aluminio, hierro', 'activo', 1)
+ON DUPLICATE KEY UPDATE nombre=nombre;
 
 -- =====================================================
 -- VISTAS ÚTILES

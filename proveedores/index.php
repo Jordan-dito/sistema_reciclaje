@@ -1,3 +1,18 @@
+<?php
+/**
+ * Gestión de Proveedores
+ * Sistema de Gestión de Reciclaje
+ */
+
+// Verificar autenticación
+require_once __DIR__ . '/../config/auth.php';
+
+$auth = new Auth();
+if (!$auth->isAuthenticated()) {
+    header('Location: ../index.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -62,68 +77,11 @@
         </div>
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
-            <ul class="nav nav-secondary">
-              <li class="nav-item">
-                <a href="../Dashboard.php">
-                  <i class="fas fa-home"></i>
-                  <p>Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Administración</h4>
-              </li>
-              <li class="nav-item">
-                <a href="../usuarios/index.php">
-                  <i class="fas fa-users"></i>
-                  <p>Usuarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../sucursales/index.php">
-                  <i class="fas fa-building"></i>
-                  <p>Sucursales</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../inventarios/index.php">
-                  <i class="fas fa-boxes"></i>
-                  <p>Inventarios</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../clientes/index.php">
-                  <i class="fas fa-user-tie"></i>
-                  <p>Clientes</p>
-                </a>
-              </li>
-              <li class="nav-item active">
-                <a href="index.php">
-                  <i class="fas fa-truck"></i>
-                  <p>Proveedores</p>
-                </a>
-              </li>
-              <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                  <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Operaciones</h4>
-              </li>
-              <li class="nav-item">
-                <a href="../compras/index.php">
-                  <i class="fas fa-shopping-cart"></i>
-                  <p>Compras</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="../ventas/index.php">
-                  <i class="fas fa-cash-register"></i>
-                  <p>Ventas</p>
-                </a>
-              </li>
-            </ul>
+            <?php
+              $basePath = '..';
+              $currentRoute = 'proveedores';
+              include __DIR__ . '/../includes/sidebar.php';
+            ?>
           </div>
         </div>
       </div>
@@ -198,108 +156,7 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <td>1</td>
-                            <td><strong>Reciclajes S.A.</strong></td>
-                            <td>0998765432001</td>
-                            <td>compras@reciclajessa.com</td>
-                            <td>02-2345678</td>
-                            <td>Av. Principal 123, Quito</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditarProveedor">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>2</td>
-                            <td><strong>Metales del Norte</strong></td>
-                            <td>0987654321001</td>
-                            <td>ventas@metalesnorte.com</td>
-                            <td>04-3456789</td>
-                            <td>Calle 10 de Agosto 456, Guayaquil</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>3</td>
-                            <td><strong>Papelería Central</strong></td>
-                            <td>0976543210001</td>
-                            <td>info@papeleriacentral.com</td>
-                            <td>02-5678901</td>
-                            <td>Av. 9 de Octubre 789, Quito</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>4</td>
-                            <td><strong>Metales Premium</strong></td>
-                            <td>0965432109001</td>
-                            <td>compras@metalespremium.com</td>
-                            <td>04-4567890</td>
-                            <td>Av. Colón 321, Guayaquil</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>5</td>
-                            <td><strong>Vidrios y Más</strong></td>
-                            <td>0954321098001</td>
-                            <td>ventas@vidriosymas.com</td>
-                            <td>02-6789012</td>
-                            <td>Calle Bolívar 654, Quito</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>6</td>
-                            <td><strong>Reciclaje Ecológico S.A.</strong></td>
-                            <td>0943210987001</td>
-                            <td>contacto@reciclajeecologico.com</td>
-                            <td>04-7890123</td>
-                            <td>Av. Amazonas 987, Guayaquil</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
+                          <!-- Los datos se cargarán dinámicamente desde la base de datos -->
                         </tbody>
                       </table>
                     </div>
@@ -333,52 +190,73 @@
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Razón Social <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" placeholder="Ej: Reciclajes S.A." required>
+                    <label>Nombre / Razón Social <span class="text-danger">*</span></label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Reciclajes S.A." required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>RUC Ecuatoriano <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="rucProveedor" placeholder="0998765432001" 
-                           pattern="[0-9]{13}" maxlength="13" required>
-                    <small class="form-text text-muted">RUC debe tener 13 dígitos (formato: 0998765432001)</small>
+                    <label>Cédula / RUC</label>
+                    <input type="text" id="cedula_ruc" name="cedula_ruc" class="form-control" placeholder="0998765432001" maxlength="20">
+                    <small class="form-text text-muted">Cédula o RUC del proveedor</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Nombre Comercial</label>
-                    <input type="text" class="form-control" placeholder="Nombre comercial (opcional)">
+                    <label>Tipo de Documento</label>
+                    <select id="tipo_documento" name="tipo_documento" class="form-control">
+                      <option value="ruc">RUC</option>
+                      <option value="cedula">Cédula</option>
+                      <option value="pasaporte">Pasaporte</option>
+                      <option value="otro">Otro</option>
+                    </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Email</label>
-                    <input type="email" class="form-control" placeholder="proveedor@email.com">
+                    <input type="email" id="email" name="email" class="form-control" placeholder="proveedor@email.com">
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Teléfono</label>
-                    <input type="tel" class="form-control" placeholder="02-2345678">
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="02-2345678">
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Dirección</label>
-                    <textarea class="form-control" rows="2" placeholder="Dirección completa"></textarea>
+                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa"></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Ciudad</label>
-                    <input type="text" class="form-control" placeholder="Ej: Quito">
+                    <label>Persona de Contacto</label>
+                    <input type="text" id="contacto" name="contacto" class="form-control" placeholder="Ej: Juan Pérez">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Tipo de Proveedor</label>
+                    <select id="tipo_proveedor" name="tipo_proveedor" class="form-control">
+                      <option value="recolector">Recolector</option>
+                      <option value="procesador">Procesador</option>
+                      <option value="mayorista">Mayorista</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Materiales que Suministra</label>
+                    <textarea id="materiales_suministra" name="materiales_suministra" class="form-control" rows="2" placeholder="Ej: Papel, plástico, vidrio"></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select class="form-control">
+                    <select id="estado" name="estado" class="form-control">
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
                     </select>
@@ -386,8 +264,8 @@
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Observaciones</label>
-                    <textarea class="form-control" rows="2" placeholder="Información adicional sobre el proveedor"></textarea>
+                    <label>Notas</label>
+                    <textarea id="notas" name="notas" class="form-control" rows="2" placeholder="Información adicional sobre el proveedor"></textarea>
                   </div>
                 </div>
               </div>
@@ -395,7 +273,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Guardar Proveedor</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarProveedor">Guardar Proveedor</button>
           </div>
         </div>
       </div>
@@ -493,20 +371,134 @@
     <script src="../assets/js/setting-demo.js"></script>
     <script>
       $(document).ready(function() {
-        $('#proveedoresTable').DataTable({
+        var table = $('#proveedoresTable').DataTable({
           "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
           }
         });
 
-        // Validar RUC - solo números y máximo 13 dígitos
-        $('#rucProveedor, #rucProveedorEdit').on('input', function() {
+        // Validar RUC - solo números
+        $('#cedula_ruc').on('input', function() {
           this.value = this.value.replace(/[^0-9]/g, '');
-          if (this.value.length > 13) {
-            this.value = this.value.slice(0, 13);
+        });
+        
+        // Cargar proveedores
+        function cargarProveedores() {
+          $.ajax({
+            url: 'api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                table.clear();
+                response.data.forEach(function(proveedor) {
+                  var badgeEstado = proveedor.estado === 'activo' 
+                    ? '<span class="badge badge-success">Activo</span>'
+                    : '<span class="badge badge-danger">Inactivo</span>';
+                  
+                  table.row.add([
+                    proveedor.id,
+                    '<strong>' + proveedor.nombre + '</strong>',
+                    proveedor.cedula_ruc || '-',
+                    proveedor.email || '-',
+                    proveedor.telefono || '-',
+                    proveedor.direccion || '-',
+                    badgeEstado,
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarProveedor(' + proveedor.id + ')"><i class="fa fa-edit"></i></button> ' +
+                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarProveedor(' + proveedor.id + ')"><i class="fa fa-times"></i></button>'
+                  ]);
+                });
+                table.draw();
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar los proveedores", "error");
+            }
+          });
+        }
+        
+        window.cargarProveedores = cargarProveedores;
+        
+        // Guardar nuevo proveedor
+        $('#btnGuardarProveedor').click(function() {
+          var form = $('#formAgregarProveedor')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var formData = {
+            nombre: $('#nombre').val(),
+            cedula_ruc: $('#cedula_ruc').val(),
+            tipo_documento: $('#tipo_documento').val(),
+            direccion: $('#direccion').val(),
+            telefono: $('#telefono').val(),
+            email: $('#email').val(),
+            contacto: $('#contacto').val(),
+            tipo_proveedor: $('#tipo_proveedor').val(),
+            materiales_suministra: $('#materiales_suministra').val(),
+            estado: $('#estado').val(),
+            notas: $('#notas').val(),
+            action: 'crear'
+          };
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalAgregarProveedor').modal('hide');
+                $('#formAgregarProveedor')[0].reset();
+                cargarProveedores();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar el proveedor';
+              swal("Error", error, "error");
+            }
+          });
+        });
+        
+        // Cargar datos al iniciar
+        cargarProveedores();
+      });
+      
+      function editarProveedor(id) {
+        swal("Próximamente", "La funcionalidad de edición estará disponible pronto", "info");
+      }
+      
+      function eliminarProveedor(id) {
+        swal({
+          title: "¿Está seguro?",
+          text: "El proveedor será desactivado",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: { id: id, action: 'eliminar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarProveedores();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              }
+            });
           }
         });
-      });
+      }
     </script>
   </body>
 </html>
