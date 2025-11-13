@@ -34,11 +34,11 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $stmt = $db->query("SELECT * FROM roles WHERE estado <> 'inactivo' ORDER BY id");
+                $stmt = $db->query("SELECT * FROM roles ORDER BY id DESC");
                 $roles = $stmt->fetchAll();
                 
                 ob_end_clean();
-                echo json_encode(['success' => true, 'data' => $roles]);
+                echo json_encode(['success' => true, 'data' => $roles], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'obtener') {
                 $id = $_GET['id'] ?? 0;
                 $stmt = $db->prepare("SELECT * FROM roles WHERE id = ?");
@@ -146,16 +146,16 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Rol actualizado exitosamente']);
-            } elseif ($action === 'eliminar') {
+            } elseif ($action === 'eliminar' || $action === 'desactivar') {
                 $id = intval($_POST['id'] ?? 0);
                 
                 // Verificar si tiene usuarios asociados
-                $stmt = $db->prepare("SELECT COUNT(*) as total FROM usuarios WHERE rol_id = ?");
+                $stmt = $db->prepare("SELECT COUNT(*) as total FROM usuarios WHERE rol_id = ? AND estado = 'activo'");
                 $stmt->execute([$id]);
                 $usuarios = $stmt->fetch()['total'];
                 
                 if ($usuarios > 0) {
-                    throw new Exception('No se puede eliminar el rol porque tiene usuarios asociados');
+                    throw new Exception('No se puede desactivar el rol porque tiene usuarios activos asociados');
                 }
                 
                 $stmt = $db->prepare("SELECT estado FROM roles WHERE id = ?");
@@ -175,6 +175,30 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Rol desactivado exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    throw new Exception('ID de rol inválido');
+                }
+                
+                $stmt = $db->prepare("SELECT estado FROM roles WHERE id = ?");
+                $stmt->execute([$id]);
+                $rol = $stmt->fetch();
+                
+                if (!$rol) {
+                    throw new Exception('Rol no encontrado');
+                }
+                
+                if ($rol['estado'] === 'activo') {
+                    throw new Exception('El rol ya está activo');
+                }
+                
+                $stmt = $db->prepare("UPDATE roles SET estado = 'activo', fecha_actualizacion = NOW() WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Rol activado exitosamente']);
             }
             break;
             
@@ -186,16 +210,16 @@ try {
     
 } catch (PDOException $e) {
     ob_end_clean();
-    error_log("Error en roles/api.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error de base de datos: ' . (APP_DEBUG ? $e->getMessage() : 'Error al procesar la solicitud')
-    ]);
+    $errorInfo = ErrorHandler::handleDatabaseError($e, 'roles/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage(), 'code' => $e->getCode()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 500, $debug);
 } catch (Exception $e) {
     ob_end_clean();
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    $errorInfo = ErrorHandler::handleException($e, 'roles/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 400, $debug);
 }
 ?>
 

@@ -38,27 +38,38 @@ function loadEnv($filePath) {
     return true;
 }
 
-// Cargar el archivo .env (requerido)
+// Configuración de Base de Datos - Valores directos (sin .env)
+// Si necesitas usar .env, descomenta las líneas siguientes y comenta esta sección
+
+// =====================================================
+// CONFIGURACIÓN DIRECTA DE BASE DE DATOS
+// =====================================================
+$dbHost = 'mysql-hermanosyanez.alwaysdata.net';
+$dbPort = '3306';
+$dbName = 'hermanosyanez_base';
+$dbUser = '438328';
+$dbPass = 'belen.jayron.tesis';
+
+// =====================================================
+// OPCIONAL: Cargar desde .env si existe (comentado por defecto)
+// =====================================================
+/*
 $envPath = __DIR__ . '/../.env';
-if (!file_exists($envPath)) {
-    throw new Exception('El archivo .env no existe. Por favor, crea un archivo .env basado en .env.example');
+if (file_exists($envPath)) {
+    $envLoaded = loadEnv($envPath);
+    if ($envLoaded) {
+        // Sobrescribir con valores de .env si existen
+        $dbHost = getenv('DB_HOST') ?: $dbHost;
+        $dbPort = getenv('DB_PORT') ?: $dbPort;
+        $dbName = getenv('DB_NAME') ?: $dbName;
+        $dbUser = getenv('DB_USER') ?: $dbUser;
+        $dbPass = getenv('DB_PASS') ?: $dbPass;
+    }
 }
-
-$envLoaded = loadEnv($envPath);
-
-if (!$envLoaded) {
-    error_log("Advertencia: No se pudo cargar el archivo .env correctamente");
-}
-
-// Configuración de Base de Datos (requeridas)
-$dbHost = getenv('DB_HOST');
-$dbPort = getenv('DB_PORT');
-$dbName = getenv('DB_NAME');
-$dbUser = getenv('DB_USER');
-$dbPass = getenv('DB_PASS');
+*/
 
 if (empty($dbHost) || empty($dbName) || empty($dbUser)) {
-    throw new Exception('Las variables de entorno DB_HOST, DB_NAME y DB_USER son requeridas en el archivo .env');
+    throw new Exception('Las variables de conexión DB_HOST, DB_NAME y DB_USER son requeridas');
 }
 
 define('DB_HOST', $dbHost);
@@ -67,13 +78,13 @@ define('DB_NAME', $dbName);
 define('DB_USER', $dbUser);
 define('DB_PASS', $dbPass ?: '');
 
-// Configuración de la Aplicación
-define('APP_NAME', getenv('APP_NAME') ?: 'Sistema de Gestión de Reciclaje');
-define('APP_ENV', getenv('APP_ENV') ?: 'production');
-define('APP_DEBUG', getenv('APP_DEBUG') === 'true' ? true : false);
+// Configuración de la Aplicación (valores directos)
+define('APP_NAME', 'Sistema de Gestión de Reciclaje');
+define('APP_ENV', 'production');
+define('APP_DEBUG', false); // Cambiar a true para ver errores detallados
 
 // Configuración de Sesión
-define('SESSION_LIFETIME', getenv('SESSION_LIFETIME') ?: '120');
+define('SESSION_LIFETIME', '120'); // minutos
 
 /**
  * Clase de Conexión a Base de Datos
@@ -139,6 +150,11 @@ class Database {
 // Función helper para obtener conexión
 function getDB() {
     return Database::getInstance()->getConnection();
+}
+
+// Cargar ErrorHandler automáticamente
+if (file_exists(__DIR__ . '/ErrorHandler.php')) {
+    require_once __DIR__ . '/ErrorHandler.php';
 }
 
 // Ejemplo de uso:

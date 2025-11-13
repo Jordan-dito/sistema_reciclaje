@@ -222,16 +222,16 @@ try {
     
 } catch (PDOException $e) {
     ob_end_clean();
-    error_log("Error en proveedores/api.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error de base de datos: ' . (APP_DEBUG ? $e->getMessage() : 'Error al procesar la solicitud')
-    ]);
+    $errorInfo = ErrorHandler::handleDatabaseError($e, 'proveedores/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage(), 'code' => $e->getCode()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 500, $debug);
 } catch (Exception $e) {
     ob_end_clean();
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    $errorInfo = ErrorHandler::handleException($e, 'proveedores/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 400, $debug);
 }
 ?>
 

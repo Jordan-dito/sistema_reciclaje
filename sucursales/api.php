@@ -38,13 +38,12 @@ try {
                     SELECT s.*, u.nombre as responsable_nombre 
                     FROM sucursales s 
                     LEFT JOIN usuarios u ON s.responsable_id = u.id 
-                    WHERE s.estado <> 'inactiva'
                     ORDER BY s.id DESC
                 ");
                 $sucursales = $stmt->fetchAll();
                 
                 ob_end_clean();
-                echo json_encode(['success' => true, 'data' => $sucursales]);
+                echo json_encode(['success' => true, 'data' => $sucursales], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'obtener') {
                 $id = $_GET['id'] ?? 0;
                 $stmt = $db->prepare("
@@ -165,7 +164,7 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Sucursal actualizada exitosamente']);
-            } elseif ($action === 'eliminar') {
+            } elseif ($action === 'eliminar' || $action === 'desactivar') {
                 $id = intval($_POST['id'] ?? 0);
                 
                 if ($id <= 0) {
@@ -189,6 +188,30 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Sucursal desactivada exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    throw new Exception('ID de sucursal inválido');
+                }
+                
+                $stmt = $db->prepare("SELECT estado FROM sucursales WHERE id = ?");
+                $stmt->execute([$id]);
+                $sucursal = $stmt->fetch();
+                
+                if (!$sucursal) {
+                    throw new Exception('Sucursal no encontrada');
+                }
+                
+                if ($sucursal['estado'] === 'activa') {
+                    throw new Exception('La sucursal ya está activa');
+                }
+                
+                $stmt = $db->prepare("UPDATE sucursales SET estado = 'activa', fecha_actualizacion = NOW() WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Sucursal activada exitosamente']);
             }
             break;
             
@@ -200,16 +223,16 @@ try {
     
 } catch (PDOException $e) {
     ob_end_clean();
-    error_log("Error en sucursales/api.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error de base de datos: ' . (APP_DEBUG ? $e->getMessage() : 'Error al procesar la solicitud')
-    ]);
+    $errorInfo = ErrorHandler::handleDatabaseError($e, 'sucursales/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage(), 'code' => $e->getCode()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 500, $debug);
 } catch (Exception $e) {
     ob_end_clean();
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    $errorInfo = ErrorHandler::handleException($e, 'sucursales/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 400, $debug);
 }
 ?>
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Gestión de Inventarios
+ * Gestión de Materiales
  * Sistema de Gestión de Reciclaje
  */
 
@@ -17,7 +17,7 @@ if (!$auth->isAuthenticated()) {
 <html lang="es">
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Gestión de Inventarios - Sistema de Reciclaje</title>
+    <title>Gestión de Materiales - Sistema de Reciclaje</title>
     <meta
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
       name="viewport"
@@ -122,8 +122,8 @@ if (!$auth->isAuthenticated()) {
           <div class="page-inner">
             <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
               <div>
-                <h3 class="fw-bold mb-3">Gestión de Inventarios</h3>
-                <h6 class="op-7 mb-2">Control de inventarios por categoría de reciclaje</h6>
+                <h3 class="fw-bold mb-3">Gestión de Materiales</h3>
+                <h6 class="op-7 mb-2">Control de materiales por categoría de reciclaje</h6>
               </div>
               <div class="ms-md-auto py-2 py-md-0">
                 <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#modalAgregarInventario">
@@ -570,21 +570,19 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Categoría *</label>
-                    <select id="categoria" name="categoria" class="form-control" required>
+                    <label>Categoría Principal *</label>
+                    <select id="categoria_principal" name="categoria_principal" class="form-control" required>
                       <option value="">Seleccione una categoría</option>
-                      <option value="papel">Papel</option>
-                      <option value="plastico">Plástico</option>
-                      <option value="vidrio">Vidrio</option>
-                      <option value="metal">Metal</option>
-                      <option value="PET">PET</option>
-                      <option value="carton">Cartón</option>
-                      <option value="cobre">Cobre</option>
-                      <option value="aluminio">Aluminio</option>
-                      <option value="bronce">Bronce</option>
-                      <option value="bateria">Batería</option>
-                      <option value="pvc">PVC</option>
-                      <option value="otro">Otro</option>
+                      <!-- Las opciones se cargarán dinámicamente -->
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Material *</label>
+                    <select id="material_id" name="material_id" class="form-control" required disabled>
+                      <option value="">Primero seleccione una categoría</option>
+                      <!-- Las opciones se cargarán dinámicamente según la categoría seleccionada -->
                     </select>
                   </div>
                 </div>
@@ -810,6 +808,69 @@ if (!$auth->isAuthenticated()) {
           });
         }
         
+        // Cargar categorías principales
+        function cargarCategorias() {
+          $.ajax({
+            url: 'api.php?action=categorias',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                var select = $('#categoria_principal');
+                select.empty().append('<option value="">Seleccione una categoría</option>');
+                response.data.forEach(function(categoria) {
+                  select.append('<option value="' + categoria.id + '">' + categoria.nombre + '</option>');
+                });
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar las categorías", "error");
+            }
+          });
+        }
+        
+        // Cargar materiales según categoría seleccionada
+        function cargarMateriales(categoriaId) {
+          var selectMaterial = $('#material_id');
+          
+          if (!categoriaId || categoriaId === '') {
+            selectMaterial.empty().append('<option value="">Primero seleccione una categoría</option>');
+            selectMaterial.prop('disabled', true);
+            return;
+          }
+          
+          $.ajax({
+            url: 'api.php?action=materiales&categoria_id=' + categoriaId,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                selectMaterial.empty();
+                if (response.data.length > 0) {
+                  selectMaterial.append('<option value="">Seleccione un material</option>');
+                  response.data.forEach(function(material) {
+                    selectMaterial.append('<option value="' + material.id + '">' + material.nombre + '</option>');
+                  });
+                  selectMaterial.prop('disabled', false);
+                } else {
+                  // Si la categoría no tiene subcategorías, usar la categoría misma como material
+                  selectMaterial.append('<option value="' + categoriaId + '">' + $('#categoria_principal option:selected').text() + '</option>');
+                  selectMaterial.prop('disabled', false);
+                }
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar los materiales", "error");
+            }
+          });
+        }
+        
+        // Evento cuando se selecciona una categoría
+        $(document).on('change', '#categoria_principal', function() {
+          var categoriaId = $(this).val();
+          cargarMateriales(categoriaId);
+        });
+        
         window.cargarInventarios = cargarInventarios;
         
         // Cargar inventarios
@@ -841,10 +902,14 @@ if (!$auth->isAuthenticated()) {
                     badgeEstado = inventario.estado || '';
                   }
                   
+                  var categoriaTexto = inventario.categoria_padre_nombre 
+                    ? inventario.categoria_padre_nombre + ' - ' + inventario.material_nombre 
+                    : inventario.material_nombre;
+                  
                   table.row.add([
                     inventario.id,
                     inventario.sucursal_nombre,
-                    '<span class="badge badge-info">' + inventario.categoria + '</span>',
+                    '<span class="badge badge-info">' + categoriaTexto + '</span>',
                     inventario.cantidad,
                     inventario.unidad,
                     '$' + parseFloat(inventario.precio_unitario).toFixed(2),
@@ -877,10 +942,16 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var materialId = $('#material_id').val();
+          if (!materialId) {
+            swal("Error", "Debe seleccionar un material", "error");
+            return;
+          }
+          
           var formData = {
             sucursal_id: $('#sucursal_id').val(),
             nombre_producto: $('#nombre_producto').val(),
-            categoria: $('#categoria').val(),
+            material_id: materialId,
             cantidad: $('#cantidad').val(),
             unidad: $('#unidad').val(),
             precio_unitario: $('#precio_unitario').val(),
@@ -915,7 +986,14 @@ if (!$auth->isAuthenticated()) {
         
         // Cargar datos al iniciar
         cargarSucursales();
+        cargarCategorias();
         cargarInventarios();
+        
+        // Limpiar formulario al cerrar modal
+        $('#modalAgregarInventario').on('hidden.bs.modal', function() {
+          $('#formAgregarInventario')[0].reset();
+          $('#material_id').empty().append('<option value="">Primero seleccione una categoría</option>').prop('disabled', true);
+        });
       });
       
       function editarInventario(id) {

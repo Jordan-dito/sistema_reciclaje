@@ -358,6 +358,14 @@ if (!$auth->isAuthenticated()) {
                     ? '<span class="badge badge-success">Activa</span>'
                     : '<span class="badge badge-danger">Inactiva</span>';
                   
+                  // Botón de estado: Activar si está inactiva, Desactivar si está activa
+                  var botonEstado = '';
+                  if (sucursal.estado === 'activa') {
+                    botonEstado = '<button class="btn btn-link btn-danger btn-sm" onclick="desactivarSucursal(' + sucursal.id + ')" title="Desactivar"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botonEstado = '<button class="btn btn-link btn-success btn-sm" onclick="activarSucursal(' + sucursal.id + ')" title="Activar"><i class="fa fa-check"></i></button>';
+                  }
+                  
                   table.row.add([
                     sucursal.id,
                     '<strong>' + sucursal.nombre + '</strong>',
@@ -366,8 +374,8 @@ if (!$auth->isAuthenticated()) {
                     sucursal.email || '-',
                     sucursal.responsable_nombre || '-',
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarSucursal(' + sucursal.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarSucursal(' + sucursal.id + ')"><i class="fa fa-times"></i></button>'
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarSucursal(' + sucursal.id + ')" title="Editar"><i class="fa fa-edit"></i></button> ' +
+                    botonEstado
                   ]);
                 });
                 table.draw();
@@ -449,6 +457,10 @@ if (!$auth->isAuthenticated()) {
             method: 'POST',
             data: formData,
             dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
             success: function(response) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
@@ -489,15 +501,19 @@ if (!$auth->isAuthenticated()) {
           url: 'api.php?action=obtener&id=' + id,
           method: 'GET',
           dataType: 'json',
+          xhrFields: {
+            withCredentials: true
+          },
+          crossDomain: false,
           success: function(response) {
             if (response.success) {
               var s = response.data;
               $('#editar_id').val(s.id);
               $('#editar_nombre').val(s.nombre);
-              $('#editar_direccion').val(s.direccion);
-              $('#editar_telefono').val(s.telefono);
-              $('#editar_email').val(s.email);
-              $('#editar_responsable_id').val(s.responsable_id);
+              $('#editar_direccion').val(s.direccion || '');
+              $('#editar_telefono').val(s.telefono || '');
+              $('#editar_email').val(s.email || '');
+              $('#editar_responsable_id').val(s.responsable_id || '');
               $('#editar_estado').val(s.estado);
               $('#modalEditarSucursal').modal('show');
             }
@@ -505,7 +521,7 @@ if (!$auth->isAuthenticated()) {
         });
       }
       
-      function eliminarSucursal(id) {
+      function desactivarSucursal(id) {
         swal({
           title: "¿Está seguro?",
           text: "La sucursal será desactivada",
@@ -518,7 +534,11 @@ if (!$auth->isAuthenticated()) {
             $.ajax({
               url: 'api.php',
               method: 'POST',
-              data: { id: id, action: 'eliminar' },
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
+              data: { id: id, action: 'desactivar' },
               dataType: 'json',
               success: function(response) {
                 if (response.success) {
@@ -527,6 +547,45 @@ if (!$auth->isAuthenticated()) {
                 } else {
                   swal("Error", response.message, "error");
                 }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al desactivar la sucursal';
+                swal("Error", error, "error");
+              }
+            });
+          }
+        });
+      }
+      
+      function activarSucursal(id) {
+        swal({
+          title: "¿Activar sucursal?",
+          text: "La sucursal será marcada como activa",
+          icon: "info",
+          buttons: true,
+        })
+        .then((willActivate) => {
+          if (willActivate) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
+              data: { id: id, action: 'activar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarSucursales();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al activar la sucursal';
+                swal("Error", error, "error");
               }
             });
           }

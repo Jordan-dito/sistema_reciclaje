@@ -139,51 +139,7 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <td>1</td>
-                            <td><strong>Administrador</strong></td>
-                            <td>Administrador del sistema con acceso completo</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>2024-01-15</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditarRol">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>2</td>
-                            <td><strong>Gerente</strong></td>
-                            <td>Gerente con permisos de gestión y reportes</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>2024-01-15</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>3</td>
-                            <td><strong>usuario</strong></td>
-                            <td>Usuario normal del sistema con acceso limitado</td>
-                            <td><span class="badge badge-success">Activo</span></td>
-                            <td>2024-01-15</td>
-                            <td>
-                              <button class="btn btn-link btn-primary btn-sm">
-                                <i class="fa fa-edit"></i>
-                              </button>
-                              <button class="btn btn-link btn-danger btn-sm">
-                                <i class="fa fa-times"></i>
-                              </button>
-                            </td>
-                          </tr>
+                          <!-- Los datos se cargarán dinámicamente -->
                         </tbody>
                       </table>
                     </div>
@@ -257,24 +213,25 @@
           </div>
           <div class="modal-body">
             <form id="formEditarRol">
+              <input type="hidden" id="editar_id" name="id">
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre del Rol</label>
-                    <input type="text" class="form-control" value="Administrador" required>
+                    <label>Nombre del Rol *</label>
+                    <input type="text" id="editar_nombre" name="nombre" class="form-control" required>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Descripción</label>
-                    <textarea class="form-control" rows="3">Administrador del sistema con acceso completo</textarea>
+                    <textarea id="editar_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select class="form-control">
-                      <option value="activo" selected>Activo</option>
+                    <select id="editar_estado" name="estado" class="form-control">
+                      <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
                     </select>
                   </div>
@@ -284,7 +241,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Actualizar Rol</button>
+            <button type="button" class="btn btn-primary" id="btnActualizarRol">Actualizar Rol</button>
           </div>
         </div>
       </div>
@@ -301,12 +258,202 @@
     <script src="../assets/js/setting-demo.js"></script>
     <script>
       $(document).ready(function() {
-        $('#rolesTable').DataTable({
+        var table = $('#rolesTable').DataTable({
           "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
+          },
+          "order": [[0, "desc"]]
+        });
+        
+        // Cargar roles dinámicamente
+        window.cargarRoles = function() {
+          $.ajax({
+            url: 'api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                table.clear();
+                response.data.forEach(function(rol) {
+                  var badgeEstado = rol.estado === 'activo' 
+                    ? '<span class="badge badge-success">Activo</span>'
+                    : '<span class="badge badge-danger">Inactivo</span>';
+                  
+                  // Botón de estado: Activar si está inactivo, Desactivar si está activo
+                  var botonEstado = '';
+                  if (rol.estado === 'activo') {
+                    botonEstado = '<button class="btn btn-link btn-danger btn-sm" onclick="desactivarRol(' + rol.id + ')" title="Desactivar"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botonEstado = '<button class="btn btn-link btn-success btn-sm" onclick="activarRol(' + rol.id + ')" title="Activar"><i class="fa fa-check"></i></button>';
+                  }
+                  
+                  table.row.add([
+                    rol.id,
+                    '<strong>' + rol.nombre + '</strong>',
+                    rol.descripcion || '-',
+                    badgeEstado,
+                    rol.fecha_creacion || '-',
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarRol(' + rol.id + ')" title="Editar"><i class="fa fa-edit"></i></button> ' +
+                    botonEstado
+                  ]);
+                });
+                table.draw();
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar los roles", "error");
+            }
+          });
+        }
+        
+        // Cargar roles al iniciar
+        cargarRoles();
+        
+        // Actualizar rol
+        $('#btnActualizarRol').click(function() {
+          var form = $('#formEditarRol')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
           }
+          
+          var formData = {
+            id: $('#editar_id').val(),
+            nombre: $('#editar_nombre').val(),
+            descripcion: $('#editar_descripcion').val(),
+            estado: $('#editar_estado').val(),
+            action: 'actualizar'
+          };
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalEditarRol').modal('hide');
+                cargarRoles();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al actualizar el rol';
+              swal("Error", error, "error");
+            }
+          });
         });
       });
+      
+      function editarRol(id) {
+        // Cargar datos del rol
+        $.ajax({
+          url: 'api.php?action=obtener&id=' + id,
+          method: 'GET',
+          dataType: 'json',
+          xhrFields: {
+            withCredentials: true
+          },
+          crossDomain: false,
+          success: function(response) {
+            if (response.success) {
+              var r = response.data;
+              $('#editar_id').val(r.id);
+              $('#editar_nombre').val(r.nombre);
+              $('#editar_descripcion').val(r.descripcion || '');
+              $('#editar_estado').val(r.estado);
+              $('#modalEditarRol').modal('show');
+            } else {
+              swal("Error", response.message || "No se pudo cargar el rol", "error");
+            }
+          },
+          error: function(xhr) {
+            var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al cargar el rol';
+            swal("Error", error, "error");
+          }
+        });
+      }
+      
+      function desactivarRol(id) {
+        swal({
+          title: "¿Está seguro?",
+          text: "El rol será marcado como inactivo",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
+              data: { id: id, action: 'desactivar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarRoles();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al desactivar el rol';
+                swal("Error", error, "error");
+              }
+            });
+          }
+        });
+      }
+      
+      function activarRol(id) {
+        swal({
+          title: "¿Activar rol?",
+          text: "El rol será marcado como activo",
+          icon: "info",
+          buttons: true,
+        })
+        .then((willActivate) => {
+          if (willActivate) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
+              data: { id: id, action: 'activar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarRoles();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al activar el rol';
+                swal("Error", error, "error");
+              }
+            });
+          }
+        });
+      }
     </script>
   </body>
 </html>

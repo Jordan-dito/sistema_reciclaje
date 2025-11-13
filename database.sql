@@ -101,13 +101,33 @@ CREATE TABLE IF NOT EXISTS sucursales (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de sucursales';
 
 -- =====================================================
+-- TABLA: materiales (Categorías y subcategorías de materiales)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS materiales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL COMMENT 'Nombre del material o categoría',
+    categoria_padre_id INT NULL COMMENT 'ID de la categoría padre (NULL si es categoría principal)',
+    descripcion TEXT COMMENT 'Descripción del material',
+    icono VARCHAR(100) COMMENT 'Icono del material (clase de Font Awesome)',
+    orden INT DEFAULT 0 COMMENT 'Orden de aparición',
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (categoria_padre_id) REFERENCES materiales(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_categoria_padre (categoria_padre_id),
+    INDEX idx_estado (estado),
+    INDEX idx_orden (orden),
+    INDEX idx_nombre (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de materiales y categorías';
+
+-- =====================================================
 -- TABLA: inventarios
 -- =====================================================
 CREATE TABLE IF NOT EXISTS inventarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sucursal_id INT NOT NULL COMMENT 'ID de la sucursal',
     nombre_producto VARCHAR(150) NOT NULL COMMENT 'Nombre del producto/material',
-    categoria ENUM('papel', 'plastico', 'vidrio', 'metal', 'organico', 'electronico', 'textil', 'otro') NOT NULL COMMENT 'Categoría del material',
+    material_id INT NOT NULL COMMENT 'ID del material/categoría',
     cantidad DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT 'Cantidad disponible',
     unidad ENUM('kg', 'litros', 'unidades', 'toneladas', 'metros') NOT NULL DEFAULT 'kg' COMMENT 'Unidad de medida',
     precio_unitario DECIMAL(10,2) DEFAULT 0 COMMENT 'Precio por unidad',
@@ -119,9 +139,10 @@ CREATE TABLE IF NOT EXISTS inventarios (
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (sucursal_id) REFERENCES sucursales(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
     INDEX idx_sucursal (sucursal_id),
-    INDEX idx_categoria (categoria),
+    INDEX idx_material (material_id),
     INDEX idx_estado (estado),
     INDEX idx_creado_por (creado_por),
     INDEX idx_fecha_actualizacion (fecha_actualizacion)
@@ -239,7 +260,7 @@ CREATE TABLE IF NOT EXISTS compras_detalle (
     compra_id INT NOT NULL COMMENT 'ID de la compra',
     inventario_id INT COMMENT 'ID del inventario (si existe)',
     nombre_producto VARCHAR(150) NOT NULL COMMENT 'Nombre del producto/material',
-    categoria ENUM('papel', 'plastico', 'vidrio', 'metal', 'organico', 'electronico', 'textil', 'otro') NOT NULL COMMENT 'Categoría del material',
+    material_id INT NOT NULL COMMENT 'ID del material/categoría',
     cantidad DECIMAL(10,2) NOT NULL COMMENT 'Cantidad comprada',
     unidad ENUM('kg', 'litros', 'unidades', 'toneladas', 'metros') NOT NULL DEFAULT 'kg' COMMENT 'Unidad de medida',
     precio_unitario DECIMAL(10,2) NOT NULL COMMENT 'Precio por unidad',
@@ -247,9 +268,10 @@ CREATE TABLE IF NOT EXISTS compras_detalle (
     descripcion TEXT COMMENT 'Descripción adicional',
     FOREIGN KEY (compra_id) REFERENCES compras(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (inventario_id) REFERENCES inventarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     INDEX idx_compra (compra_id),
     INDEX idx_inventario (inventario_id),
-    INDEX idx_categoria (categoria)
+    INDEX idx_material (material_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Detalle de productos por compra';
 
 -- =====================================================
@@ -292,7 +314,7 @@ CREATE TABLE IF NOT EXISTS ventas_detalle (
     venta_id INT NOT NULL COMMENT 'ID de la venta',
     inventario_id INT NOT NULL COMMENT 'ID del inventario vendido',
     nombre_producto VARCHAR(150) NOT NULL COMMENT 'Nombre del producto/material',
-    categoria ENUM('papel', 'plastico', 'vidrio', 'metal', 'organico', 'electronico', 'textil', 'otro') NOT NULL COMMENT 'Categoría del material',
+    material_id INT NOT NULL COMMENT 'ID del material/categoría',
     cantidad DECIMAL(10,2) NOT NULL COMMENT 'Cantidad vendida',
     unidad ENUM('kg', 'litros', 'unidades', 'toneladas', 'metros') NOT NULL DEFAULT 'kg' COMMENT 'Unidad de medida',
     precio_unitario DECIMAL(10,2) NOT NULL COMMENT 'Precio por unidad',
@@ -300,9 +322,10 @@ CREATE TABLE IF NOT EXISTS ventas_detalle (
     descripcion TEXT COMMENT 'Descripción adicional',
     FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (inventario_id) REFERENCES inventarios(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     INDEX idx_venta (venta_id),
     INDEX idx_inventario (inventario_id),
-    INDEX idx_categoria (categoria)
+    INDEX idx_material (material_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Detalle de productos por venta';
 
 -- =====================================================
@@ -376,15 +399,62 @@ INSERT INTO sucursales (nombre, direccion, telefono, email, responsable_id, esta
 ON DUPLICATE KEY UPDATE nombre=nombre;
 
 -- =====================================================
+-- INSERTAR MATERIALES (Categorías y subcategorías)
+-- =====================================================
+-- Categorías principales (categoria_padre_id = NULL)
+-- Se insertan primero las categorías principales para obtener sus IDs
+INSERT IGNORE INTO materiales (id, nombre, categoria_padre_id, descripcion, icono, orden, estado) VALUES
+(1, 'Plástico', NULL, 'Materiales plásticos reciclables', 'fas fa-recycle', 1, 'activo'),
+(2, 'Metales', NULL, 'Metales reciclables', 'fas fa-cog', 2, 'activo'),
+(3, 'Fibroso', NULL, 'Materiales fibrosos (papel, cartón)', 'fas fa-file-alt', 3, 'activo'),
+(4, 'Batería', NULL, 'Baterías reciclables', 'fas fa-battery-half', 4, 'activo'),
+(5, 'Vidrio', NULL, 'Vidrio reciclable', 'fas fa-wine-bottle', 5, 'activo'),
+(6, 'Orgánico', NULL, 'Material orgánico compostable', 'fas fa-leaf', 6, 'activo'),
+(7, 'Electrónico', NULL, 'Residuos electrónicos', 'fas fa-microchip', 7, 'activo'),
+(8, 'Textil', NULL, 'Ropa y textiles', 'fas fa-tshirt', 8, 'activo'),
+(9, 'Otro', NULL, 'Otros materiales', 'fas fa-box', 9, 'activo');
+
+-- Subcategorías de Plástico (categoria_padre_id = 1)
+INSERT IGNORE INTO materiales (nombre, categoria_padre_id, descripcion, orden, estado) VALUES
+('PET', 1, 'Polietileno Tereftalato', 1, 'activo'),
+('Hogar', 1, 'Plásticos de uso doméstico', 2, 'activo'),
+('Soplado', 1, 'Plásticos soplados', 3, 'activo'),
+('PVC', 1, 'Policloruro de Vinilo', 4, 'activo');
+
+-- Subcategorías de Metales (categoria_padre_id = 2)
+INSERT IGNORE INTO materiales (nombre, categoria_padre_id, descripcion, orden, estado) VALUES
+('Chatarra', 2, 'Chatarra metálica', 1, 'activo'),
+('Cobre', 2, 'Cobre reciclable', 2, 'activo'),
+('Aluminio', 2, 'Aluminio reciclable', 3, 'activo'),
+('Perfil', 2, 'Perfiles metálicos', 4, 'activo'),
+('Rayador Cobre Aluminio', 2, 'Mezcla de cobre y aluminio rayado', 5, 'activo'),
+('Rayador Aluminio', 2, 'Aluminio rayado', 6, 'activo');
+
+-- Subcategorías de Fibroso (categoria_padre_id = 3)
+INSERT IGNORE INTO materiales (nombre, categoria_padre_id, descripcion, orden, estado) VALUES
+('Papel', 3, 'Papel reciclable', 1, 'activo'),
+('Cartón', 3, 'Cartón reciclable', 2, 'activo'),
+('Periódico', 3, 'Periódicos', 3, 'activo'),
+('Químico', 3, 'Papel químico', 4, 'activo'),
+('Dúplex', 3, 'Papel dúplex', 5, 'activo');
+
+-- Subcategorías de Batería (categoria_padre_id = 4)
+INSERT IGNORE INTO materiales (nombre, categoria_padre_id, descripcion, orden, estado) VALUES
+('Seca', 4, 'Baterías secas', 1, 'activo'),
+('Húmeda', 4, 'Baterías húmedas', 2, 'activo');
+
+-- =====================================================
 -- INSERTAR INVENTARIOS DE EJEMPLO
 -- =====================================================
-INSERT INTO inventarios (sucursal_id, nombre_producto, categoria, cantidad, unidad, precio_unitario, stock_minimo, stock_maximo, descripcion, estado, creado_por) VALUES
-(1, 'Papel Reciclado', 'papel', 150.50, 'kg', 2.50, 50.00, 500.00, 'Papel reciclado procesado', 'disponible', 1),
-(1, 'Botellas PET', 'plastico', 85.00, 'kg', 3.00, 30.00, 200.00, 'Botellas de plástico PET', 'disponible', 1),
-(1, 'Vidrio Verde', 'vidrio', 120.75, 'kg', 1.50, 40.00, 300.00, 'Vidrio verde reciclable', 'disponible', 1),
-(2, 'Papel Reciclado', 'papel', 95.25, 'kg', 2.50, 50.00, 500.00, 'Papel reciclado procesado', 'disponible', 1),
-(2, 'Latas de Aluminio', 'metal', 45.50, 'kg', 4.00, 20.00, 150.00, 'Latas de aluminio compactadas', 'disponible', 1),
-(3, 'Botellas PET', 'plastico', 60.00, 'kg', 3.00, 30.00, 200.00, 'Botellas de plástico PET', 'disponible', 2)
+-- Nota: Los material_id corresponden a los IDs de los materiales insertados anteriormente
+-- Se usan subconsultas para obtener los IDs dinámicamente
+INSERT INTO inventarios (sucursal_id, nombre_producto, material_id, cantidad, unidad, precio_unitario, stock_minimo, stock_maximo, descripcion, estado, creado_por) VALUES
+(1, 'Papel Reciclado', (SELECT id FROM materiales WHERE nombre = 'Papel' AND categoria_padre_id = 3 LIMIT 1), 150.50, 'kg', 2.50, 50.00, 500.00, 'Papel reciclado procesado', 'disponible', 1),
+(1, 'Botellas PET', (SELECT id FROM materiales WHERE nombre = 'PET' AND categoria_padre_id = 1 LIMIT 1), 85.00, 'kg', 3.00, 30.00, 200.00, 'Botellas de plástico PET', 'disponible', 1),
+(1, 'Vidrio Verde', (SELECT id FROM materiales WHERE nombre = 'Vidrio' AND categoria_padre_id IS NULL LIMIT 1), 120.75, 'kg', 1.50, 40.00, 300.00, 'Vidrio verde reciclable', 'disponible', 1),
+(2, 'Papel Reciclado', (SELECT id FROM materiales WHERE nombre = 'Papel' AND categoria_padre_id = 3 LIMIT 1), 95.25, 'kg', 2.50, 50.00, 500.00, 'Papel reciclado procesado', 'disponible', 1),
+(2, 'Latas de Aluminio', (SELECT id FROM materiales WHERE nombre = 'Aluminio' AND categoria_padre_id = 2 LIMIT 1), 45.50, 'kg', 4.00, 20.00, 150.00, 'Latas de aluminio compactadas', 'disponible', 1),
+(3, 'Botellas PET', (SELECT id FROM materiales WHERE nombre = 'PET' AND categoria_padre_id = 1 LIMIT 1), 60.00, 'kg', 3.00, 30.00, 200.00, 'Botellas de plástico PET', 'disponible', 2)
 ON DUPLICATE KEY UPDATE nombre_producto=nombre_producto;
 
 -- =====================================================
@@ -424,12 +494,15 @@ SELECT
 FROM usuarios u
 INNER JOIN roles r ON u.rol_id = r.id;
 
--- Vista de inventarios con información de sucursal
+-- Vista de inventarios con información de sucursal y material
 CREATE OR REPLACE VIEW v_inventarios_completos AS
 SELECT 
     i.id,
     i.nombre_producto,
-    i.categoria,
+    i.material_id,
+    m.nombre AS material_nombre,
+    m.categoria_padre_id,
+    mp.nombre AS categoria_padre_nombre,
     i.cantidad,
     i.unidad,
     i.precio_unitario,
@@ -445,6 +518,8 @@ SELECT
     i.fecha_actualizacion
 FROM inventarios i
 INNER JOIN sucursales s ON i.sucursal_id = s.id
+INNER JOIN materiales m ON i.material_id = m.id
+LEFT JOIN materiales mp ON m.categoria_padre_id = mp.id
 LEFT JOIN usuarios ur ON s.responsable_id = ur.id
 LEFT JOIN usuarios uc ON i.creado_por = uc.id;
 
@@ -478,10 +553,12 @@ LEFT JOIN inventarios i ON s.id = i.sucursal_id
 WHERE s.estado = 'activa'
 GROUP BY s.id, s.nombre;
 
--- Vista de resumen por categoría
+-- Vista de resumen por categoría/material
 CREATE OR REPLACE VIEW v_inventario_por_categoria AS
 SELECT 
-    i.categoria,
+    m.id AS material_id,
+    m.nombre AS material_nombre,
+    mp.nombre AS categoria_padre_nombre,
     s.nombre AS sucursal_nombre,
     COUNT(i.id) AS total_items,
     SUM(i.cantidad) AS cantidad_total,
@@ -489,8 +566,10 @@ SELECT
     SUM(i.cantidad * i.precio_unitario) AS valor_total
 FROM inventarios i
 INNER JOIN sucursales s ON i.sucursal_id = s.id
+INNER JOIN materiales m ON i.material_id = m.id
+LEFT JOIN materiales mp ON m.categoria_padre_id = mp.id
 WHERE i.estado = 'disponible' AND s.estado = 'activa'
-GROUP BY i.categoria, s.id, s.nombre, i.unidad;
+GROUP BY m.id, m.nombre, mp.nombre, s.id, s.nombre, i.unidad;
 
 -- =====================================================
 -- TRIGGERS ÚTILES
@@ -576,12 +655,14 @@ BEGIN
 END$$
 DELIMITER ;
 
--- Procedimiento para obtener inventario por categoría
+-- Procedimiento para obtener inventario por material
 DELIMITER $$
-CREATE PROCEDURE IF NOT EXISTS sp_inventario_por_categoria(IN p_categoria VARCHAR(50))
+CREATE PROCEDURE IF NOT EXISTS sp_inventario_por_material(IN p_material_id INT)
 BEGIN
     SELECT 
         i.nombre_producto,
+        m.nombre AS material_nombre,
+        mp.nombre AS categoria_padre,
         s.nombre AS sucursal,
         i.cantidad,
         i.unidad,
@@ -589,7 +670,9 @@ BEGIN
         (i.cantidad * i.precio_unitario) AS valor_total
     FROM inventarios i
     INNER JOIN sucursales s ON i.sucursal_id = s.id
-    WHERE i.categoria = p_categoria AND i.estado = 'disponible' AND s.estado = 'activa'
+    INNER JOIN materiales m ON i.material_id = m.id
+    LEFT JOIN materiales mp ON m.categoria_padre_id = mp.id
+    WHERE i.material_id = p_material_id AND i.estado = 'disponible' AND s.estado = 'activa'
     ORDER BY s.nombre, i.nombre_producto;
 END$$
 DELIMITER ;
@@ -651,15 +734,13 @@ ALTER TABLE usuarios ADD INDEX idx_nombre (nombre);
 -- Para generar nuevas contraseñas, ejecuta en PHP:
 -- echo password_hash('tu_contraseña', PASSWORD_DEFAULT);
 -- 
--- CATEGORÍAS DE MATERIALES:
--- - papel: Papel y cartón
--- - plastico: Plásticos reciclables
--- - vidrio: Vidrio reciclable
--- - metal: Metales (aluminio, hierro, etc.)
--- - organico: Material orgánico compostable
--- - electronico: Residuos electrónicos
--- - textil: Ropa y textiles
--- - otro: Otros materiales
+-- ESTRUCTURA DE MATERIALES:
+-- La tabla 'materiales' contiene categorías principales y subcategorías:
+-- - Categorías principales: Plástico, Metales, Fibroso, Batería, Vidrio, Orgánico, Electrónico, Textil, Otro
+-- - Subcategorías se relacionan mediante categoria_padre_id
+-- - Ejemplo: PET, Hogar, Soplado, PVC son subcategorías de Plástico
+-- - Ejemplo: Cobre, Aluminio, Perfil son subcategorías de Metales
+-- - Ejemplo: Papel, Cartón, Periódico son subcategorías de Fibroso
 -- 
 -- =====================================================
 

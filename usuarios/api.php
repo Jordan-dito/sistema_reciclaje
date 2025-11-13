@@ -16,15 +16,31 @@ header('Content-Type: application/json; charset=utf-8');
 ob_start();
 
 try {
+    // Cargar configuración de base de datos primero
+    require_once __DIR__ . '/../config/database.php';
+    
     // Verificar autenticación
     require_once __DIR__ . '/../config/auth.php';
     require_once __DIR__ . '/../config/validaciones.php';
 
     $auth = new Auth();
+    
+    // Debug: Verificar estado de sesión
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    if ($debug) {
+        error_log("Estado de sesión - logged_in: " . (isset($_SESSION['logged_in']) ? 'true' : 'false'));
+        error_log("Estado de sesión - usuario_id: " . (isset($_SESSION['usuario_id']) ? $_SESSION['usuario_id'] : 'no definido'));
+    }
+    
     if (!$auth->isAuthenticated()) {
         ob_end_clean();
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No autorizado']);
+        $details = $debug ? [
+            'session_status' => session_status(),
+            'session_id' => session_id(),
+            'logged_in' => isset($_SESSION['logged_in']) ? $_SESSION['logged_in'] : null,
+            'usuario_id' => isset($_SESSION['usuario_id']) ? $_SESSION['usuario_id'] : null
+        ] : [];
+        echo ErrorHandler::handleAuthError('No autorizado. Por favor, inicia sesión primero.', $details);
         exit;
     }
 
@@ -44,22 +60,31 @@ try {
         case 'GET':
             if ($action === 'listar') {
                 // Listar todos los usuarios
-                $stmt = $db->query("
-                    SELECT u.*, r.nombre as rol_nombre 
-                    FROM usuarios u 
-                    INNER JOIN roles r ON u.rol_id = r.id 
-                    WHERE u.estado <> 'inactivo'
-                    ORDER BY u.id DESC
-                ");
-                $usuarios = $stmt->fetchAll();
-                
-                // Limpiar cualquier salida no deseada antes de enviar JSON
-                ob_end_clean();
-                
-                echo json_encode([
-                    'success' => true,
-                    'data' => $usuarios
-                ]);
+                try {
+                    $stmt = $db->prepare("
+                        SELECT u.*, r.nombre as rol_nombre 
+                        FROM usuarios u 
+                        INNER JOIN roles r ON u.rol_id = r.id 
+                        WHERE u.estado <> 'inactivo'
+                        ORDER BY u.id DESC
+                    ");
+                    $stmt->execute();
+                    $usuarios = $stmt->fetchAll();
+                    
+                    // Limpiar cualquier salida no deseada antes de enviar JSON
+                    ob_end_clean();
+                    
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $usuarios
+                    ], JSON_UNESCAPED_UNICODE);
+                } catch (PDOException $e) {
+                    ob_end_clean();
+                    $errorInfo = ErrorHandler::handleDatabaseError($e, 'usuarios/api.php - listar');
+                    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage(), 'code' => $e->getCode()]);
+                    $debug = defined('APP_DEBUG') && APP_DEBUG;
+                    echo ErrorHandler::jsonResponse($errorInfo, 500, $debug);
+                }
             } elseif ($action === 'obtener') {
                 // Obtener un usuario por ID
                 $id = $_GET['id'] ?? 0;
@@ -263,15 +288,15 @@ try {
                     'success' => true,
                     'message' => 'Usuario actualizado exitosamente'
                 ]);
-            } elseif ($action === 'eliminar') {
-                // Eliminar usuario (soft delete - cambiar estado a inactivo)
+            } elseif ($action === 'eliminar' || $action === 'desactivar') {
+                // Desactivar usuario (soft delete - cambiar estado a inactivo)
                 $id = intval($_POST['id'] ?? 0);
                 
                 if ($id <= 0) {
                     throw new Exception('ID de usuario inválido');
                 }
                 
-                // No permitir eliminar el último administrador
+                // No permitir desactivar el último administrador
                 $stmt = $db->prepare("
                     SELECT COUNT(*) as total 
                     FROM usuarios u 
@@ -282,7 +307,7 @@ try {
                 $admin_count = $stmt->fetch()['total'];
                 
                 $stmt = $db->prepare("
-                    SELECT r.nombre as rol_nombre 
+                    SELECT r.nombre as rol_nombre, u.estado
                     FROM usuarios u 
                     INNER JOIN roles r ON u.rol_id = r.id 
                     WHERE u.id = ?
@@ -290,20 +315,55 @@ try {
                 $stmt->execute([$id]);
                 $usuario = $stmt->fetch();
                 
-                if ($usuario && $usuario['rol_nombre'] === 'Administrador' && $admin_count <= 1) {
-                    throw new Exception('No se puede eliminar el último administrador activo');
+                if (!$usuario) {
+                    throw new Exception('Usuario no encontrado');
                 }
                 
-                // Cambiar estado a inactivo (soft delete)
-                $stmt = $db->prepare("UPDATE usuarios SET estado = 'inactivo' WHERE id = ?");
+                if ($usuario['estado'] === 'inactivo') {
+                    throw new Exception('El usuario ya está inactivo');
+                }
+                
+                if ($usuario['rol_nombre'] === 'Administrador' && $admin_count <= 1) {
+                    throw new Exception('No se puede desactivar el último administrador activo');
+                }
+                
+                // Cambiar estado a inactivo
+                $stmt = $db->prepare("UPDATE usuarios SET estado = 'inactivo', fecha_actualizacion = NOW() WHERE id = ?");
                 $stmt->execute([$id]);
                 
-                // Limpiar cualquier salida no deseada antes de enviar JSON
                 ob_end_clean();
-                
                 echo json_encode([
                     'success' => true,
                     'message' => 'Usuario desactivado exitosamente'
+                ]);
+            } elseif ($action === 'activar') {
+                // Activar usuario (cambiar estado a activo)
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    throw new Exception('ID de usuario inválido');
+                }
+                
+                $stmt = $db->prepare("SELECT estado FROM usuarios WHERE id = ?");
+                $stmt->execute([$id]);
+                $usuario = $stmt->fetch();
+                
+                if (!$usuario) {
+                    throw new Exception('Usuario no encontrado');
+                }
+                
+                if ($usuario['estado'] === 'activo') {
+                    throw new Exception('El usuario ya está activo');
+                }
+                
+                // Cambiar estado a activo
+                $stmt = $db->prepare("UPDATE usuarios SET estado = 'activo', fecha_actualizacion = NOW() WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Usuario activado exitosamente'
                 ]);
             } else {
                 throw new Exception('Acción no válida');
@@ -318,19 +378,16 @@ try {
     
 } catch (PDOException $e) {
     ob_end_clean();
-    error_log("Error en usuarios/api.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error de base de datos: ' . (APP_DEBUG ? $e->getMessage() : 'Error al procesar la solicitud')
-    ]);
+    $errorInfo = ErrorHandler::handleDatabaseError($e, 'usuarios/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage(), 'code' => $e->getCode()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 500, $debug);
 } catch (Exception $e) {
     ob_end_clean();
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
-    ]);
+    $errorInfo = ErrorHandler::handleException($e, 'usuarios/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 400, $debug);
 }
 ?>
 

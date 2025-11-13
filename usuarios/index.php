@@ -259,52 +259,51 @@ if (!$auth->isAuthenticated()) {
           </div>
           <div class="modal-body">
             <form id="formEditarUsuario">
+              <input type="hidden" id="editar_id" name="id">
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre Completo</label>
-                    <input type="text" class="form-control" value="Administrador del Sistema" required>
+                    <label>Nombre Completo *</label>
+                    <input type="text" id="editar_nombre" name="nombre" class="form-control" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Cédula</label>
-                    <input type="text" class="form-control" value="0000000000" required>
+                    <label>Cédula *</label>
+                    <input type="text" id="editar_cedula" name="cedula" class="form-control" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" class="form-control" value="admin@sistema.com" required>
+                    <label>Email *</label>
+                    <input type="email" id="editar_email" name="email" class="form-control" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Teléfono</label>
-                    <input type="tel" class="form-control" value="1234567890">
+                    <input type="tel" id="editar_telefono" name="telefono" class="form-control">
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Rol</label>
-                    <select class="form-control" required>
-                      <option value="1" selected>Administrador</option>
-                      <option value="2">Gerente</option>
-                      <option value="3">Usuario</option>
+                    <label>Rol *</label>
+                    <select id="editar_rol_id" name="rol_id" class="form-control" required>
+                      <option value="">Seleccione un rol</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Nueva Contraseña (dejar vacío para no cambiar)</label>
-                    <input type="password" class="form-control" placeholder="Mínimo 8 caracteres">
+                    <input type="password" id="editar_password" name="password" class="form-control" placeholder="Mínimo 8 caracteres">
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select class="form-control">
-                      <option value="activo" selected>Activo</option>
+                    <select id="editar_estado" name="estado" class="form-control">
+                      <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
                     </select>
                   </div>
@@ -314,7 +313,7 @@ if (!$auth->isAuthenticated()) {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Actualizar Usuario</button>
+            <button type="button" class="btn btn-primary" id="btnActualizarUsuario">Actualizar Usuario</button>
           </div>
         </div>
       </div>
@@ -344,6 +343,10 @@ if (!$auth->isAuthenticated()) {
             url: 'api.php?action=listar',
             method: 'GET',
             dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
             success: function(response) {
               if (response.success) {
                 table.clear();
@@ -361,6 +364,14 @@ if (!$auth->isAuthenticated()) {
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
                   
+                  // Botón de estado: Activar si está inactivo, Desactivar si está activo
+                  var botonEstado = '';
+                  if (usuario.estado === 'activo') {
+                    botonEstado = '<button class="btn btn-link btn-danger btn-sm" onclick="desactivarUsuario(' + usuario.id + ')" title="Desactivar"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botonEstado = '<button class="btn btn-link btn-success btn-sm" onclick="activarUsuario(' + usuario.id + ')" title="Activar"><i class="fa fa-check"></i></button>';
+                  }
+                  
                   table.row.add([
                     usuario.id,
                     '<strong>' + usuario.nombre + '</strong>',
@@ -369,8 +380,8 @@ if (!$auth->isAuthenticated()) {
                     usuario.telefono || '-',
                     badgeRol,
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarUsuario(' + usuario.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarUsuario(' + usuario.id + ')"><i class="fa fa-times"></i></button>'
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarUsuario(' + usuario.id + ')" title="Editar"><i class="fa fa-edit"></i></button> ' +
+                    botonEstado
                   ]);
                 });
                 table.draw();
@@ -409,6 +420,10 @@ if (!$auth->isAuthenticated()) {
             method: 'POST',
             data: formData,
             dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
             success: function(response) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
@@ -425,16 +440,116 @@ if (!$auth->isAuthenticated()) {
             }
           });
         });
+        
+        // Actualizar usuario
+        $('#btnActualizarUsuario').click(function() {
+          var form = $('#formEditarUsuario')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var formData = {
+            id: $('#editar_id').val(),
+            nombre: $('#editar_nombre').val(),
+            cedula: $('#editar_cedula').val(),
+            email: $('#editar_email').val(),
+            telefono: $('#editar_telefono').val(),
+            rol_id: $('#editar_rol_id').val(),
+            estado: $('#editar_estado').val(),
+            action: 'actualizar'
+          };
+          
+          // Solo incluir password si se proporcionó uno nuevo
+          var password = $('#editar_password').val();
+          if (password && password.trim() !== '') {
+            formData.password = password;
+          }
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalEditarUsuario').modal('hide');
+                cargarUsuarios();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al actualizar el usuario';
+              swal("Error", error, "error");
+            }
+          });
+        });
       });
       
       // Función para editar usuario
       function editarUsuario(id) {
-        // TODO: Implementar edición
-        swal("Próximamente", "La funcionalidad de edición estará disponible pronto", "info");
+        // Cargar roles en el select de edición
+        $.ajax({
+          url: '../roles/api.php?action=listar',
+          method: 'GET',
+          dataType: 'json',
+          xhrFields: {
+            withCredentials: true
+          },
+          crossDomain: false,
+          success: function(response) {
+            if (response.success) {
+              var select = $('#editar_rol_id');
+              select.empty().append('<option value="">Seleccione un rol</option>');
+              response.data.forEach(function(rol) {
+                if (rol.estado === 'activo') {
+                  select.append('<option value="' + rol.id + '">' + rol.nombre + '</option>');
+                }
+              });
+            }
+          }
+        });
+        
+        // Cargar datos del usuario
+        $.ajax({
+          url: 'api.php?action=obtener&id=' + id,
+          method: 'GET',
+          dataType: 'json',
+          xhrFields: {
+            withCredentials: true
+          },
+          crossDomain: false,
+          success: function(response) {
+            if (response.success) {
+              var u = response.data;
+              $('#editar_id').val(u.id);
+              $('#editar_nombre').val(u.nombre);
+              $('#editar_cedula').val(u.cedula);
+              $('#editar_email').val(u.email);
+              $('#editar_telefono').val(u.telefono || '');
+              $('#editar_rol_id').val(u.rol_id);
+              $('#editar_estado').val(u.estado);
+              $('#editar_password').val(''); // Limpiar campo de contraseña
+              $('#modalEditarUsuario').modal('show');
+            } else {
+              swal("Error", response.message || "No se pudo cargar el usuario", "error");
+            }
+          },
+          error: function(xhr) {
+            var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al cargar el usuario';
+            swal("Error", error, "error");
+          }
+        });
       }
       
-      // Función para eliminar usuario
-      function eliminarUsuario(id) {
+      // Función para desactivar usuario
+      function desactivarUsuario(id) {
         swal({
           title: "¿Está seguro?",
           text: "El usuario será marcado como inactivo",
@@ -447,21 +562,64 @@ if (!$auth->isAuthenticated()) {
             $.ajax({
               url: 'api.php',
               method: 'POST',
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
               data: {
                 id: id,
-                action: 'eliminar'
+                action: 'desactivar'
               },
               dataType: 'json',
               success: function(response) {
                 if (response.success) {
                   swal("¡Éxito!", response.message, "success");
-                  location.reload();
+                  cargarUsuarios();
                 } else {
                   swal("Error", response.message, "error");
                 }
               },
               error: function(xhr) {
-                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al eliminar el usuario';
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al desactivar el usuario';
+                swal("Error", error, "error");
+              }
+            });
+          }
+        });
+      }
+      
+      // Función para activar usuario
+      function activarUsuario(id) {
+        swal({
+          title: "¿Activar usuario?",
+          text: "El usuario será marcado como activo",
+          icon: "info",
+          buttons: true,
+        })
+        .then((willActivate) => {
+          if (willActivate) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
+              data: {
+                id: id,
+                action: 'activar'
+              },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarUsuarios();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al activar el usuario';
                 swal("Error", error, "error");
               }
             });

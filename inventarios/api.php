@@ -38,9 +38,13 @@ try {
                 $sucursal_id = $_GET['sucursal_id'] ?? null;
                 
                 $sql = "
-                    SELECT i.*, s.nombre as sucursal_nombre 
+                    SELECT i.*, s.nombre as sucursal_nombre,
+                           m.nombre as material_nombre, m.categoria_padre_id,
+                           mp.nombre as categoria_padre_nombre
                     FROM inventarios i 
                     INNER JOIN sucursales s ON i.sucursal_id = s.id 
+                    INNER JOIN materiales m ON i.material_id = m.id
+                    LEFT JOIN materiales mp ON m.categoria_padre_id = mp.id
                     WHERE i.estado <> 'inactivo'
                 ";
                 $params = [];
@@ -58,12 +62,48 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'data' => $inventarios]);
+            } elseif ($action === 'categorias') {
+                // Obtener categorías principales (sin padre)
+                $stmt = $db->prepare("
+                    SELECT id, nombre, descripcion, icono, orden
+                    FROM materiales 
+                    WHERE categoria_padre_id IS NULL AND estado = 'activo'
+                    ORDER BY orden, nombre
+                ");
+                $stmt->execute();
+                $categorias = $stmt->fetchAll();
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $categorias]);
+            } elseif ($action === 'materiales') {
+                // Obtener materiales (subcategorías) de una categoría
+                $categoria_id = $_GET['categoria_id'] ?? 0;
+                
+                if ($categoria_id <= 0) {
+                    throw new Exception('ID de categoría inválido');
+                }
+                
+                $stmt = $db->prepare("
+                    SELECT id, nombre, descripcion, orden
+                    FROM materiales 
+                    WHERE categoria_padre_id = ? AND estado = 'activo'
+                    ORDER BY orden, nombre
+                ");
+                $stmt->execute([$categoria_id]);
+                $materiales = $stmt->fetchAll();
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $materiales]);
             } elseif ($action === 'obtener') {
                 $id = $_GET['id'] ?? 0;
                 $stmt = $db->prepare("
-                    SELECT i.*, s.nombre as sucursal_nombre 
+                    SELECT i.*, s.nombre as sucursal_nombre,
+                           m.id as material_id, m.nombre as material_nombre, m.categoria_padre_id,
+                           mp.nombre as categoria_padre_nombre
                     FROM inventarios i 
                     INNER JOIN sucursales s ON i.sucursal_id = s.id 
+                    INNER JOIN materiales m ON i.material_id = m.id
+                    LEFT JOIN materiales mp ON m.categoria_padre_id = mp.id
                     WHERE i.id = ?
                 ");
                 $stmt->execute([$id]);
@@ -82,7 +122,7 @@ try {
             if ($action === 'crear') {
                 $sucursal_id = intval($_POST['sucursal_id'] ?? 0);
                 $nombre_producto = trim($_POST['nombre_producto'] ?? '');
-                $categoria = $_POST['categoria'] ?? '';
+                $material_id = intval($_POST['material_id'] ?? 0);
                 $cantidad = floatval($_POST['cantidad'] ?? 0);
                 $unidad = $_POST['unidad'] ?? 'kg';
                 $precio_unitario = floatval($_POST['precio_unitario'] ?? 0);
@@ -91,8 +131,8 @@ try {
                 $descripcion = trim($_POST['descripcion'] ?? '');
                 $estado = $_POST['estado'] ?? 'disponible';
                 
-                if (empty($nombre_producto) || $sucursal_id <= 0) {
-                    throw new Exception('Nombre del producto y sucursal son obligatorios');
+                if (empty($nombre_producto) || $sucursal_id <= 0 || $material_id <= 0) {
+                    throw new Exception('Nombre del producto, sucursal y material son obligatorios');
                 }
                 
                 // Verificar que la sucursal existe
@@ -102,16 +142,23 @@ try {
                     throw new Exception('Sucursal inválida');
                 }
                 
+                // Verificar que el material existe
+                $stmt = $db->prepare("SELECT id FROM materiales WHERE id = ? AND estado = 'activo'");
+                $stmt->execute([$material_id]);
+                if (!$stmt->fetch()) {
+                    throw new Exception('Material inválido');
+                }
+                
                 $stmt = $db->prepare("
                     INSERT INTO inventarios 
-                    (sucursal_id, nombre_producto, categoria, cantidad, unidad, precio_unitario, stock_minimo, stock_maximo, descripcion, estado, creado_por) 
+                    (sucursal_id, nombre_producto, material_id, cantidad, unidad, precio_unitario, stock_minimo, stock_maximo, descripcion, estado, creado_por) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 
                 $stmt->execute([
                     $sucursal_id,
                     $nombre_producto,
-                    $categoria,
+                    $material_id,
                     $cantidad,
                     $unidad,
                     $precio_unitario,
@@ -132,7 +179,7 @@ try {
                 $id = intval($_POST['id'] ?? 0);
                 $sucursal_id = intval($_POST['sucursal_id'] ?? 0);
                 $nombre_producto = trim($_POST['nombre_producto'] ?? '');
-                $categoria = $_POST['categoria'] ?? '';
+                $material_id = intval($_POST['material_id'] ?? 0);
                 $cantidad = floatval($_POST['cantidad'] ?? 0);
                 $unidad = $_POST['unidad'] ?? 'kg';
                 $precio_unitario = floatval($_POST['precio_unitario'] ?? 0);
@@ -141,13 +188,13 @@ try {
                 $descripcion = trim($_POST['descripcion'] ?? '');
                 $estado = $_POST['estado'] ?? 'disponible';
                 
-                if (empty($nombre_producto) || $sucursal_id <= 0) {
-                    throw new Exception('Nombre del producto y sucursal son obligatorios');
+                if (empty($nombre_producto) || $sucursal_id <= 0 || $material_id <= 0) {
+                    throw new Exception('Nombre del producto, sucursal y material son obligatorios');
                 }
                 
                 $stmt = $db->prepare("
                     UPDATE inventarios 
-                    SET sucursal_id = ?, nombre_producto = ?, categoria = ?, cantidad = ?, unidad = ?, 
+                    SET sucursal_id = ?, nombre_producto = ?, material_id = ?, cantidad = ?, unidad = ?, 
                         precio_unitario = ?, stock_minimo = ?, stock_maximo = ?, descripcion = ?, estado = ?
                     WHERE id = ?
                 ");
@@ -155,7 +202,7 @@ try {
                 $stmt->execute([
                     $sucursal_id,
                     $nombre_producto,
-                    $categoria,
+                    $material_id,
                     $cantidad,
                     $unidad,
                     $precio_unitario,
@@ -199,16 +246,16 @@ try {
     
 } catch (PDOException $e) {
     ob_end_clean();
-    error_log("Error en inventarios/api.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error de base de datos: ' . (APP_DEBUG ? $e->getMessage() : 'Error al procesar la solicitud')
-    ]);
+    $errorInfo = ErrorHandler::handleDatabaseError($e, 'inventarios/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage(), 'code' => $e->getCode()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 500, $debug);
 } catch (Exception $e) {
     ob_end_clean();
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    $errorInfo = ErrorHandler::handleException($e, 'inventarios/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 400, $debug);
 }
 ?>
 

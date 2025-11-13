@@ -9,6 +9,11 @@ require_once __DIR__ . '/database.php';
 
 // Iniciar sesión si no está iniciada
 if (session_status() === PHP_SESSION_NONE) {
+    // Configurar parámetros de sesión para cookies
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_samesite', 'Lax');
+    
     session_start();
 }
 
