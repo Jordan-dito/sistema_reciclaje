@@ -99,25 +99,10 @@ $inventarioOpen = in_array($currentRoute, $inventarioRoutes, true);
     </span>
     <h4 class="text-section">Reportes</h4>
   </li>
-  <li class="nav-item submenu">
-    <a data-bs-toggle="collapse" href="#menuReportes" class="collapsed" aria-expanded="false">
+  <li class="nav-item <?php echo $currentRoute === 'reportes' ? 'active' : ''; ?>">
+    <a href="<?php echo $basePath; ?>reportes/index.php">
       <i class="fas fa-chart-line"></i>
       <p>Reportes</p>
-      <span class="caret"></span>
     </a>
-    <div class="collapse" id="menuReportes">
-      <ul class="nav nav-collapse">
-        <li>
-          <a href="#" class="text-muted">
-            <span class="sub-item">Transportistas</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="text-muted">
-            <span class="sub-item">Stock de Materiales (Kardex)</span>
-          </a>
-        </li>
-      </ul>
-    </div>
   </li>
 </ul>

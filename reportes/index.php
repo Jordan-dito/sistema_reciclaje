@@ -1,0 +1,362 @@
+<?php
+/**
+ * Módulo de Reportes
+ * Sistema de Gestión de Reciclaje
+ */
+
+// Verificar autenticación
+require_once __DIR__ . '/../config/auth.php';
+
+$auth = new Auth();
+if (!$auth->isAuthenticated()) {
+    header('Location: ../index.php');
+    exit;
+}
+
+$currentRoute = 'reportes';
+$basePath = '';
+?>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Reportes - Sistema de Reciclaje</title>
+    <meta
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+      name="viewport"
+    />
+    <link
+      rel="icon"
+      href="../assets/img/kaiadmin/favicon.ico"
+      type="image/x-icon"
+    />
+
+    <!-- Fonts and icons -->
+    <script src="../assets/js/plugin/webfont/webfont.min.js"></script>
+    <script>
+      WebFont.load({
+        google: { families: ["Public Sans:300,400,500,600,700"] },
+        custom: {
+          families: [
+            "Font Awesome 5 Solid",
+            "Font Awesome 5 Regular",
+            "Font Awesome 5 Brands",
+            "simple-line-icons",
+          ],
+          urls: ["../assets/css/fonts.min.css"],
+        },
+        active: function () {
+          sessionStorage.fonts = true;
+        },
+      });
+    </script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="../assets/css/kaiadmin.min.css" />
+    <link rel="stylesheet" href="../assets/css/demo.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <!-- Sidebar -->
+      <div class="sidebar" data-background-color="dark">
+        <div class="sidebar-logo">
+          <div class="logo-header" data-background-color="dark">
+            <a href="../Dashboard.php" class="logo">
+              <img
+                src="../assets/img/kaiadmin/logo_light.svg"
+                alt="navbar brand"
+                class="navbar-brand"
+                height="20"
+              />
+            </a>
+            <div class="nav-toggle">
+              <button class="btn btn-toggle toggle-sidebar">
+                <i class="gg-menu-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+          <div class="sidebar-content">
+            <?php
+              $basePath = '..';
+              $currentRoute = 'reportes';
+              include __DIR__ . '/../includes/sidebar.php';
+            ?>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-panel">
+        <div class="main-header">
+          <div class="main-header-logo">
+            <div class="logo-header" data-background-color="dark">
+              <a href="../Dashboard.php" class="logo">
+                <img
+                  src="../assets/img/kaiadmin/logo_light.svg"
+                  alt="navbar brand"
+                  class="navbar-brand"
+                  height="20"
+                />
+              </a>
+            </div>
+          </div>
+          <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
+            <div class="container-fluid">
+              <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+                <li class="nav-item topbar-user dropdown hidden-caret">
+                  <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#" aria-expanded="false">
+                    <div class="avatar-sm">
+                      <img src="../assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle" />
+                    </div>
+                  </a>
+                  <ul class="dropdown-menu dropdown-user animated fadeIn">
+                    <li><a class="dropdown-item" href="../config/logout.php">Cerrar Sesión</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </nav>
+        </div>
+
+        <div class="container">
+          <div class="page-inner">
+              <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
+                <div>
+                  <h3 class="fw-bold mb-3">Reportes del Sistema</h3>
+                  <h6 class="op-7 mb-2">Genera y exporta reportes en formato PDF</h6>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="card card-round">
+                    <div class="card-header">
+                      <div class="card-head-row">
+                        <div class="card-title">Seleccionar Reporte</div>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <form id="formReporte">
+                        <div class="row">
+                          <div class="col-md-4">
+                            <div class="form-group">
+                              <label>Tipo de Reporte *</label>
+                              <select id="tipo_reporte" name="tipo_reporte" class="form-control" required>
+                                <option value="">Seleccione un reporte</option>
+                                <option value="sucursales">Reporte de Sucursales</option>
+                                <option value="usuarios">Reporte de Usuarios por Rol</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="form-group">
+                              <label>Fecha Desde *</label>
+                              <input type="date" id="fecha_desde" name="fecha_desde" class="form-control" required>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="form-group">
+                              <label>Fecha Hasta *</label>
+                              <input type="date" id="fecha_hasta" name="fecha_hasta" class="form-control" required>
+                            </div>
+                          </div>
+                          <div class="col-md-2">
+                            <div class="form-group">
+                              <label>&nbsp;</label>
+                              <div>
+                                <button type="button" class="btn btn-primary btn-block" id="btnGenerarReporte">
+                                  <i class="fa fa-file-pdf"></i> PDF
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row" id="filtro_rol" style="display: none;">
+                          <div class="col-md-4">
+                            <div class="form-group">
+                              <label>Filtrar por Rol</label>
+                              <select id="rol_id" name="rol_id" class="form-control">
+                                <option value="">Todos los roles</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-md-12">
+                            <button type="button" class="btn btn-secondary" id="btnVistaPrevia">
+                              <i class="fa fa-eye"></i> Vista Previa
+                            </button>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mt-4" id="vistaPrevia" style="display: none;">
+                <div class="col-md-12">
+                  <div class="card card-round">
+                    <div class="card-header">
+                      <div class="card-head-row">
+                        <div class="card-title">Vista Previa del Reporte</div>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div id="contenidoVistaPrevia"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="footer">
+            <div class="container-fluid d-flex justify-content-between">
+              <div class="copyright">
+                2024, Sistema de Gestión de Reciclaje
+              </div>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core JS Files -->
+    <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
+    <script src="../assets/js/core/popper.min.js"></script>
+    <script src="../assets/js/core/bootstrap.min.js"></script>
+    <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+    <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+    <script src="../assets/js/kaiadmin.min.js"></script>
+    <script src="../assets/js/setting-demo.js"></script>
+    <script>
+      $(document).ready(function() {
+        // Establecer fechas por defecto (último mes)
+        var hoy = new Date();
+        var haceUnMes = new Date();
+        haceUnMes.setMonth(haceUnMes.getMonth() - 1);
+        
+        $('#fecha_hasta').val(hoy.toISOString().split('T')[0]);
+        $('#fecha_desde').val(haceUnMes.toISOString().split('T')[0]);
+        
+        // Cargar roles cuando se selecciona reporte de usuarios
+        $('#tipo_reporte').change(function() {
+          if ($(this).val() === 'usuarios') {
+            $('#filtro_rol').show();
+            cargarRoles();
+          } else {
+            $('#filtro_rol').hide();
+          }
+        });
+        
+        // Cargar roles disponibles
+        function cargarRoles() {
+          $.ajax({
+            url: '../roles/api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                var select = $('#rol_id');
+                select.empty().append('<option value="">Todos los roles</option>');
+                response.data.forEach(function(rol) {
+                  if (rol.estado === 'activo') {
+                    select.append('<option value="' + rol.id + '">' + rol.nombre + '</option>');
+                  }
+                });
+              }
+            }
+          });
+        }
+        
+        // Generar reporte PDF
+        $('#btnGenerarReporte').click(function() {
+          var form = $('#formReporte')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var tipo = $('#tipo_reporte').val();
+          var fechaDesde = $('#fecha_desde').val();
+          var fechaHasta = $('#fecha_hasta').val();
+          var rolId = $('#rol_id').val() || '';
+          
+          // Validar fechas
+          if (new Date(fechaDesde) > new Date(fechaHasta)) {
+            swal("Error", "La fecha desde debe ser menor o igual a la fecha hasta", "error");
+            return;
+          }
+          
+          // Construir URL para generar PDF
+          var url = 'pdf.php?tipo=' + tipo + '&fecha_desde=' + fechaDesde + '&fecha_hasta=' + fechaHasta;
+          if (rolId) {
+            url += '&rol_id=' + rolId;
+          }
+          
+          // Abrir en nueva ventana para descargar PDF
+          window.open(url, '_blank');
+        });
+        
+        // Vista previa
+        $('#btnVistaPrevia').click(function() {
+          var form = $('#formReporte')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var tipo = $('#tipo_reporte').val();
+          var fechaDesde = $('#fecha_desde').val();
+          var fechaHasta = $('#fecha_hasta').val();
+          var rolId = $('#rol_id').val() || '';
+          
+          // Validar fechas
+          if (new Date(fechaDesde) > new Date(fechaHasta)) {
+            swal("Error", "La fecha desde debe ser menor o igual a la fecha hasta", "error");
+            return;
+          }
+          
+          // Cargar vista previa
+          $.ajax({
+            url: 'api.php',
+            method: 'GET',
+            data: {
+              action: 'vista_previa',
+              tipo: tipo,
+              fecha_desde: fechaDesde,
+              fecha_hasta: fechaHasta,
+              rol_id: rolId
+            },
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                $('#contenidoVistaPrevia').html(response.html);
+                $('#vistaPrevia').show();
+              } else {
+                swal("Error", response.message || "No se pudo generar la vista previa", "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al generar la vista previa';
+              swal("Error", error, "error");
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
+
