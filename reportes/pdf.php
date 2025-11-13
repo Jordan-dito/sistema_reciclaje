@@ -7,8 +7,6 @@
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/auth.php';
 
-use ErrorHandler;
-
 try {
     $auth = new Auth();
     if (!$auth->isAuthenticated()) {
@@ -34,13 +32,38 @@ try {
         throw new Exception('La fecha desde debe ser menor o igual a la fecha hasta');
     }
     
+    // Validar que hay datos antes de generar PDF
+    $tieneDatos = false;
+    if ($tipo === 'sucursales') {
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM sucursales WHERE DATE(fecha_creacion) BETWEEN ? AND ?");
+        $stmt->execute([$fechaDesde, $fechaHasta]);
+        $result = $stmt->fetch();
+        $tieneDatos = $result['total'] > 0;
+    } elseif ($tipo === 'usuarios') {
+        $sql = "SELECT COUNT(*) as total FROM usuarios WHERE DATE(fecha_creacion) BETWEEN ? AND ?";
+        $params = [$fechaDesde, $fechaHasta];
+        if (!empty($rolId)) {
+            $sql .= " AND rol_id = ?";
+            $params[] = $rolId;
+        }
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        $tieneDatos = $result['total'] > 0;
+    } else {
+        throw new Exception('Tipo de reporte no válido');
+    }
+    
+    if (!$tieneDatos) {
+        echo '<html><body><h1>Sin datos</h1><p>No hay datos para generar el reporte en el período seleccionado.</p></body></html>';
+        exit;
+    }
+    
     // Generar contenido según el tipo
     if ($tipo === 'sucursales') {
         generarPDFSucursales($db, $fechaDesde, $fechaHasta);
     } elseif ($tipo === 'usuarios') {
         generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId);
-    } else {
-        throw new Exception('Tipo de reporte no válido');
     }
     
 } catch (Exception $e) {

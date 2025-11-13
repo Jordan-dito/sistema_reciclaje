@@ -137,6 +137,28 @@ if (!$auth->isAuthenticated()) {
                 <div class="card card-round">
                   <div class="card-header">
                     <div class="card-head-row">
+                      <div class="card-title">Materiales por Categoría</div>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div id="materialesPorCategoria">
+                      <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando materiales...</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card card-round">
+                  <div class="card-header">
+                    <div class="card-head-row">
                       <div class="card-title">Lista de Inventarios</div>
                       <div class="card-tools">
                         <select class="form-control form-control-sm" id="filtroSucursal" style="width: 200px; display: inline-block;">
@@ -984,9 +1006,89 @@ if (!$auth->isAuthenticated()) {
           });
         });
         
+        // Cargar materiales por categoría
+        function cargarMaterialesPorCategoria() {
+          $.ajax({
+            url: 'api.php?action=categorias',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success && response.data.length > 0) {
+                var html = '<div class="row">';
+                
+                response.data.forEach(function(categoria) {
+                  // Cargar materiales de esta categoría
+                  $.ajax({
+                    url: 'api.php?action=materiales&categoria_id=' + categoria.id,
+                    method: 'GET',
+                    dataType: 'json',
+                    async: false, // Sincrónico para mantener el orden
+                    success: function(materialResponse) {
+                      html += '<div class="col-md-6 mb-4">';
+                      html += '<div class="card card-round" style="border-left: 4px solid #177dff;">';
+                      html += '<div class="card-header">';
+                      html += '<div class="card-head-row">';
+                      html += '<div class="card-title">';
+                      if (categoria.icono) {
+                        html += '<i class="' + categoria.icono + ' me-2"></i>';
+                      }
+                      html += '<strong>' + categoria.nombre + '</strong>';
+                      html += '</div>';
+                      html += '</div>';
+                      html += '</div>';
+                      html += '<div class="card-body">';
+                      
+                      if (materialResponse.success && materialResponse.data.length > 0) {
+                        html += '<ul class="list-group list-group-flush">';
+                        materialResponse.data.forEach(function(material) {
+                          html += '<li class="list-group-item d-flex justify-content-between align-items-center">';
+                          html += '<span><i class="fa fa-circle me-2" style="font-size: 8px; color: #177dff;"></i>' + material.nombre + '</span>';
+                          if (material.descripcion) {
+                            html += '<small class="text-muted">' + material.descripcion + '</small>';
+                          }
+                          html += '</li>';
+                        });
+                        html += '</ul>';
+                      } else {
+                        // Si no tiene subcategorías, mostrar la categoría misma
+                        html += '<ul class="list-group list-group-flush">';
+                        html += '<li class="list-group-item d-flex justify-content-between align-items-center">';
+                        html += '<span><i class="fa fa-circle me-2" style="font-size: 8px; color: #177dff;"></i>' + categoria.nombre + '</span>';
+                        if (categoria.descripcion) {
+                          html += '<small class="text-muted">' + categoria.descripcion + '</small>';
+                        }
+                        html += '</li>';
+                        html += '</ul>';
+                      }
+                      
+                      html += '</div>';
+                      html += '</div>';
+                      html += '</div>';
+                    },
+                    error: function() {
+                      html += '<div class="col-md-6 mb-4">';
+                      html += '<div class="alert alert-warning">Error al cargar materiales de ' + categoria.nombre + '</div>';
+                      html += '</div>';
+                    }
+                  });
+                });
+                
+                html += '</div>';
+                $('#materialesPorCategoria').html(html);
+              } else {
+                $('#materialesPorCategoria').html('<div class="alert alert-info">No hay categorías registradas</div>');
+              }
+            },
+            error: function() {
+              $('#materialesPorCategoria').html('<div class="alert alert-danger">Error al cargar las categorías</div>');
+            }
+          });
+        }
+        
         // Cargar datos al iniciar
         cargarSucursales();
         cargarCategorias();
+        cargarMaterialesPorCategoria();
         cargarInventarios();
         
         // Limpiar formulario al cerrar modal

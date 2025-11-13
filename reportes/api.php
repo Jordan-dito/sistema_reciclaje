@@ -43,10 +43,17 @@ try {
         
         $html = '';
         
+        $resultado = null;
+        $tieneDatos = false;
+        
         if ($tipo === 'sucursales') {
-            $html = generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta);
+            $resultado = generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta);
+            $tieneDatos = $resultado['tieneDatos'];
+            $html = $resultado['html'];
         } elseif ($tipo === 'usuarios') {
-            $html = generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId);
+            $resultado = generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId);
+            $tieneDatos = $resultado['tieneDatos'];
+            $html = $resultado['html'];
         } else {
             throw new Exception('Tipo de reporte no válido');
         }
@@ -54,7 +61,9 @@ try {
         ob_end_clean();
         echo json_encode([
             'success' => true,
-            'html' => $html
+            'html' => $html,
+            'tieneDatos' => $tieneDatos,
+            'datos' => $resultado['datos'] ?? []
         ], JSON_UNESCAPED_UNICODE);
     } else {
         throw new Exception('Acción no válida');
@@ -89,9 +98,17 @@ function generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta) {
     $stmt->execute([$fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta]);
     $sucursales = $stmt->fetchAll();
     
+    $tieneDatos = count($sucursales) > 0;
+    
     $html = '<div class="table-responsive">';
     $html .= '<h4>Reporte de Sucursales</h4>';
     $html .= '<p><strong>Período:</strong> ' . date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta)) . '</p>';
+    
+    if (!$tieneDatos) {
+        $html .= '<div class="alert alert-warning">No se encontraron sucursales en el período seleccionado.</div>';
+        return ['html' => $html, 'tieneDatos' => false, 'datos' => []];
+    }
+    
     $html .= '<table class="table table-bordered table-striped">';
     $html .= '<thead><tr>';
     $html .= '<th>ID</th>';
@@ -125,7 +142,7 @@ function generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta) {
     $html .= '<p><strong>Total de sucursales:</strong> ' . count($sucursales) . '</p>';
     $html .= '</div>';
     
-    return $html;
+    return ['html' => $html, 'tieneDatos' => true, 'datos' => $sucursales];
 }
 
 /**
@@ -159,6 +176,8 @@ function generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '') 
     $stmt->execute($params);
     $usuarios = $stmt->fetchAll();
     
+    $tieneDatos = count($usuarios) > 0;
+    
     $html = '<div class="table-responsive">';
     $html .= '<h4>Reporte de Usuarios por Rol</h4>';
     $html .= '<p><strong>Período:</strong> ' . date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta)) . '</p>';
@@ -170,6 +189,11 @@ function generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '') 
         if ($rol) {
             $html .= '<p><strong>Rol filtrado:</strong> ' . htmlspecialchars($rol['nombre']) . '</p>';
         }
+    }
+    
+    if (!$tieneDatos) {
+        $html .= '<div class="alert alert-warning">No se encontraron usuarios en el período seleccionado.</div>';
+        return ['html' => $html, 'tieneDatos' => false, 'datos' => []];
     }
     
     $html .= '<table class="table table-bordered table-striped">';
@@ -205,6 +229,6 @@ function generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '') 
     $html .= '<p><strong>Total de usuarios:</strong> ' . count($usuarios) . '</p>';
     $html .= '</div>';
     
-    return $html;
+    return ['html' => $html, 'tieneDatos' => true, 'datos' => $usuarios];
 }
 

@@ -8,11 +8,21 @@ $basePath = isset($basePath) ? rtrim($basePath, '/') : '';
 $basePath = $basePath !== '' ? $basePath . '/' : '';
 $currentRoute = $currentRoute ?? '';
 
+// Obtener rol del usuario desde la sesión
+$usuarioRol = isset($_SESSION['usuario_rol']) ? strtolower($_SESSION['usuario_rol']) : '';
+
 $gestionRoutes = ['usuarios', 'roles', 'sucursales'];
 $inventarioRoutes = ['inventarios', 'clientes', 'proveedores', 'compras', 'ventas'];
 
 $gestionOpen = in_array($currentRoute, $gestionRoutes, true);
 $inventarioOpen = in_array($currentRoute, $inventarioRoutes, true);
+
+// Determinar qué menús mostrar según el rol
+// Administrador: NO ve Gestión (solo Dashboard, Inventario, Reportes)
+// Gerente: SÍ ve Gestión (Dashboard, Gestión, Inventario, Reportes)
+$mostrarGestion = ($usuarioRol === 'gerente' || $usuarioRol === 'super administrador');
+$mostrarInventario = true; // Todos los roles ven inventario
+$mostrarReportes = true; // Todos los roles ven reportes
 ?>
 <ul class="nav nav-secondary">
   <li class="nav-item <?php echo $currentRoute === 'dashboard' ? 'active' : ''; ?>">
@@ -22,6 +32,7 @@ $inventarioOpen = in_array($currentRoute, $inventarioRoutes, true);
     </a>
   </li>
 
+  <?php if ($mostrarGestion): ?>
   <li class="nav-section">
     <span class="sidebar-mini-icon">
       <i class="fa fa-ellipsis-h"></i>
@@ -55,7 +66,9 @@ $inventarioOpen = in_array($currentRoute, $inventarioRoutes, true);
       </ul>
     </div>
   </li>
+  <?php endif; ?>
 
+  <?php if ($mostrarInventario): ?>
   <li class="nav-item submenu <?php echo $inventarioOpen ? 'active' : ''; ?>">
     <a data-bs-toggle="collapse" href="#menuInventario" class="<?php echo $inventarioOpen ? '' : 'collapsed'; ?>" aria-expanded="<?php echo $inventarioOpen ? 'true' : 'false'; ?>">
       <i class="fas fa-warehouse"></i>
@@ -92,7 +105,9 @@ $inventarioOpen = in_array($currentRoute, $inventarioRoutes, true);
       </ul>
     </div>
   </li>
+  <?php endif; ?>
 
+  <?php if ($mostrarReportes): ?>
   <li class="nav-section">
     <span class="sidebar-mini-icon">
       <i class="fa fa-ellipsis-h"></i>
@@ -105,4 +120,5 @@ $inventarioOpen = in_array($currentRoute, $inventarioRoutes, true);
       <p>Reportes</p>
     </a>
   </li>
+  <?php endif; ?>
 </ul>

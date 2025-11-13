@@ -197,6 +197,23 @@ $basePath = '';
                 </div>
               </div>
 
+              <div class="row mt-4" id="dashboardSection" style="display: none;">
+                <div class="col-md-12">
+                  <div class="card card-round">
+                    <div class="card-header">
+                      <div class="card-head-row">
+                        <div class="card-title">Dashboard de Sucursales</div>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-container" style="min-height: 375px; position: relative;">
+                        <canvas id="sucursalesChart"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="row mt-4" id="vistaPrevia" style="display: none;">
                 <div class="col-md-12">
                   <div class="card card-round">
@@ -231,6 +248,7 @@ $basePath = '';
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
     <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+    <script src="../assets/js/plugin/chart.js/chart.min.js"></script>
     <script src="../assets/js/kaiadmin.min.js"></script>
     <script src="../assets/js/setting-demo.js"></script>
     <script>
@@ -277,34 +295,13 @@ $basePath = '';
           });
         }
         
-        // Generar reporte PDF
-        $('#btnGenerarReporte').click(function() {
-          var form = $('#formReporte')[0];
-          if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-          }
-          
-          var tipo = $('#tipo_reporte').val();
-          var fechaDesde = $('#fecha_desde').val();
-          var fechaHasta = $('#fecha_hasta').val();
-          var rolId = $('#rol_id').val() || '';
-          
-          // Validar fechas
-          if (new Date(fechaDesde) > new Date(fechaHasta)) {
-            swal("Error", "La fecha desde debe ser menor o igual a la fecha hasta", "error");
-            return;
-          }
-          
-          // Construir URL para generar PDF
-          var url = 'pdf.php?tipo=' + tipo + '&fecha_desde=' + fechaDesde + '&fecha_hasta=' + fechaHasta;
-          if (rolId) {
-            url += '&rol_id=' + rolId;
-          }
-          
-          // Abrir en nueva ventana para descargar PDF
-          window.open(url, '_blank');
-        });
+        var tieneDatos = false;
+        var datosReporte = [];
+        var chartSucursales = null;
+        
+        // Inicialmente deshabilitar botones
+        $('#btnGenerarReporte').prop('disabled', true);
+        $('#btnVistaPrevia').prop('disabled', false);
         
         // Vista previa
         $('#btnVistaPrevia').click(function() {
@@ -343,18 +340,192 @@ $basePath = '';
             crossDomain: false,
             success: function(response) {
               if (response.success) {
+                tieneDatos = response.tieneDatos;
+                datosReporte = response.datos || [];
+                
                 $('#contenidoVistaPrevia').html(response.html);
                 $('#vistaPrevia').show();
+                
+                // Habilitar/deshabilitar botones según si hay datos
+                if (tieneDatos) {
+                  $('#btnGenerarReporte').prop('disabled', false);
+                  
+                  // Si es reporte de sucursales, mostrar dashboard
+                  if (tipo === 'sucursales' && datosReporte.length > 0) {
+                    mostrarDashboardSucursales(datosReporte);
+                  } else {
+                    $('#dashboardSection').hide();
+                  }
+                } else {
+                  $('#btnGenerarReporte').prop('disabled', true);
+                  $('#dashboardSection').hide();
+                  swal("Sin datos", "No hay datos para mostrar en el período seleccionado", "warning");
+                }
               } else {
                 swal("Error", response.message || "No se pudo generar la vista previa", "error");
+                $('#btnGenerarReporte').prop('disabled', true);
+                $('#dashboardSection').hide();
               }
             },
             error: function(xhr) {
               var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al generar la vista previa';
               swal("Error", error, "error");
+              $('#btnGenerarReporte').prop('disabled', true);
+              $('#dashboardSection').hide();
             }
           });
         });
+        
+        // Generar reporte PDF (solo si hay datos)
+        $('#btnGenerarReporte').click(function() {
+          if (!tieneDatos) {
+            swal("Sin datos", "Primero debe generar la vista previa y verificar que hay datos", "warning");
+            return;
+          }
+          
+          var form = $('#formReporte')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          var tipo = $('#tipo_reporte').val();
+          var fechaDesde = $('#fecha_desde').val();
+          var fechaHasta = $('#fecha_hasta').val();
+          var rolId = $('#rol_id').val() || '';
+          
+          // Validar fechas
+          if (new Date(fechaDesde) > new Date(fechaHasta)) {
+            swal("Error", "La fecha desde debe ser menor o igual a la fecha hasta", "error");
+            return;
+          }
+          
+          // Construir URL para generar PDF
+          var url = 'pdf.php?tipo=' + tipo + '&fecha_desde=' + fechaDesde + '&fecha_hasta=' + fechaHasta;
+          if (rolId) {
+            url += '&rol_id=' + rolId;
+          }
+          
+          // Abrir en nueva ventana para descargar PDF
+          window.open(url, '_blank');
+        });
+        
+        // Función para mostrar dashboard de sucursales
+        function mostrarDashboardSucursales(datos) {
+          $('#dashboardSection').show();
+          
+          // Agrupar por dirección
+          var datosPorDireccion = {};
+          datos.forEach(function(sucursal) {
+            var direccion = sucursal.direccion || 'Sin dirección';
+            if (!datosPorDireccion[direccion]) {
+              datosPorDireccion[direccion] = 0;
+            }
+            datosPorDireccion[direccion]++;
+          });
+          
+          var labels = Object.keys(datosPorDireccion);
+          var valores = Object.values(datosPorDireccion);
+          
+          // Destruir gráfico anterior si existe
+          if (chartSucursales) {
+            chartSucursales.destroy();
+          }
+          
+          var ctx = document.getElementById('sucursalesChart').getContext('2d');
+          chartSucursales = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Cantidad de Sucursales',
+                data: valores,
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: 'rgba(54, 162, 235, 1)',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: {
+                intersect: false,
+                mode: 'index'
+              },
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top',
+                  labels: {
+                    usePointStyle: true,
+                    padding: 15,
+                    font: {
+                      size: 12,
+                      weight: 'bold'
+                    }
+                  }
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  padding: 12,
+                  titleFont: {
+                    size: 14,
+                    weight: 'bold'
+                  },
+                  bodyFont: {
+                    size: 13
+                  },
+                  displayColors: true,
+                  callbacks: {
+                    label: function(context) {
+                      return 'Sucursales: ' + context.parsed.y;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  display: true,
+                  grid: {
+                    display: false
+                  },
+                  ticks: {
+                    font: {
+                      size: 11
+                    },
+                    maxRotation: 45,
+                    minRotation: 45
+                  }
+                },
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    stepSize: 1,
+                    font: {
+                      size: 11
+                    },
+                    callback: function(value) {
+                      return value;
+                    }
+                  },
+                  grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                  }
+                }
+              }
+            }
+          });
+        }
       });
     </script>
   </body>

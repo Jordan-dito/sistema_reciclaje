@@ -4,11 +4,32 @@
  * Sistema de Gestión de Reciclaje
  */
 
-require_once __DIR__ . '/auth.php';
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-$auth = new Auth();
-$auth->logout();
+// Limpiar todas las variables de sesión
+$_SESSION = array();
 
+// Destruir la cookie de sesión si existe
+if (isset($_COOKIE[session_name()])) {
+    setcookie(session_name(), '', time() - 3600, '/');
+}
+
+// Destruir la sesión
+session_destroy();
+
+// Limpiar cookies relacionadas con la sesión
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(session_name(), '', time() - 42000,
+        $params["path"], $params["domain"],
+        $params["secure"], $params["httponly"]
+    );
+}
+
+// Redirigir al login
 header('Location: index.php');
 exit;
 ?>
