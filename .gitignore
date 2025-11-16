@@ -18,6 +18,7 @@ desktop.ini
 # Logs
 *.log
 logs/
+deploy.log
 
 # Archivos temporales
 tmp/
