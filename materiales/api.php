@@ -81,9 +81,14 @@ try {
                 $icono = trim($_POST['icono'] ?? '');
                 $estado = $_POST['estado'] ?? 'activo';
                 
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                // Validar nombre: no solo espacios
+                $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
                 }
+                $nombre = limpiarEspacios($nombre);
+                $descripcion = limpiarEspacios($descripcion);
+                $icono = limpiarEspacios($icono);
                 
                 $stmt = $db->prepare("
                     INSERT INTO materiales (nombre, categoria_id, descripcion, icono, estado) 

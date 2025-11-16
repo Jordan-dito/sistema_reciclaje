@@ -190,6 +190,12 @@
         .input-wrapper {
             position: relative;
         }
+        
+        .input-wrapper .form-control,
+        .input-wrapper .password-toggle,
+        .input-wrapper i {
+            pointer-events: auto;
+        }
 
         .input-wrapper i {
             position: absolute;
@@ -213,6 +219,15 @@
             background: #f9fafb;
             outline: none;
             color: #111827;
+        }
+        
+        #cedula.form-control {
+            padding-right: 80px;
+        }
+        
+        #password.form-control,
+        #confirmPassword.form-control {
+            padding-right: 80px;
         }
 
         .form-control::placeholder {
@@ -247,15 +262,34 @@
             right: 18px;
             top: 50%;
             transform: translateY(-50%);
-            background: none;
+            background: transparent;
             border: none;
             color: #9ca3af;
             cursor: pointer;
             font-size: 17px;
             padding: 8px;
+            margin: 0;
             transition: all 0.3s ease;
             border-radius: 8px;
-            z-index: 2;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            min-width: 35px;
+            min-height: 35px;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .password-toggle:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(44, 159, 95, 0.2);
+        }
+        
+        .password-toggle:active {
+            transform: translateY(-50%) scale(0.95);
         }
 
         .password-toggle:hover {
@@ -483,7 +517,17 @@
             font-size: 16px;
             opacity: 0;
             transition: all 0.3s ease;
-            z-index: 2;
+            z-index: 3;
+            pointer-events: none;
+        }
+        
+        .input-wrapper:has(#cedula) .validation-icon {
+            right: 50px;
+        }
+        
+        .input-wrapper:has(#password) .validation-icon,
+        .input-wrapper:has(#confirmPassword) .validation-icon {
+            right: 50px;
         }
 
         .validation-icon.show {
@@ -496,6 +540,32 @@
 
         .validation-icon.invalid {
             color: #ef4444;
+        }
+        
+        .error-message {
+            display: block;
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 5px;
+            min-height: 18px;
+            font-weight: 500;
+        }
+        
+        .error-message:empty {
+            display: none;
+        }
+        
+        .success-message {
+            display: block;
+            color: #10b981;
+            font-size: 12px;
+            margin-top: 5px;
+            min-height: 18px;
+            font-weight: 500;
+        }
+        
+        .success-message:empty {
+            display: none;
         }
 
         /* Responsive Design */
@@ -566,12 +636,15 @@
                         id="cedula" 
                         name="cedula" 
                         class="form-control" 
-                        placeholder="Ingresa tu cédula"
+                        placeholder="Ingresa tu cédula (10 dígitos)"
                         required
-                        pattern="[0-9]{10,20}"
-                        title="Solo números, entre 10 y 20 dígitos"
+                        maxlength="10"
+                        pattern="[0-9]{10}"
+                        title="Solo números, exactamente 10 dígitos"
                     >
+                    <span class="validation-icon" id="cedulaValidation"></span>
                 </div>
+                <small class="error-message" id="cedulaError"></small>
             </div>
 
             <div class="form-group">
@@ -620,13 +693,14 @@
                         autocomplete="new-password"
                     >
                     <span class="validation-icon" id="passwordValidation"></span>
-                    <button type="button" class="password-toggle" id="togglePassword">
+                    <button type="button" class="password-toggle" id="togglePassword" aria-label="Mostrar/Ocultar contraseña" tabindex="0">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
                 <div class="password-strength" id="passwordStrength">
                     <div class="password-strength-bar"></div>
                 </div>
+                <small class="error-message" id="passwordError"></small>
             </div>
 
             <div class="form-group">
@@ -644,10 +718,11 @@
                         autocomplete="new-password"
                     >
                     <span class="validation-icon" id="confirmPasswordValidation"></span>
-                    <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                    <button type="button" class="password-toggle" id="toggleConfirmPassword" aria-label="Mostrar/Ocultar confirmación de contraseña" tabindex="0">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
+                <small class="error-message" id="confirmPasswordError"></small>
             </div>
 
             <button type="submit" class="btn-register">
@@ -661,122 +736,285 @@
     </div>
 
     <script>
-        // Toggle password visibility
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
-        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-
-        togglePassword.addEventListener('click', function() {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
+        // Función para validar cédula ecuatoriana
+        function validarCedulaEcuatoriana(cedula) {
+            cedula = cedula.replace(/[^0-9]/g, '');
             
-            const icon = this.querySelector('i');
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
-        });
-
-        toggleConfirmPassword.addEventListener('click', function() {
-            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            confirmPasswordInput.setAttribute('type', type);
+            if (cedula.length !== 10) {
+                return { valid: false, message: 'La cédula debe tener exactamente 10 dígitos' };
+            }
             
-            const icon = this.querySelector('i');
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
-        });
-
-        // Validación en tiempo real
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-        const passwordStrength = document.getElementById('passwordStrength');
-        const passwordStrengthBar = passwordStrength.querySelector('.password-strength-bar');
-        const passwordValidation = document.getElementById('passwordValidation');
-        const confirmPasswordValidation = document.getElementById('confirmPasswordValidation');
-
-        // Validar fuerza de contraseña
-        function checkPasswordStrength(password) {
-            let strength = 0;
-            if (password.length >= 8) strength++;
-            if (password.length >= 12) strength++;
-            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            if (/^(\d)\1{9}$/.test(cedula)) {
+                return { valid: false, message: 'La cédula no puede tener todos los dígitos iguales' };
+            }
             
-            passwordStrength.classList.add('show');
+            var digitos = cedula.substring(0, 9).split('').map(Number);
+            var verificador = parseInt(cedula.charAt(9));
+            var coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+            var suma = 0;
             
-            if (strength <= 2) {
-                passwordStrengthBar.className = 'password-strength-bar weak';
-            } else if (strength <= 3) {
-                passwordStrengthBar.className = 'password-strength-bar medium';
+            for (var i = 0; i < 9; i++) {
+                var producto = digitos[i] * coeficientes[i];
+                if (producto > 9) {
+                    producto = Math.floor(producto / 10) + (producto % 10);
+                }
+                suma += producto;
+            }
+            
+            var residuo = suma % 10;
+            var digitoCalculado = (residuo === 0) ? 0 : (10 - residuo);
+            
+            if (digitoCalculado === verificador) {
+                return { valid: true, message: 'Cédula válida' };
             } else {
-                passwordStrengthBar.className = 'password-strength-bar strong';
+                return { valid: false, message: 'La cédula no es válida' };
             }
         }
 
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            if (password.length > 0) {
-                checkPasswordStrength(password);
-                if (password.length >= 8) {
-                    this.classList.add('valid');
-                    this.classList.remove('invalid');
-                    passwordValidation.className = 'validation-icon show valid';
-                    passwordValidation.innerHTML = '<i class="fas fa-check-circle"></i>';
-                } else {
-                    this.classList.remove('valid');
-                    this.classList.add('invalid');
-                    passwordValidation.className = 'validation-icon show invalid';
-                    passwordValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
-                }
-            } else {
-                this.classList.remove('valid', 'invalid');
-                passwordValidation.className = 'validation-icon';
-                passwordStrength.classList.remove('show');
-            }
-            
-            // Validar confirmación
-            if (confirmPasswordInput.value.length > 0) {
-                validatePasswordMatch();
-            }
-        });
-
-        function validatePasswordMatch() {
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-            
-            if (confirmPassword.length > 0) {
-                if (password === confirmPassword && password.length >= 8) {
-                    confirmPasswordInput.classList.add('valid');
-                    confirmPasswordInput.classList.remove('invalid');
-                    confirmPasswordValidation.className = 'validation-icon show valid';
-                    confirmPasswordValidation.innerHTML = '<i class="fas fa-check-circle"></i>';
-                } else {
-                    confirmPasswordInput.classList.remove('valid');
-                    confirmPasswordInput.classList.add('invalid');
-                    confirmPasswordValidation.className = 'validation-icon show invalid';
-                    confirmPasswordValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
-                }
-            } else {
-                confirmPasswordInput.classList.remove('valid', 'invalid');
-                confirmPasswordValidation.className = 'validation-icon';
+        // Función para mostrar mensaje de error
+        function mostrarError(campoId, mensaje) {
+            const errorElement = document.getElementById(campoId + 'Error');
+            if (errorElement) {
+                errorElement.textContent = mensaje;
+                errorElement.className = 'error-message';
             }
         }
 
-        confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+        // Función para mostrar mensaje de éxito
+        function mostrarExito(campoId, mensaje) {
+            const errorElement = document.getElementById(campoId + 'Error');
+            if (errorElement) {
+                errorElement.textContent = mensaje;
+                errorElement.className = 'success-message';
+            }
+        }
 
-        // Validación de otros campos
-        const inputs = document.querySelectorAll('.form-control');
-        inputs.forEach(input => {
-            if (input.id !== 'password' && input.id !== 'confirmPassword') {
-                input.addEventListener('blur', function() {
-                    if (this.value.trim().length > 0) {
-                        this.classList.add('valid');
-                        this.classList.remove('invalid');
+        // Función para limpiar mensaje
+        function limpiarMensaje(campoId) {
+            const errorElement = document.getElementById(campoId + 'Error');
+            if (errorElement) {
+                errorElement.textContent = '';
+            }
+        }
+
+        // Todo el código cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle password visibility - ENFOQUE SIMPLE Y DIRECTO
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+
+            // Toggle para contraseña principal
+            if (togglePassword) {
+                togglePassword.onclick = function() {
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        this.querySelector('i').classList.remove('fa-eye');
+                        this.querySelector('i').classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        this.querySelector('i').classList.remove('fa-eye-slash');
+                        this.querySelector('i').classList.add('fa-eye');
+                    }
+                };
+            }
+
+            // Toggle para confirmar contraseña
+            if (toggleConfirmPassword) {
+                toggleConfirmPassword.onclick = function() {
+                    if (confirmPasswordInput.type === 'password') {
+                        confirmPasswordInput.type = 'text';
+                        this.querySelector('i').classList.remove('fa-eye');
+                        this.querySelector('i').classList.add('fa-eye-slash');
+                    } else {
+                        confirmPasswordInput.type = 'password';
+                        this.querySelector('i').classList.remove('fa-eye-slash');
+                        this.querySelector('i').classList.add('fa-eye');
+                    }
+                };
+            }
+
+            // Validación en tiempo real
+            const passwordStrength = document.getElementById('passwordStrength');
+            const passwordStrengthBar = passwordStrength ? passwordStrength.querySelector('.password-strength-bar') : null;
+            const passwordValidation = document.getElementById('passwordValidation');
+            const confirmPasswordValidation = document.getElementById('confirmPasswordValidation');
+            const cedulaInput = document.getElementById('cedula');
+            const cedulaValidation = document.getElementById('cedulaValidation');
+
+            // Validar fuerza de contraseña
+            function checkPasswordStrength(password) {
+                if (!passwordStrength || !passwordStrengthBar) return;
+                
+                let strength = 0;
+                if (password.length >= 8) strength++;
+                if (password.length >= 12) strength++;
+                if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                
+                passwordStrength.classList.add('show');
+                
+                if (strength <= 2) {
+                    passwordStrengthBar.className = 'password-strength-bar weak';
+                } else if (strength <= 3) {
+                    passwordStrengthBar.className = 'password-strength-bar medium';
+                } else {
+                    passwordStrengthBar.className = 'password-strength-bar strong';
+                }
+            }
+
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function() {
+                    const password = this.value;
+                    limpiarMensaje('password');
+                    
+                    if (password.length > 0) {
+                        checkPasswordStrength(password);
+                        if (password.length >= 8) {
+                            this.classList.add('valid');
+                            this.classList.remove('invalid');
+                            if (passwordValidation) {
+                                passwordValidation.className = 'validation-icon show valid';
+                                passwordValidation.innerHTML = '<i class="fas fa-check-circle"></i>';
+                            }
+                            mostrarExito('password', '✓ Contraseña válida');
+                        } else {
+                            this.classList.remove('valid');
+                            this.classList.add('invalid');
+                            if (passwordValidation) {
+                                passwordValidation.className = 'validation-icon show invalid';
+                                passwordValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                            }
+                            mostrarError('password', 'La contraseña debe tener al menos 8 caracteres');
+                        }
                     } else {
                         this.classList.remove('valid', 'invalid');
+                        if (passwordValidation) {
+                            passwordValidation.className = 'validation-icon';
+                        }
+                        if (passwordStrength) {
+                            passwordStrength.classList.remove('show');
+                        }
+                    }
+                    
+                    // Validar confirmación si hay texto
+                    if (confirmPasswordInput && confirmPasswordInput.value.length > 0) {
+                        validatePasswordMatch();
                     }
                 });
             }
+
+            function validatePasswordMatch() {
+                if (!passwordInput || !confirmPasswordInput) return;
+                
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                limpiarMensaje('confirmPassword');
+                
+                if (confirmPassword.length > 0) {
+                    if (password === confirmPassword && password.length >= 8) {
+                        confirmPasswordInput.classList.add('valid');
+                        confirmPasswordInput.classList.remove('invalid');
+                        if (confirmPasswordValidation) {
+                            confirmPasswordValidation.className = 'validation-icon show valid';
+                            confirmPasswordValidation.innerHTML = '<i class="fas fa-check-circle"></i>';
+                        }
+                        mostrarExito('confirmPassword', '✓ Las contraseñas coinciden');
+                    } else if (password !== confirmPassword) {
+                        confirmPasswordInput.classList.remove('valid');
+                        confirmPasswordInput.classList.add('invalid');
+                        if (confirmPasswordValidation) {
+                            confirmPasswordValidation.className = 'validation-icon show invalid';
+                            confirmPasswordValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                        }
+                        mostrarError('confirmPassword', '✗ Las contraseñas no coinciden');
+                    } else {
+                        confirmPasswordInput.classList.remove('valid');
+                        confirmPasswordInput.classList.add('invalid');
+                        if (confirmPasswordValidation) {
+                            confirmPasswordValidation.className = 'validation-icon show invalid';
+                            confirmPasswordValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                        }
+                        mostrarError('confirmPassword', 'La contraseña debe tener al menos 8 caracteres');
+                    }
+                } else {
+                    confirmPasswordInput.classList.remove('valid', 'invalid');
+                    if (confirmPasswordValidation) {
+                        confirmPasswordValidation.className = 'validation-icon';
+                    }
+                }
+            }
+
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+            }
+
+            // Validación de cédula en tiempo real
+            if (cedulaInput) {
+                cedulaInput.addEventListener('input', function() {
+                    let cedula = this.value.replace(/[^0-9]/g, '');
+                    this.value = cedula;
+                    
+                    limpiarMensaje('cedula');
+                    
+                    if (cedula.length === 0) {
+                        this.classList.remove('valid', 'invalid');
+                        if (cedulaValidation) {
+                            cedulaValidation.className = 'validation-icon';
+                            cedulaValidation.innerHTML = '';
+                        }
+                        return;
+                    }
+                    
+                    if (cedula.length === 10) {
+                        const resultado = validarCedulaEcuatoriana(cedula);
+                        
+                        if (resultado.valid) {
+                            this.classList.add('valid');
+                            this.classList.remove('invalid');
+                            if (cedulaValidation) {
+                                cedulaValidation.className = 'validation-icon show valid';
+                                cedulaValidation.innerHTML = '<i class="fas fa-check-circle"></i>';
+                            }
+                            mostrarExito('cedula', '✓ Cédula válida');
+                        } else {
+                            this.classList.remove('valid');
+                            this.classList.add('invalid');
+                            if (cedulaValidation) {
+                                cedulaValidation.className = 'validation-icon show invalid';
+                                cedulaValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                            }
+                            mostrarError('cedula', '✗ ' + resultado.message);
+                        }
+                    } else {
+                        this.classList.remove('valid');
+                        this.classList.add('invalid');
+                        if (cedulaValidation) {
+                            cedulaValidation.className = 'validation-icon show invalid';
+                            cedulaValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                        }
+                        mostrarError('cedula', 'La cédula debe tener 10 dígitos');
+                    }
+                });
+            }
+
+            // Validación de otros campos
+            const inputs = document.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                if (input.id !== 'password' && input.id !== 'confirmPassword' && input.id !== 'cedula') {
+                    input.addEventListener('blur', function() {
+                        if (this.value.trim().length > 0) {
+                            this.classList.add('valid');
+                            this.classList.remove('invalid');
+                        } else {
+                            this.classList.remove('valid', 'invalid');
+                        }
+                    });
+                }
+            });
         });
 
         // Form submission
@@ -807,10 +1045,17 @@
                 return;
             }
 
-            // Validar cédula (solo números)
-            const cedulaRegex = /^[0-9]{10,20}$/;
-            if (!cedulaRegex.test(cedula)) {
-                showAlert('La cédula debe contener solo números (10-20 dígitos)', 'error');
+            // Validar cédula ecuatoriana
+            const cedulaLimpia = cedula.replace(/[^0-9]/g, '');
+            if (cedulaLimpia.length !== 10) {
+                showAlert('La cédula debe tener exactamente 10 dígitos', 'error');
+                return;
+            }
+            
+            // Validar con algoritmo
+            const resultadoCedula = validarCedulaEcuatoriana(cedulaLimpia);
+            if (!resultadoCedula.valid) {
+                showAlert(resultadoCedula.message, 'error');
                 return;
             }
 
@@ -832,7 +1077,7 @@
 
             const formData = new FormData();
             formData.append('nombre', nombre);
-            formData.append('cedula', cedula);
+            formData.append('cedula', cedula.replace(/[^0-9]/g, ''));
             formData.append('email', email);
             formData.append('telefono', telefono);
             formData.append('password', password);

@@ -468,6 +468,10 @@ if (!$auth->isAuthenticated()) {
         });
 
         window.editarProducto = function(id) {
+          // Recargar dropdowns antes de abrir el modal para tener datos actualizados
+          cargarMateriales();
+          cargarUnidades();
+          
           $.ajax({
             url: 'api.php?action=obtener&id=' + id,
             method: 'GET',
@@ -475,30 +479,34 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 var prod = response.data;
-                $('#edit_id').val(prod.id);
-                $('#edit_nombre').val(prod.nombre);
-                $('#edit_material_id').val(prod.material_id);
-                $('#edit_unidad_id').val(prod.unidad_id);
-                $('#edit_descripcion').val(prod.descripcion || '');
-                $('#edit_estado').val(prod.estado);
                 
-                // Cargar precios
-                var precioVenta = 0;
-                var precioCompra = 0;
-                if (prod.precios) {
-                  prod.precios.forEach(function(precio) {
-                    if (precio.tipo_precio === 'venta' && precio.estado === 'activo') {
-                      precioVenta = precio.precio_unitario;
-                    }
-                    if (precio.tipo_precio === 'compra' && precio.estado === 'activo') {
-                      precioCompra = precio.precio_unitario;
-                    }
-                  });
-                }
-                $('#edit_precio_venta').val(precioVenta);
-                $('#edit_precio_compra').val(precioCompra);
-                
-                $('#modalEditarProducto').modal('show');
+                // Esperar a que los dropdowns se carguen antes de establecer valores
+                setTimeout(function() {
+                  $('#edit_id').val(prod.id);
+                  $('#edit_nombre').val(prod.nombre);
+                  $('#edit_material_id').val(prod.material_id);
+                  $('#edit_unidad_id').val(prod.unidad_id);
+                  $('#edit_descripcion').val(prod.descripcion || '');
+                  $('#edit_estado').val(prod.estado);
+                  
+                  // Cargar precios
+                  var precioVenta = 0;
+                  var precioCompra = 0;
+                  if (prod.precios) {
+                    prod.precios.forEach(function(precio) {
+                      if (precio.tipo_precio === 'venta' && precio.estado === 'activo') {
+                        precioVenta = precio.precio_unitario;
+                      }
+                      if (precio.tipo_precio === 'compra' && precio.estado === 'activo') {
+                        precioCompra = precio.precio_unitario;
+                      }
+                    });
+                  }
+                  $('#edit_precio_venta').val(precioVenta);
+                  $('#edit_precio_compra').val(precioCompra);
+                  
+                  $('#modalEditarProducto').modal('show');
+                }, 200); // Pequeño delay para asegurar que los dropdowns se cargaron
               }
             }
           });

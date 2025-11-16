@@ -113,8 +113,30 @@ try {
                     $precio_venta = $_POST['precio_venta'] ?? 0;
                     $precio_compra = $_POST['precio_compra'] ?? 0;
                     
-                    if (empty($nombre) || empty($material_id) || empty($unidad_id)) {
-                        throw new Exception('Nombre, material y unidad son obligatorios');
+                    // Validar nombre: no solo espacios
+                    $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                    if (!$validacionNombre['valid']) {
+                        throw new Exception($validacionNombre['message']);
+                    }
+                    $nombre = limpiarEspacios($nombre);
+                    $descripcion = limpiarEspacios($descripcion);
+                    
+                    // Validar precios: solo números (decimales permitidos)
+                    if (!empty($precio_venta)) {
+                        $validacionPrecioVenta = validarSoloNumeros($precio_venta, 'Precio de Venta', true);
+                        if (!$validacionPrecioVenta['valid']) {
+                            throw new Exception($validacionPrecioVenta['message']);
+                        }
+                    }
+                    if (!empty($precio_compra)) {
+                        $validacionPrecioCompra = validarSoloNumeros($precio_compra, 'Precio de Compra', true);
+                        if (!$validacionPrecioCompra['valid']) {
+                            throw new Exception($validacionPrecioCompra['message']);
+                        }
+                    }
+                    
+                    if (empty($material_id) || empty($unidad_id)) {
+                        throw new Exception('Material y unidad son obligatorios');
                     }
                     
                     // Crear producto

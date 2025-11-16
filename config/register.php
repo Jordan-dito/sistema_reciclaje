@@ -112,14 +112,14 @@ try {
         exit;
     }
     
-    // Obtener el rol por defecto (Administrador - rol_id = 1)
-    $stmt = $db->prepare("SELECT id FROM roles WHERE nombre = 'Administrador' LIMIT 1");
+    // Obtener el rol por defecto (Gerente - rol_id = 2)
+    $stmt = $db->prepare("SELECT id FROM roles WHERE nombre = 'Gerente' LIMIT 1");
     $stmt->execute();
     $rol = $stmt->fetch();
     
     if (!$rol) {
-        // Si no existe el rol Administrador, buscar por id = 1
-        $stmt = $db->prepare("SELECT id FROM roles WHERE id = 1 LIMIT 1");
+        // Si no existe el rol Gerente, buscar por id = 2
+        $stmt = $db->prepare("SELECT id FROM roles WHERE id = 2 LIMIT 1");
         $stmt->execute();
         $rol = $stmt->fetch();
     }

@@ -387,6 +387,9 @@ if (!$auth->isAuthenticated()) {
         });
 
         window.editarMaterial = function(id) {
+          // Recargar categorías antes de abrir el modal para tener datos actualizados
+          cargarCategorias();
+          
           $.ajax({
             url: 'api.php?action=obtener&id=' + id,
             method: 'GET',
@@ -394,13 +397,17 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 var mat = response.data;
-                $('#edit_id').val(mat.id);
-                $('#edit_nombre').val(mat.nombre);
-                $('#edit_categoria_id').val(mat.categoria_id || '');
-                $('#edit_descripcion').val(mat.descripcion || '');
-                $('#edit_icono').val(mat.icono || '');
-                $('#edit_estado').val(mat.estado);
-                $('#modalEditarMaterial').modal('show');
+                
+                // Esperar a que el dropdown se cargue antes de establecer valores
+                setTimeout(function() {
+                  $('#edit_id').val(mat.id);
+                  $('#edit_nombre').val(mat.nombre);
+                  $('#edit_categoria_id').val(mat.categoria_id || '');
+                  $('#edit_descripcion').val(mat.descripcion || '');
+                  $('#edit_icono').val(mat.icono || '');
+                  $('#edit_estado').val(mat.estado);
+                  $('#modalEditarMaterial').modal('show');
+                }, 200); // Pequeño delay para asegurar que el dropdown se cargó
               }
             }
           });

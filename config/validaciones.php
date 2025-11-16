@@ -223,3 +223,216 @@ function formatearRuc($ruc) {
     return $ruc;
 }
 
+/**
+ * Valida que un campo no contenga solo espacios en blanco
+ * 
+ * @param string $valor Valor a validar
+ * @param string $nombreCampo Nombre del campo para el mensaje de error
+ * @return array ['valid' => bool, 'message' => string]
+ */
+function validarNoSoloEspacios($valor, $nombreCampo = 'Campo') {
+    $trimmed = trim($valor);
+    if (empty($trimmed)) {
+        return [
+            'valid' => false,
+            'message' => $nombreCampo . ' no puede contener solo espacios en blanco'
+        ];
+    }
+    return [
+        'valid' => true,
+        'message' => 'Válido'
+    ];
+}
+
+/**
+ * Valida que un campo contenga solo números
+ * 
+ * @param string $valor Valor a validar
+ * @param string $nombreCampo Nombre del campo para el mensaje de error
+ * @param bool $permitirDecimales Si permite decimales (default: false)
+ * @return array ['valid' => bool, 'message' => string]
+ */
+function validarSoloNumeros($valor, $nombreCampo = 'Campo', $permitirDecimales = false) {
+    $valor = trim($valor);
+    if (empty($valor)) {
+        return [
+            'valid' => false,
+            'message' => $nombreCampo . ' no puede estar vacío'
+        ];
+    }
+    
+    if ($permitirDecimales) {
+        // Permitir números enteros y decimales (con punto o coma)
+        if (!preg_match('/^[0-9]+([.,][0-9]+)?$/', $valor)) {
+            return [
+                'valid' => false,
+                'message' => $nombreCampo . ' debe contener solo números' . ($permitirDecimales ? ' (puede incluir decimales)' : '')
+            ];
+        }
+    } else {
+        // Solo números enteros
+        if (!preg_match('/^[0-9]+$/', $valor)) {
+            return [
+                'valid' => false,
+                'message' => $nombreCampo . ' debe contener solo números'
+            ];
+        }
+    }
+    
+    return [
+        'valid' => true,
+        'message' => 'Válido'
+    ];
+}
+
+/**
+ * Valida que un campo contenga solo letras (y espacios)
+ * 
+ * @param string $valor Valor a validar
+ * @param string $nombreCampo Nombre del campo para el mensaje de error
+ * @param bool $permitirEspacios Si permite espacios (default: true)
+ * @param bool $permitirAcentos Si permite acentos y caracteres especiales del español (default: true)
+ * @return array ['valid' => bool, 'message' => string]
+ */
+function validarSoloLetras($valor, $nombreCampo = 'Campo', $permitirEspacios = true, $permitirAcentos = true) {
+    $valor = trim($valor);
+    if (empty($valor)) {
+        return [
+            'valid' => false,
+            'message' => $nombreCampo . ' no puede estar vacío'
+        ];
+    }
+    
+    // Patrón base: solo letras
+    $patron = '/^[a-zA-Z';
+    
+    if ($permitirAcentos) {
+        $patron .= 'áéíóúÁÉÍÓÚñÑüÜ';
+    }
+    
+    if ($permitirEspacios) {
+        $patron .= ' ';
+    }
+    
+    $patron .= ']+$/u';
+    
+    if (!preg_match($patron, $valor)) {
+        $mensaje = $nombreCampo . ' debe contener solo letras';
+        if ($permitirEspacios) {
+            $mensaje .= ' y espacios';
+        }
+        return [
+            'valid' => false,
+            'message' => $mensaje
+        ];
+    }
+    
+    return [
+        'valid' => true,
+        'message' => 'Válido'
+    ];
+}
+
+/**
+ * Limpia espacios en blanco al inicio y final de un string
+ * 
+ * @param string $valor Valor a limpiar
+ * @return string Valor limpio
+ */
+function limpiarEspacios($valor) {
+    return trim($valor);
+}
+
+/**
+ * Limpia y valida un campo de texto
+ * 
+ * @param string $valor Valor a limpiar y validar
+ * @param bool $requerido Si el campo es requerido (default: false)
+ * @return array ['valid' => bool, 'value' => string, 'message' => string]
+ */
+function limpiarYValidarTexto($valor, $requerido = false) {
+    $limpio = trim($valor);
+    
+    if ($requerido && empty($limpio)) {
+        return [
+            'valid' => false,
+            'value' => '',
+            'message' => 'Este campo es obligatorio'
+        ];
+    }
+    
+    if (!empty($limpio) && preg_match('/^\s+$/', $limpio)) {
+        return [
+            'valid' => false,
+            'value' => '',
+            'message' => 'El campo no puede contener solo espacios en blanco'
+        ];
+    }
+    
+    return [
+        'valid' => true,
+        'value' => $limpio,
+        'message' => 'Válido'
+    ];
+}
+
+/**
+ * Valida un email
+ * 
+ * @param string $email Email a validar
+ * @return array ['valid' => bool, 'message' => string]
+ */
+function validarEmail($email) {
+    $email = trim($email);
+    if (empty($email)) {
+        return [
+            'valid' => false,
+            'message' => 'El email no puede estar vacío'
+        ];
+    }
+    
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return [
+            'valid' => false,
+            'message' => 'El formato del email no es válido'
+        ];
+    }
+    
+    return [
+        'valid' => true,
+        'message' => 'Email válido'
+    ];
+}
+
+/**
+ * Valida un teléfono ecuatoriano
+ * 
+ * @param string $telefono Teléfono a validar
+ * @return array ['valid' => bool, 'message' => string]
+ */
+function validarTelefonoEcuatoriano($telefono) {
+    $telefono = preg_replace('/[^0-9]/', '', $telefono);
+    
+    // Teléfonos ecuatorianos: 9 dígitos (celular) o 7 dígitos (fijo)
+    if (strlen($telefono) === 9) {
+        // Celular: debe empezar con 09
+        if (substr($telefono, 0, 2) === '09') {
+            return [
+                'valid' => true,
+                'message' => 'Teléfono válido'
+            ];
+        }
+    } elseif (strlen($telefono) === 7) {
+        // Fijo: 7 dígitos
+        return [
+            'valid' => true,
+            'message' => 'Teléfono válido'
+        ];
+    }
+    
+    return [
+        'valid' => false,
+        'message' => 'El teléfono debe tener 9 dígitos (celular: 09XXXXXXXX) o 7 dígitos (fijo)'
+    ];
+}
+
