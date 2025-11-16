@@ -77,7 +77,16 @@ class ErrorHandler {
             2006 => 'El servidor MySQL se ha desconectado. Intenta nuevamente.',
         ];
         
-        return $messages[$code] ?? 'Error de base de datos desconocido.';
+        // Si no hay mensaje específico, intentar obtener información del error
+        if (!isset($messages[$code])) {
+            // Errores comunes de MySQL que no están en la lista
+            if ($code == 1146) {
+                return 'La tabla no existe en la base de datos. Verifica que las tablas estén creadas correctamente.';
+            }
+            return "Error de base de datos (Código: {$code}). Verifica los logs para más detalles.";
+        }
+        
+        return $messages[$code];
     }
     
     /**

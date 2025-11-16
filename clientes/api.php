@@ -14,6 +14,7 @@ ob_start();
 try {
     require_once __DIR__ . '/../config/auth.php';
     require_once __DIR__ . '/../config/validaciones.php';
+    require_once __DIR__ . '/../config/ErrorHandler.php';
 
     $auth = new Auth();
     if (!$auth->isAuthenticated()) {
@@ -31,6 +32,22 @@ try {
     }
 
     $db = getDB();
+    
+    // Verificar que la tabla clientes existe
+    try {
+        $db->query("SELECT 1 FROM clientes LIMIT 1");
+    } catch (PDOException $e) {
+        if ($e->getCode() == '42S02') { // Table doesn't exist
+            ob_end_clean();
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'La tabla de clientes no existe. Por favor, ejecuta el script crear_tabla_clientes.sql en tu base de datos.'
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        throw $e;
+    }
     $usuario_id = $_SESSION['usuario_id'] ?? null;
     
     switch ($method) {
