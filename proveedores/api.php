@@ -41,7 +41,7 @@ try {
                     FROM proveedores p 
                     LEFT JOIN usuarios u ON p.creado_por = u.id 
                     WHERE p.estado <> 'inactivo'
-                    ORDER BY p.id DESC
+                    ORDER BY p.id ASC
                 ");
                 $proveedores = $stmt->fetchAll();
                 
@@ -76,16 +76,43 @@ try {
                 $estado = $_POST['estado'] ?? 'activo';
                 $notas = trim($_POST['notas'] ?? '');
                 
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                // Validar nombre: no solo espacios
+                $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
+                }
+                $nombre = limpiarEspacios($nombre);
+                
+                // Validar email si se proporciona
+                if (!empty($email)) {
+                    $email = limpiarEspacios($email);
+                    $validacionEmail = validarEmail($email);
+                    if (!$validacionEmail['valid']) {
+                        throw new Exception($validacionEmail['message']);
+                    }
                 }
                 
-                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    throw new Exception('Email inválido');
+                // Validar teléfono si se proporciona
+                if (!empty($telefono)) {
+                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
+                    $validacionTelefono = validarTelefonoEcuatoriano($telefono);
+                    if (!$validacionTelefono['valid']) {
+                        throw new Exception($validacionTelefono['message']);
+                    }
+                }
+                
+                // Validar contacto si se proporciona (solo letras y espacios)
+                if (!empty($contacto)) {
+                    $validacionContacto = validarSoloLetras($contacto, 'Contacto', true, true);
+                    if (!$validacionContacto['valid']) {
+                        throw new Exception($validacionContacto['message']);
+                    }
+                    $contacto = limpiarEspacios($contacto);
                 }
                 
                 // Validar cédula/RUC si se proporciona
                 if (!empty($cedula_ruc)) {
+                    $cedula_ruc = preg_replace('/[^0-9]/', '', $cedula_ruc); // Solo números
                     $validacionDoc = validarDocumentoEcuatoriano($cedula_ruc, $tipo_documento);
                     if (!$validacionDoc['valid']) {
                         throw new Exception($validacionDoc['message']);
@@ -98,6 +125,11 @@ try {
                         throw new Exception('La cédula/RUC ya está registrada');
                     }
                 }
+                
+                // Limpiar campos de texto
+                $direccion = limpiarEspacios($direccion);
+                $materiales_suministra = limpiarEspacios($materiales_suministra);
+                $notas = limpiarEspacios($notas);
                 
                 $stmt = $db->prepare("
                     INSERT INTO proveedores 
@@ -140,16 +172,43 @@ try {
                 $estado = $_POST['estado'] ?? 'activo';
                 $notas = trim($_POST['notas'] ?? '');
                 
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                // Validar nombre: no solo espacios
+                $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
+                }
+                $nombre = limpiarEspacios($nombre);
+                
+                // Validar email si se proporciona
+                if (!empty($email)) {
+                    $email = limpiarEspacios($email);
+                    $validacionEmail = validarEmail($email);
+                    if (!$validacionEmail['valid']) {
+                        throw new Exception($validacionEmail['message']);
+                    }
                 }
                 
-                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    throw new Exception('Email inválido');
+                // Validar teléfono si se proporciona
+                if (!empty($telefono)) {
+                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
+                    $validacionTelefono = validarTelefonoEcuatoriano($telefono);
+                    if (!$validacionTelefono['valid']) {
+                        throw new Exception($validacionTelefono['message']);
+                    }
+                }
+                
+                // Validar contacto si se proporciona (solo letras y espacios)
+                if (!empty($contacto)) {
+                    $validacionContacto = validarSoloLetras($contacto, 'Contacto', true, true);
+                    if (!$validacionContacto['valid']) {
+                        throw new Exception($validacionContacto['message']);
+                    }
+                    $contacto = limpiarEspacios($contacto);
                 }
                 
                 // Validar cédula/RUC si se proporciona
                 if (!empty($cedula_ruc)) {
+                    $cedula_ruc = preg_replace('/[^0-9]/', '', $cedula_ruc); // Solo números
                     $validacionDoc = validarDocumentoEcuatoriano($cedula_ruc, $tipo_documento);
                     if (!$validacionDoc['valid']) {
                         throw new Exception($validacionDoc['message']);
@@ -162,6 +221,11 @@ try {
                         throw new Exception('La cédula/RUC ya está registrada en otro proveedor');
                     }
                 }
+                
+                // Limpiar campos de texto
+                $direccion = limpiarEspacios($direccion);
+                $materiales_suministra = limpiarEspacios($materiales_suministra);
+                $notas = limpiarEspacios($notas);
                 
                 $stmt = $db->prepare("
                     UPDATE proveedores 

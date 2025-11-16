@@ -34,7 +34,7 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $stmt = $db->query("SELECT * FROM roles ORDER BY id DESC");
+                $stmt = $db->query("SELECT * FROM roles ORDER BY id ASC");
                 $roles = $stmt->fetchAll();
                 
                 ob_end_clean();

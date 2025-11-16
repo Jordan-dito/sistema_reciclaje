@@ -38,7 +38,7 @@ try {
                     SELECT s.*, u.nombre as responsable_nombre 
                     FROM sucursales s 
                     LEFT JOIN usuarios u ON s.responsable_id = u.id 
-                    ORDER BY s.id DESC
+                    ORDER BY s.id ASC
                 ");
                 $sucursales = $stmt->fetchAll();
                 

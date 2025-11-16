@@ -66,7 +66,7 @@ try {
                         FROM usuarios u 
                         INNER JOIN roles r ON u.rol_id = r.id 
                         WHERE u.estado <> 'inactivo'
-                        ORDER BY u.id DESC
+                        ORDER BY u.id ASC
                     ");
                     $stmt->execute();
                     $usuarios = $stmt->fetchAll();
@@ -132,18 +132,38 @@ try {
                     throw new Exception('Todos los campos obligatorios deben estar completos');
                 }
                 
-                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    throw new Exception('Email inválido');
+                // Validar nombre: solo letras y espacios
+                $validacionNombre = validarSoloLetras($nombre, 'Nombre', true, true);
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
+                }
+                $nombre = limpiarEspacios($nombre);
+                
+                // Validar cédula ecuatoriana
+                $cedula = preg_replace('/[^0-9]/', '', $cedula); // Solo números
+                $validacionCedula = validarCedulaEcuatoriana($cedula);
+                if (!$validacionCedula['valid']) {
+                    throw new Exception($validacionCedula['message']);
+                }
+                
+                // Validar email
+                $email = limpiarEspacios($email);
+                $validacionEmail = validarEmail($email);
+                if (!$validacionEmail['valid']) {
+                    throw new Exception($validacionEmail['message']);
+                }
+                
+                // Validar teléfono si se proporciona
+                if (!empty($telefono)) {
+                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
+                    $validacionTelefono = validarTelefonoEcuatoriano($telefono);
+                    if (!$validacionTelefono['valid']) {
+                        throw new Exception($validacionTelefono['message']);
+                    }
                 }
                 
                 if (strlen($password) < 8) {
                     throw new Exception('La contraseña debe tener al menos 8 caracteres');
-                }
-                
-                // Validar cédula ecuatoriana
-                $validacionCedula = validarCedulaEcuatoriana($cedula);
-                if (!$validacionCedula['valid']) {
-                    throw new Exception($validacionCedula['message']);
                 }
                 
                 // Verificar si el email ya existe
@@ -212,14 +232,34 @@ try {
                     throw new Exception('Todos los campos obligatorios deben estar completos');
                 }
                 
-                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    throw new Exception('Email inválido');
+                // Validar nombre: solo letras y espacios
+                $validacionNombre = validarSoloLetras($nombre, 'Nombre', true, true);
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
                 }
+                $nombre = limpiarEspacios($nombre);
                 
                 // Validar cédula ecuatoriana
+                $cedula = preg_replace('/[^0-9]/', '', $cedula); // Solo números
                 $validacionCedula = validarCedulaEcuatoriana($cedula);
                 if (!$validacionCedula['valid']) {
                     throw new Exception($validacionCedula['message']);
+                }
+                
+                // Validar email
+                $email = limpiarEspacios($email);
+                $validacionEmail = validarEmail($email);
+                if (!$validacionEmail['valid']) {
+                    throw new Exception($validacionEmail['message']);
+                }
+                
+                // Validar teléfono si se proporciona
+                if (!empty($telefono)) {
+                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
+                    $validacionTelefono = validarTelefonoEcuatoriano($telefono);
+                    if (!$validacionTelefono['valid']) {
+                        throw new Exception($validacionTelefono['message']);
+                    }
                 }
                 
                 // Verificar si el email ya existe en otro usuario

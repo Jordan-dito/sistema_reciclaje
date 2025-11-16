@@ -58,7 +58,7 @@ try {
                     FROM clientes c 
                     LEFT JOIN usuarios u ON c.creado_por = u.id 
                     WHERE c.estado <> 'inactivo'
-                    ORDER BY c.id DESC
+                    ORDER BY c.id ASC
                 ");
                 $clientes = $stmt->fetchAll();
                 

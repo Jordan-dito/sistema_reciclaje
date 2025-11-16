@@ -61,7 +61,7 @@ try {
                     $params[] = $sucursal_id;
                 }
                 
-                $sql .= " ORDER BY i.id DESC";
+                $sql .= " ORDER BY i.id ASC";
                 
                 $stmt = $db->prepare($sql);
                 $stmt->execute($params);
