@@ -295,6 +295,10 @@ if (!$auth->isAuthenticated()) {
     <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
     <script src="../assets/js/kaiadmin.min.js"></script>
     <script src="../assets/js/setting-demo.js"></script>
+    <?php
+      $basePath = '..';
+      include __DIR__ . '/../includes/footer-scripts.php';
+    ?>
     <script>
       function cargarMateriales() {
         $.ajax({

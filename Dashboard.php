@@ -901,6 +901,10 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
     <!-- Kaiadmin DEMO methods, don't include it in your project! -->
     <script src="assets/js/setting-demo.js"></script>
     <script src="assets/js/demo.js"></script>
+    <?php
+      $basePath = '';
+      include __DIR__ . '/includes/footer-scripts.php';
+    ?>
     <script>
       var chartSucursales = null;
       var chartUsuarios = null;
