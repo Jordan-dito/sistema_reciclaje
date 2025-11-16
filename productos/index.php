@@ -18,7 +18,7 @@ if (!$auth->isAuthenticated()) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>Gestión de Productos - Sistema de Reciclaje</title>
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
-    <link rel="icon" href="../assets/img/kaiadmin/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="../assets/img/logo.jpg" type="image/jpeg" />
 
     <script src="../assets/js/plugin/webfont/webfont.min.js"></script>
     <script>
@@ -43,7 +43,7 @@ if (!$auth->isAuthenticated()) {
         <div class="sidebar-logo">
           <div class="logo-header" data-background-color="dark">
             <a href="../Dashboard.php" class="logo">
-              <img src="../assets/img/kaiadmin/logo_light.svg" alt="navbar brand" class="navbar-brand" height="20" />
+              <img src="../assets/img/logo.jpg" alt="HNOSYÁNEZ S.A." class="navbar-brand" height="50" style="object-fit: contain; border-radius: 8px;" />
             </a>
             <div class="nav-toggle">
               <button class="btn btn-toggle toggle-sidebar"><i class="gg-menu-right"></i></button>
@@ -66,7 +66,7 @@ if (!$auth->isAuthenticated()) {
           <div class="main-header-logo">
             <div class="logo-header" data-background-color="dark">
               <a href="../Dashboard.php" class="logo">
-                <img src="../assets/img/kaiadmin/logo_light.svg" alt="navbar brand" class="navbar-brand" height="20" />
+                <img src="../assets/img/logo.jpg" alt="HNOSYÁNEZ S.A." class="navbar-brand" height="50" style="object-fit: contain; border-radius: 8px;" />
               </a>
             </div>
           </div>

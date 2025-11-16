@@ -61,27 +61,58 @@ try {
             
         case 'POST':
             if ($action === 'crear') {
-                $nombre = trim($_POST['nombre'] ?? '');
-                $descripcion = trim($_POST['descripcion'] ?? '');
-                $icono = trim($_POST['icono'] ?? '');
-                $estado = $_POST['estado'] ?? 'activo';
-                
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                $db->beginTransaction();
+                try {
+                    $nombre = trim($_POST['nombre'] ?? '');
+                    $descripcion = trim($_POST['descripcion'] ?? '');
+                    $icono = trim($_POST['icono'] ?? '');
+                    $estado = $_POST['estado'] ?? 'activo';
+                    $materiales = json_decode($_POST['materiales'] ?? '[]', true);
+                    
+                    if (empty($nombre)) {
+                        throw new Exception('El nombre es obligatorio');
+                    }
+                    
+                    // Crear categoría
+                    $stmt = $db->prepare("
+                        INSERT INTO categorias (nombre, descripcion, icono, estado) 
+                        VALUES (?, ?, ?, ?)
+                    ");
+                    $stmt->execute([$nombre, $descripcion ?: null, $icono ?: null, $estado]);
+                    $categoria_id = $db->lastInsertId();
+                    
+                    // Crear materiales asociados si existen
+                    if (!empty($materiales) && is_array($materiales)) {
+                        $stmtMaterial = $db->prepare("
+                            INSERT INTO materiales (nombre, categoria_id, descripcion, estado) 
+                            VALUES (?, ?, ?, 'activo')
+                        ");
+                        foreach ($materiales as $material) {
+                            if (!empty($material['nombre'])) {
+                                $stmtMaterial->execute([
+                                    trim($material['nombre']),
+                                    $categoria_id,
+                                    !empty($material['descripcion']) ? trim($material['descripcion']) : null
+                                ]);
+                            }
+                        }
+                    }
+                    
+                    $db->commit();
+                    ob_end_clean();
+                    $mensaje = 'Categoría creada exitosamente';
+                    if (!empty($materiales) && count($materiales) > 0) {
+                        $mensaje .= ' con ' . count($materiales) . ' material(es)';
+                    }
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $mensaje,
+                        'id' => $categoria_id
+                    ]);
+                } catch (Exception $e) {
+                    $db->rollBack();
+                    throw $e;
                 }
-                
-                $stmt = $db->prepare("
-                    INSERT INTO categorias (nombre, descripcion, icono, estado) 
-                    VALUES (?, ?, ?, ?)
-                ");
-                $stmt->execute([$nombre, $descripcion ?: null, $icono ?: null, $estado]);
-                
-                ob_end_clean();
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Categoría creada exitosamente',
-                    'id' => $db->lastInsertId()
-                ]);
             } elseif ($action === 'actualizar') {
                 $id = $_POST['id'] ?? 0;
                 $nombre = trim($_POST['nombre'] ?? '');

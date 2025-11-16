@@ -9,18 +9,18 @@ $basePath = $basePath !== '' ? $basePath . '/' : '';
 $currentRoute = $currentRoute ?? '';
 
 // Obtener rol del usuario desde la sesión
-$usuarioRol = isset($_SESSION['usuario_rol']) ? strtolower($_SESSION['usuario_rol']) : '';
+$usuarioRol = isset($_SESSION['usuario_rol']) ? trim(strtolower($_SESSION['usuario_rol'])) : '';
 
-$gestionRoutes = ['usuarios', 'roles', 'sucursales', 'categorias', 'materiales', 'productos'];
+$gestionRoutes = ['usuarios', 'roles', 'sucursales', 'categorias', 'materiales', 'productos', 'unidades'];
 $inventarioRoutes = ['inventarios', 'clientes', 'proveedores', 'compras', 'ventas'];
 
 $gestionOpen = in_array($currentRoute, $gestionRoutes, true);
 $inventarioOpen = in_array($currentRoute, $inventarioRoutes, true);
 
 // Determinar qué menús mostrar según el rol
-// Administrador: NO ve Gestión (solo Dashboard, Inventario, Reportes)
+// Administrador: SÍ ve Gestión (Dashboard, Gestión, Inventario, Reportes)
 // Gerente: SÍ ve Gestión (Dashboard, Gestión, Inventario, Reportes)
-$mostrarGestion = ($usuarioRol === 'gerente' || $usuarioRol === 'super administrador');
+$mostrarGestion = ($usuarioRol === 'administrador' || $usuarioRol === 'gerente' || $usuarioRol === 'super administrador');
 $mostrarInventario = true; // Todos los roles ven inventario
 $mostrarReportes = true; // Todos los roles ven reportes
 ?>
@@ -76,6 +76,11 @@ $mostrarReportes = true; // Todos los roles ven reportes
         <li class="<?php echo $currentRoute === 'productos' ? 'active' : ''; ?>">
           <a href="<?php echo $basePath; ?>productos/index.php">
             <span class="sub-item">Productos</span>
+          </a>
+        </li>
+        <li class="<?php echo $currentRoute === 'unidades' ? 'active' : ''; ?>">
+          <a href="<?php echo $basePath; ?>unidades/index.php">
+            <span class="sub-item">Unidades</span>
           </a>
         </li>
       </ul>

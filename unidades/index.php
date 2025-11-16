@@ -1,6 +1,6 @@
 <?php
 /**
- * Gestión de Materiales
+ * Gestión de Unidades
  * Sistema de Gestión de Reciclaje
  */
 
@@ -16,7 +16,7 @@ if (!$auth->isAuthenticated()) {
 <html lang="es">
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Gestión de Materiales - Sistema de Reciclaje</title>
+    <title>Gestión de Unidades - Sistema de Reciclaje</title>
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
     <link rel="icon" href="../assets/img/logo.jpg" type="image/jpeg" />
 
@@ -54,7 +54,7 @@ if (!$auth->isAuthenticated()) {
           <div class="sidebar-content">
             <?php
               $basePath = '..';
-              $currentRoute = 'materiales';
+              $currentRoute = 'unidades';
               include __DIR__ . '/../includes/sidebar.php';
             ?>
           </div>
@@ -92,12 +92,12 @@ if (!$auth->isAuthenticated()) {
           <div class="page-inner">
             <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
               <div>
-                <h3 class="fw-bold mb-3">Gestión de Materiales</h3>
-                <h6 class="op-7 mb-2">Administra los materiales reciclables por categoría</h6>
+                <h3 class="fw-bold mb-3">Gestión de Unidades</h3>
+                <h6 class="op-7 mb-2">Administra las unidades de medida (kg, L, und, etc.)</h6>
               </div>
               <div class="ms-md-auto py-2 py-md-0">
-                <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#modalAgregarMaterial">
-                  <i class="fa fa-plus"></i> Nuevo Material
+                <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#modalAgregarUnidad">
+                  <i class="fa fa-plus"></i> Nueva Unidad
                 </button>
               </div>
             </div>
@@ -107,19 +107,18 @@ if (!$auth->isAuthenticated()) {
                 <div class="card card-round">
                   <div class="card-header">
                     <div class="card-head-row">
-                      <div class="card-title">Lista de Materiales</div>
+                      <div class="card-title">Lista de Unidades</div>
                     </div>
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
-                      <table id="materialesTable" class="display table table-striped table-hover">
+                      <table id="unidadesTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
                             <th>ID</th>
                             <th>Nombre</th>
-                            <th>Categoría</th>
-                            <th>Descripción</th>
-                            <th>Icono</th>
+                            <th>Símbolo</th>
+                            <th>Tipo</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                           </tr>
@@ -142,33 +141,33 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
-    <!-- Modal Agregar Material -->
-    <div class="modal fade" id="modalAgregarMaterial" tabindex="-1" aria-hidden="true">
+    <!-- Modal Agregar Unidad -->
+    <div class="modal fade" id="modalAgregarUnidad" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Nuevo Material</h5>
+            <h5 class="modal-title">Nueva Unidad</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form id="formAgregarMaterial">
+            <form id="formAgregarUnidad">
               <div class="form-group">
                 <label>Nombre <span class="text-danger">*</span></label>
-                <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: PET" required>
+                <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Kilogramos" required>
               </div>
               <div class="form-group">
-                <label>Categoría</label>
-                <select id="categoria_id" name="categoria_id" class="form-control">
-                  <option value="">Seleccione una categoría</option>
+                <label>Símbolo</label>
+                <input type="text" id="simbolo" name="simbolo" class="form-control" placeholder="Ej: kg" maxlength="10">
+                <small class="form-text text-muted">Símbolo de la unidad (opcional)</small>
+              </div>
+              <div class="form-group">
+                <label>Tipo <span class="text-danger">*</span></label>
+                <select id="tipo" name="tipo" class="form-control" required>
+                  <option value="peso">Peso</option>
+                  <option value="volumen">Volumen</option>
+                  <option value="longitud">Longitud</option>
+                  <option value="cantidad">Cantidad</option>
                 </select>
-              </div>
-              <div class="form-group">
-                <label>Descripción</label>
-                <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del material"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Icono (clase Font Awesome)</label>
-                <input type="text" id="icono" name="icono" class="form-control" placeholder="Ej: fa-recycle">
               </div>
               <div class="form-group">
                 <label>Estado</label>
@@ -181,40 +180,39 @@ if (!$auth->isAuthenticated()) {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnGuardarMaterial">Guardar Material</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarUnidad">Guardar Unidad</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal Editar Material -->
-    <div class="modal fade" id="modalEditarMaterial" tabindex="-1" aria-hidden="true">
+    <!-- Modal Editar Unidad -->
+    <div class="modal fade" id="modalEditarUnidad" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Editar Material</h5>
+            <h5 class="modal-title">Editar Unidad</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form id="formEditarMaterial">
+            <form id="formEditarUnidad">
               <input type="hidden" id="edit_id" name="id">
               <div class="form-group">
                 <label>Nombre <span class="text-danger">*</span></label>
                 <input type="text" id="edit_nombre" name="nombre" class="form-control" required>
               </div>
               <div class="form-group">
-                <label>Categoría</label>
-                <select id="edit_categoria_id" name="categoria_id" class="form-control">
-                  <option value="">Seleccione una categoría</option>
+                <label>Símbolo</label>
+                <input type="text" id="edit_simbolo" name="simbolo" class="form-control" maxlength="10">
+              </div>
+              <div class="form-group">
+                <label>Tipo <span class="text-danger">*</span></label>
+                <select id="edit_tipo" name="tipo" class="form-control" required>
+                  <option value="peso">Peso</option>
+                  <option value="volumen">Volumen</option>
+                  <option value="longitud">Longitud</option>
+                  <option value="cantidad">Cantidad</option>
                 </select>
-              </div>
-              <div class="form-group">
-                <label>Descripción</label>
-                <textarea id="edit_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Icono (clase Font Awesome)</label>
-                <input type="text" id="edit_icono" name="icono" class="form-control">
               </div>
               <div class="form-group">
                 <label>Estado</label>
@@ -227,7 +225,7 @@ if (!$auth->isAuthenticated()) {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnActualizarMaterial">Actualizar Material</button>
+            <button type="button" class="btn btn-primary" id="btnActualizarUnidad">Actualizar Unidad</button>
           </div>
         </div>
       </div>
@@ -242,37 +240,12 @@ if (!$auth->isAuthenticated()) {
     <script src="../assets/js/kaiadmin.min.js"></script>
     <script src="../assets/js/setting-demo.js"></script>
     <script>
-      var categoriasList = [];
-      
-      function cargarCategorias() {
-        $.ajax({
-          url: 'api.php?action=categorias',
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success) {
-              categoriasList = response.data;
-              var selectAdd = $('#categoria_id');
-              var selectEdit = $('#edit_categoria_id');
-              selectAdd.html('<option value="">Seleccione una categoría</option>');
-              selectEdit.html('<option value="">Seleccione una categoría</option>');
-              response.data.forEach(function(cat) {
-                selectAdd.append('<option value="' + cat.id + '">' + cat.nombre + '</option>');
-                selectEdit.append('<option value="' + cat.id + '">' + cat.nombre + '</option>');
-              });
-            }
-          }
-        });
-      }
-
       $(document).ready(function() {
-        var table = $('#materialesTable').DataTable({
+        var table = $('#unidadesTable').DataTable({
           "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
         });
 
-        cargarCategorias();
-
-        function cargarMateriales() {
+        function cargarUnidades() {
           $.ajax({
             url: 'api.php?action=listar',
             method: 'GET',
@@ -280,34 +253,39 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 table.clear();
-                response.data.forEach(function(material) {
-                  var badgeEstado = material.estado === 'activo' 
+                response.data.forEach(function(unidad) {
+                  var badgeEstado = unidad.estado === 'activo' 
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
-                  var icono = material.icono ? '<i class="' + material.icono + '"></i>' : '-';
+                  
+                  var tipoLabels = {
+                    'peso': 'Peso',
+                    'volumen': 'Volumen',
+                    'longitud': 'Longitud',
+                    'cantidad': 'Cantidad'
+                  };
                   
                   table.row.add([
-                    material.id,
-                    '<strong>' + material.nombre + '</strong>',
-                    material.categoria_nombre || '-',
-                    material.descripcion || '-',
-                    icono,
+                    unidad.id,
+                    '<strong>' + unidad.nombre + '</strong>',
+                    unidad.simbolo || '-',
+                    tipoLabels[unidad.tipo] || unidad.tipo,
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarMaterial(' + material.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarMaterial(' + material.id + ')"><i class="fa fa-times"></i></button>'
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarUnidad(' + unidad.id + ')"><i class="fa fa-edit"></i></button> ' +
+                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarUnidad(' + unidad.id + ')"><i class="fa fa-times"></i></button>'
                   ]);
                 });
                 table.draw();
               }
             },
             error: function() {
-              swal("Error", "No se pudieron cargar los materiales", "error");
+              swal("Error", "No se pudieron cargar las unidades", "error");
             }
           });
         }
 
-        $('#btnGuardarMaterial').click(function() {
-          var form = $('#formAgregarMaterial')[0];
+        $('#btnGuardarUnidad').click(function() {
+          var form = $('#formAgregarUnidad')[0];
           if (!form.checkValidity()) {
             form.reportValidity();
             return;
@@ -315,9 +293,8 @@ if (!$auth->isAuthenticated()) {
           
           var formData = {
             nombre: $('#nombre').val(),
-            categoria_id: $('#categoria_id').val() || null,
-            descripcion: $('#descripcion').val(),
-            icono: $('#icono').val(),
+            simbolo: $('#simbolo').val(),
+            tipo: $('#tipo').val(),
             estado: $('#estado').val(),
             action: 'crear'
           };
@@ -330,22 +307,22 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
-                $('#modalAgregarMaterial').modal('hide');
-                $('#formAgregarMaterial')[0].reset();
-                cargarMateriales();
+                $('#modalAgregarUnidad').modal('hide');
+                $('#formAgregarUnidad')[0].reset();
+                cargarUnidades();
               } else {
                 swal("Error", response.message, "error");
               }
             },
             error: function(xhr) {
-              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar el material';
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar la unidad';
               swal("Error", error, "error");
             }
           });
         });
 
-        $('#btnActualizarMaterial').click(function() {
-          var form = $('#formEditarMaterial')[0];
+        $('#btnActualizarUnidad').click(function() {
+          var form = $('#formEditarUnidad')[0];
           if (!form.checkValidity()) {
             form.reportValidity();
             return;
@@ -354,9 +331,8 @@ if (!$auth->isAuthenticated()) {
           var formData = {
             id: $('#edit_id').val(),
             nombre: $('#edit_nombre').val(),
-            categoria_id: $('#edit_categoria_id').val() || null,
-            descripcion: $('#edit_descripcion').val(),
-            icono: $('#edit_icono').val(),
+            simbolo: $('#edit_simbolo').val(),
+            tipo: $('#edit_tipo').val(),
             estado: $('#edit_estado').val(),
             action: 'actualizar'
           };
@@ -369,43 +345,42 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
-                $('#modalEditarMaterial').modal('hide');
-                cargarMateriales();
+                $('#modalEditarUnidad').modal('hide');
+                cargarUnidades();
               } else {
                 swal("Error", response.message, "error");
               }
             },
             error: function(xhr) {
-              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al actualizar el material';
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al actualizar la unidad';
               swal("Error", error, "error");
             }
           });
         });
 
-        window.editarMaterial = function(id) {
+        window.editarUnidad = function(id) {
           $.ajax({
             url: 'api.php?action=obtener&id=' + id,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
               if (response.success) {
-                var mat = response.data;
-                $('#edit_id').val(mat.id);
-                $('#edit_nombre').val(mat.nombre);
-                $('#edit_categoria_id').val(mat.categoria_id || '');
-                $('#edit_descripcion').val(mat.descripcion || '');
-                $('#edit_icono').val(mat.icono || '');
-                $('#edit_estado').val(mat.estado);
-                $('#modalEditarMaterial').modal('show');
+                var unidad = response.data;
+                $('#edit_id').val(unidad.id);
+                $('#edit_nombre').val(unidad.nombre);
+                $('#edit_simbolo').val(unidad.simbolo || '');
+                $('#edit_tipo').val(unidad.tipo);
+                $('#edit_estado').val(unidad.estado);
+                $('#modalEditarUnidad').modal('show');
               }
             }
           });
         };
 
-        window.eliminarMaterial = function(id) {
+        window.eliminarUnidad = function(id) {
           swal({
             title: "¿Está seguro?",
-            text: "El material será desactivado",
+            text: "La unidad será desactivada",
             icon: "warning",
             buttons: true,
             dangerMode: true,
@@ -420,7 +395,7 @@ if (!$auth->isAuthenticated()) {
                 success: function(response) {
                   if (response.success) {
                     swal("¡Éxito!", response.message, "success");
-                    cargarMateriales();
+                    cargarUnidades();
                   } else {
                     swal("Error", response.message, "error");
                   }
@@ -430,7 +405,7 @@ if (!$auth->isAuthenticated()) {
           });
         };
 
-        cargarMateriales();
+        cargarUnidades();
       });
     </script>
   </body>

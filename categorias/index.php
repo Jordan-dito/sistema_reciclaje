@@ -18,7 +18,7 @@ if (!$auth->isAuthenticated()) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>Gestión de Categorías - Sistema de Reciclaje</title>
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
-    <link rel="icon" href="../assets/img/kaiadmin/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="../assets/img/logo.jpg" type="image/jpeg" />
 
     <script src="../assets/js/plugin/webfont/webfont.min.js"></script>
     <script>
@@ -43,7 +43,7 @@ if (!$auth->isAuthenticated()) {
         <div class="sidebar-logo">
           <div class="logo-header" data-background-color="dark">
             <a href="../Dashboard.php" class="logo">
-              <img src="../assets/img/kaiadmin/logo_light.svg" alt="navbar brand" class="navbar-brand" height="20" />
+              <img src="../assets/img/logo.jpg" alt="HNOSYÁNEZ S.A." class="navbar-brand" height="50" style="object-fit: contain; border-radius: 8px;" />
             </a>
             <div class="nav-toggle">
               <button class="btn btn-toggle toggle-sidebar"><i class="gg-menu-right"></i></button>
@@ -66,7 +66,7 @@ if (!$auth->isAuthenticated()) {
           <div class="main-header-logo">
             <div class="logo-header" data-background-color="dark">
               <a href="../Dashboard.php" class="logo">
-                <img src="../assets/img/kaiadmin/logo_light.svg" alt="navbar brand" class="navbar-brand" height="20" />
+                <img src="../assets/img/logo.jpg" alt="HNOSYÁNEZ S.A." class="navbar-brand" height="50" style="object-fit: contain; border-radius: 8px;" />
               </a>
             </div>
           </div>
@@ -143,39 +143,79 @@ if (!$auth->isAuthenticated()) {
 
     <!-- Modal Agregar Categoría -->
     <div class="modal fade" id="modalAgregarCategoria" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Nueva Categoría</h5>
+            <h5 class="modal-title">Nueva Categoría con Materiales</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form id="formAgregarCategoria">
+              <h6 class="mb-3">Información de la Categoría</h6>
               <div class="form-group">
-                <label>Nombre <span class="text-danger">*</span></label>
+                <label>Nombre de la Categoría <span class="text-danger">*</span></label>
                 <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Plástico" required>
               </div>
               <div class="form-group">
                 <label>Descripción</label>
-                <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción de la categoría"></textarea>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="2" placeholder="Descripción de la categoría"></textarea>
               </div>
-              <div class="form-group">
-                <label>Icono (clase Font Awesome)</label>
-                <input type="text" id="icono" name="icono" class="form-control" placeholder="Ej: fa-recycle">
-                <small class="form-text text-muted">Clase de icono de Font Awesome (opcional)</small>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Icono (clase Font Awesome)</label>
+                    <input type="text" id="icono" name="icono" class="form-control" placeholder="Ej: fa-recycle">
+                    <small class="form-text text-muted">Clase de icono de Font Awesome (opcional)</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Estado</label>
+                    <select id="estado" name="estado" class="form-control">
+                      <option value="activo">Activo</option>
+                      <option value="inactivo">Inactivo</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <label>Estado</label>
-                <select id="estado" name="estado" class="form-control">
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
+              
+              <hr class="my-4">
+              
+              <h6 class="mb-3">Materiales de esta Categoría</h6>
+              <div id="materialesContainer">
+                <div class="material-item mb-3 p-3 border rounded">
+                  <div class="row">
+                    <div class="col-md-5">
+                      <div class="form-group">
+                        <label>Nombre del Material <span class="text-danger">*</span></label>
+                        <input type="text" name="material_nombre[]" class="form-control material-nombre" placeholder="Ej: PET" required>
+                      </div>
+                    </div>
+                    <div class="col-md-5">
+                      <div class="form-group">
+                        <label>Descripción</label>
+                        <input type="text" name="material_descripcion[]" class="form-control material-descripcion" placeholder="Descripción del material">
+                      </div>
+                    </div>
+                    <div class="col-md-2">
+                      <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="button" class="btn btn-danger btn-sm w-100 btn-eliminar-material" style="display: none;">
+                          <i class="fa fa-times"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarMaterial">
+                <i class="fa fa-plus"></i> Agregar Otro Material
+              </button>
             </form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnGuardarCategoria">Guardar Categoría</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarCategoria">Guardar Categoría y Materiales</button>
           </div>
         </div>
       </div>
@@ -268,6 +308,51 @@ if (!$auth->isAuthenticated()) {
           });
         }
 
+        // Agregar material dinámicamente
+        $('#btnAgregarMaterial').click(function() {
+          var materialHtml = `
+            <div class="material-item mb-3 p-3 border rounded">
+              <div class="row">
+                <div class="col-md-5">
+                  <div class="form-group">
+                    <label>Nombre del Material <span class="text-danger">*</span></label>
+                    <input type="text" name="material_nombre[]" class="form-control material-nombre" placeholder="Ej: PET" required>
+                  </div>
+                </div>
+                <div class="col-md-5">
+                  <div class="form-group">
+                    <label>Descripción</label>
+                    <input type="text" name="material_descripcion[]" class="form-control material-descripcion" placeholder="Descripción del material">
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-danger btn-sm w-100 btn-eliminar-material">
+                      <i class="fa fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          $('#materialesContainer').append(materialHtml);
+          updateEliminarButtons();
+        });
+
+        // Eliminar material
+        $(document).on('click', '.btn-eliminar-material', function() {
+          $(this).closest('.material-item').remove();
+          updateEliminarButtons();
+        });
+
+        function updateEliminarButtons() {
+          var items = $('.material-item').length;
+          $('.btn-eliminar-material').each(function() {
+            $(this).toggle(items > 1);
+          });
+        }
+
         $('#btnGuardarCategoria').click(function() {
           var form = $('#formAgregarCategoria')[0];
           if (!form.checkValidity()) {
@@ -275,11 +360,25 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          // Recopilar materiales
+          var materiales = [];
+          $('.material-item').each(function() {
+            var nombre = $(this).find('.material-nombre').val().trim();
+            var descripcion = $(this).find('.material-descripcion').val().trim();
+            if (nombre) {
+              materiales.push({
+                nombre: nombre,
+                descripcion: descripcion || null
+              });
+            }
+          });
+          
           var formData = {
             nombre: $('#nombre').val(),
             descripcion: $('#descripcion').val(),
             icono: $('#icono').val(),
             estado: $('#estado').val(),
+            materiales: JSON.stringify(materiales),
             action: 'crear'
           };
           
@@ -293,6 +392,33 @@ if (!$auth->isAuthenticated()) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalAgregarCategoria').modal('hide');
                 $('#formAgregarCategoria')[0].reset();
+                $('#materialesContainer').html(`
+                  <div class="material-item mb-3 p-3 border rounded">
+                    <div class="row">
+                      <div class="col-md-5">
+                        <div class="form-group">
+                          <label>Nombre del Material <span class="text-danger">*</span></label>
+                          <input type="text" name="material_nombre[]" class="form-control material-nombre" placeholder="Ej: PET" required>
+                        </div>
+                      </div>
+                      <div class="col-md-5">
+                        <div class="form-group">
+                          <label>Descripción</label>
+                          <input type="text" name="material_descripcion[]" class="form-control material-descripcion" placeholder="Descripción del material">
+                        </div>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="form-group">
+                          <label>&nbsp;</label>
+                          <button type="button" class="btn btn-danger btn-sm w-100 btn-eliminar-material" style="display: none;">
+                            <i class="fa fa-times"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `);
+                updateEliminarButtons();
                 cargarCategorias();
               } else {
                 swal("Error", response.message, "error");

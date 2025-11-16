@@ -27,8 +27,8 @@ $basePath = '';
     />
     <link
       rel="icon"
-      href="../assets/img/kaiadmin/favicon.ico"
-      type="image/x-icon"
+      href="../assets/img/logo.jpg"
+      type="image/jpeg"
     />
 
     <!-- Fonts and icons -->
@@ -65,10 +65,11 @@ $basePath = '';
           <div class="logo-header" data-background-color="dark">
             <a href="../Dashboard.php" class="logo">
               <img
-                src="../assets/img/kaiadmin/logo_light.svg"
-                alt="navbar brand"
+                src="../assets/img/logo.jpg"
+                alt="HNOSYÁNEZ S.A."
                 class="navbar-brand"
-                height="20"
+                height="50"
+                style="object-fit: contain; border-radius: 8px;"
               />
             </a>
             <div class="nav-toggle">
@@ -146,6 +147,11 @@ $basePath = '';
                               <label>Tipo de Reporte *</label>
                               <select id="tipo_reporte" name="tipo_reporte" class="form-control" required>
                                 <option value="">Seleccione un reporte</option>
+                                <option value="inventarios">Reporte de Inventarios</option>
+                                <option value="compras">Reporte de Compras</option>
+                                <option value="ventas">Reporte de Ventas</option>
+                                <option value="productos">Reporte de Productos</option>
+                                <option value="materiales">Reporte de Materiales por Categoría</option>
                                 <option value="sucursales">Reporte de Sucursales</option>
                                 <option value="usuarios">Reporte de Usuarios por Rol</option>
                               </select>
@@ -261,13 +267,26 @@ $basePath = '';
         $('#fecha_hasta').val(hoy.toISOString().split('T')[0]);
         $('#fecha_desde').val(haceUnMes.toISOString().split('T')[0]);
         
-        // Cargar roles cuando se selecciona reporte de usuarios
+        // Manejar cambios en el tipo de reporte
         $('#tipo_reporte').change(function() {
-          if ($(this).val() === 'usuarios') {
+          var tipo = $(this).val();
+          
+          // Mostrar/ocultar filtro de rol
+          if (tipo === 'usuarios') {
             $('#filtro_rol').show();
             cargarRoles();
           } else {
             $('#filtro_rol').hide();
+          }
+          
+          // Reportes que no requieren fechas
+          var reportesSinFechas = ['productos', 'materiales'];
+          if (reportesSinFechas.includes(tipo)) {
+            $('#fecha_desde').prop('required', false).closest('.form-group').hide();
+            $('#fecha_hasta').prop('required', false).closest('.form-group').hide();
+          } else {
+            $('#fecha_desde').prop('required', true).closest('.form-group').show();
+            $('#fecha_hasta').prop('required', true).closest('.form-group').show();
           }
         });
         
@@ -312,27 +331,37 @@ $basePath = '';
           }
           
           var tipo = $('#tipo_reporte').val();
-          var fechaDesde = $('#fecha_desde').val();
-          var fechaHasta = $('#fecha_hasta').val();
+          var fechaDesde = $('#fecha_desde').val() || '';
+          var fechaHasta = $('#fecha_hasta').val() || '';
           var rolId = $('#rol_id').val() || '';
           
-          // Validar fechas
-          if (new Date(fechaDesde) > new Date(fechaHasta)) {
-            swal("Error", "La fecha desde debe ser menor o igual a la fecha hasta", "error");
-            return;
+          // Validar fechas solo si son requeridas
+          var reportesSinFechas = ['productos', 'materiales'];
+          if (!reportesSinFechas.includes(tipo)) {
+            if (!fechaDesde || !fechaHasta) {
+              swal("Error", "Las fechas son obligatorias para este tipo de reporte", "error");
+              return;
+            }
+            if (new Date(fechaDesde) > new Date(fechaHasta)) {
+              swal("Error", "La fecha desde debe ser menor o igual a la fecha hasta", "error");
+              return;
+            }
           }
           
           // Cargar vista previa
+          var dataParams = {
+            action: 'vista_previa',
+            tipo: tipo,
+            rol_id: rolId
+          };
+          
+          if (fechaDesde) dataParams.fecha_desde = fechaDesde;
+          if (fechaHasta) dataParams.fecha_hasta = fechaHasta;
+          
           $.ajax({
             url: 'api.php',
             method: 'GET',
-            data: {
-              action: 'vista_previa',
-              tipo: tipo,
-              fecha_desde: fechaDesde,
-              fecha_hasta: fechaHasta,
-              rol_id: rolId
-            },
+            data: dataParams,
             dataType: 'json',
             xhrFields: {
               withCredentials: true
@@ -390,21 +419,28 @@ $basePath = '';
           }
           
           var tipo = $('#tipo_reporte').val();
-          var fechaDesde = $('#fecha_desde').val();
-          var fechaHasta = $('#fecha_hasta').val();
+          var fechaDesde = $('#fecha_desde').val() || '';
+          var fechaHasta = $('#fecha_hasta').val() || '';
           var rolId = $('#rol_id').val() || '';
           
-          // Validar fechas
-          if (new Date(fechaDesde) > new Date(fechaHasta)) {
-            swal("Error", "La fecha desde debe ser menor o igual a la fecha hasta", "error");
-            return;
+          // Validar fechas solo si son requeridas
+          var reportesSinFechas = ['productos', 'materiales'];
+          if (!reportesSinFechas.includes(tipo)) {
+            if (!fechaDesde || !fechaHasta) {
+              swal("Error", "Las fechas son obligatorias para este tipo de reporte", "error");
+              return;
+            }
+            if (new Date(fechaDesde) > new Date(fechaHasta)) {
+              swal("Error", "La fecha desde debe ser menor o igual a la fecha hasta", "error");
+              return;
+            }
           }
           
           // Construir URL para generar PDF
-          var url = 'pdf.php?tipo=' + tipo + '&fecha_desde=' + fechaDesde + '&fecha_hasta=' + fechaHasta;
-          if (rolId) {
-            url += '&rol_id=' + rolId;
-          }
+          var url = 'pdf.php?tipo=' + tipo;
+          if (fechaDesde) url += '&fecha_desde=' + fechaDesde;
+          if (fechaHasta) url += '&fecha_hasta=' + fechaHasta;
+          if (rolId) url += '&rol_id=' + rolId;
           
           // Abrir en nueva ventana para descargar PDF
           window.open(url, '_blank');
