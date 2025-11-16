@@ -12,7 +12,7 @@ $currentRoute = $currentRoute ?? '';
 $usuarioRol = isset($_SESSION['usuario_rol']) ? trim(strtolower($_SESSION['usuario_rol'])) : '';
 
 $gestionRoutes = ['usuarios', 'roles', 'sucursales', 'categorias', 'materiales', 'productos', 'unidades'];
-$inventarioRoutes = ['inventarios', 'clientes', 'proveedores', 'compras', 'ventas'];
+$inventarioRoutes = ['inventarios', 'proveedores', 'compras', 'ventas']; // 'clientes' oculto temporalmente
 
 $gestionOpen = in_array($currentRoute, $gestionRoutes, true);
 $inventarioOpen = in_array($currentRoute, $inventarioRoutes, true);
@@ -102,11 +102,13 @@ $mostrarReportes = true; // Todos los roles ven reportes
             <span class="sub-item">Inventario</span>
           </a>
         </li>
+        <?php /* Clientes oculto temporalmente
         <li class="<?php echo $currentRoute === 'clientes' ? 'active' : ''; ?>">
           <a href="<?php echo $basePath; ?>clientes/index.php">
             <span class="sub-item">Clientes</span>
           </a>
         </li>
+        */ ?>
         <li class="<?php echo $currentRoute === 'proveedores' ? 'active' : ''; ?>">
           <a href="<?php echo $basePath; ?>proveedores/index.php">
             <span class="sub-item">Proveedores</span>
