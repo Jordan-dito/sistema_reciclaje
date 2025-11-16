@@ -29,8 +29,18 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// Redirigir al login
-header('Location: index.php');
+// Redirigir al login (usar ruta absoluta desde la raíz del sitio)
+// Calcular la ruta base del sitio
+$scriptPath = $_SERVER['SCRIPT_NAME']; // Ej: /config/logout.php
+$basePath = dirname(dirname($scriptPath)); // Subir dos niveles: /config -> /
+$basePath = $basePath === '/' ? '' : $basePath; // Si es raíz, dejar vacío
+
+// Construir URL absoluta
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$loginUrl = $protocol . '://' . $host . $basePath . '/index.php';
+
+header('Location: ' . $loginUrl);
 exit;
 ?>
 

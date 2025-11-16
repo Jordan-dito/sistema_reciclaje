@@ -6,6 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Registro - Sistema de Reciclaje</title>
     
+    <!-- Favicon -->
+    <link rel="icon" href="assets/img/logo.jpg" type="image/jpeg">
+    <link rel="shortcut icon" href="assets/img/logo.jpg" type="image/jpeg">
+    
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -23,18 +27,13 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #2c9f5f 0%, #1e7e4a 50%, #0d5a2f 100%);
+            background: linear-gradient(135deg, rgba(44, 159, 95, 0.85) 0%, rgba(30, 126, 74, 0.85) 50%, rgba(13, 90, 47, 0.85) 100%);
             min-height: 100vh;
-            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            position: relative;
             overflow-y: auto;
         }
 
@@ -45,9 +44,9 @@
             width: 100%;
             height: 100%;
             background: 
-                radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(46, 125, 50, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(27, 94, 32, 0.2) 0%, transparent 50%);
+                radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.25) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(46, 125, 50, 0.25) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(27, 94, 32, 0.15) 0%, transparent 50%);
             background-size: 100% 100%;
             animation: moveBackground 15s ease-in-out infinite alternate;
             top: 0;
@@ -60,8 +59,8 @@
             width: 100%;
             height: 100%;
             background-image: 
-                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,0.03) 35px, rgba(255,255,255,0.03) 70px),
-                repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(255,255,255,0.03) 35px, rgba(255,255,255,0.03) 70px);
+                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,0.02) 35px, rgba(255,255,255,0.02) 70px),
+                repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(255,255,255,0.02) 35px, rgba(255,255,255,0.02) 70px);
             top: 0;
             left: 0;
             pointer-events: none;
@@ -80,15 +79,17 @@
 
         .register-container {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(25px);
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.6) inset;
             width: 100%;
-            max-width: 500px;
-            padding: 40px;
+            max-width: 420px;
+            padding: 35px 30px;
             position: relative;
             z-index: 1;
-            animation: fadeInUp 0.6s ease-out;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
             margin: 20px 0;
         }
 
@@ -105,45 +106,69 @@
 
         .register-header {
             text-align: center;
-            margin-bottom: 35px;
+            margin-bottom: 30px;
         }
 
         .logo-container {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             margin: 0 auto 20px;
-            background: linear-gradient(135deg, #2c9f5f 0%, #1e7e4a 100%);
-            border-radius: 20px;
+            background: white;
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 30px rgba(44, 159, 95, 0.4);
+            box-shadow: 
+                0 15px 35px rgba(102, 126, 234, 0.4),
+                0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: floatLogo 3s ease-in-out infinite;
+            position: relative;
+            padding: 8px;
+            overflow: hidden;
+        }
+
+        .logo-container::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #2c9f5f, #1e7e4a, #0d5a2f);
+            opacity: 0.3;
+            filter: blur(10px);
+            z-index: -1;
             animation: pulse 2s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
         }
 
-        .logo-container i {
-            font-size: 40px;
-            color: white;
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 16px;
         }
 
         .register-header h1 {
-            color: #333;
-            font-size: 28px;
-            font-weight: 600;
+            background: linear-gradient(135deg, #2c9f5f 0%, #1e7e4a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 26px;
+            font-weight: 700;
             margin-bottom: 8px;
+            letter-spacing: -0.5px;
         }
 
         .register-header p {
-            color: #666;
+            color: #6b7280;
             font-size: 14px;
             font-weight: 400;
         }
@@ -155,10 +180,11 @@
 
         .form-group label {
             display: block;
-            color: #333;
+            color: #374151;
             font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 8px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
         }
 
         .input-wrapper {
@@ -167,70 +193,131 @@
 
         .input-wrapper i {
             position: absolute;
-            left: 15px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
-            color: #999;
-            font-size: 16px;
-            transition: color 0.3s;
+            color: #9ca3af;
+            font-size: 17px;
+            transition: all 0.3s ease;
+            z-index: 2;
         }
 
         .form-control {
             width: 100%;
-            padding: 14px 14px 14px 45px;
-            border: 2px solid #e0e0e0;
+            padding: 13px 13px 13px 45px;
+            border: 2px solid #e5e7eb;
             border-radius: 12px;
-            font-size: 15px;
+            font-size: 14px;
             font-family: 'Poppins', sans-serif;
-            transition: all 0.3s;
-            background: #f9f9f9;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f9fafb;
             outline: none;
+            color: #111827;
+        }
+
+        .form-control::placeholder {
+            color: #9ca3af;
         }
 
         .form-control:focus {
             border-color: #2c9f5f;
-            background: #fff;
-            box-shadow: 0 0 0 4px rgba(44, 159, 95, 0.1);
+            background: #ffffff;
+            box-shadow: 
+                0 0 0 4px rgba(44, 159, 95, 0.1),
+                0 4px 12px rgba(44, 159, 95, 0.15);
+            transform: translateY(-1px);
         }
 
-        .form-control:focus + i,
+        .form-control:focus ~ i,
         .input-wrapper:has(.form-control:focus) i {
             color: #2c9f5f;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .form-control.valid {
+            border-color: #10b981;
+        }
+
+        .form-control.invalid {
+            border-color: #ef4444;
         }
 
         .password-toggle {
             position: absolute;
-            right: 15px;
+            right: 18px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: #999;
+            color: #9ca3af;
             cursor: pointer;
-            font-size: 16px;
-            padding: 5px;
-            transition: color 0.3s;
+            font-size: 17px;
+            padding: 8px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            z-index: 2;
         }
 
         .password-toggle:hover {
             color: #2c9f5f;
+            background: rgba(44, 159, 95, 0.1);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .password-strength.show {
+            display: block;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .password-strength-bar.weak {
+            width: 33%;
+            background: #ef4444;
+        }
+
+        .password-strength-bar.medium {
+            width: 66%;
+            background: #f59e0b;
+        }
+
+        .password-strength-bar.strong {
+            width: 100%;
+            background: #10b981;
         }
 
         .btn-register {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             background: linear-gradient(135deg, #2c9f5f 0%, #1e7e4a 100%);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 16px;
             font-weight: 600;
             font-family: 'Poppins', sans-serif;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(44, 159, 95, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 10px 25px rgba(44, 159, 95, 0.4),
+                0 0 0 0 rgba(44, 159, 95, 0.5);
             position: relative;
             overflow: hidden;
+            margin-top: 10px;
+            letter-spacing: 0.5px;
         }
 
         .btn-register::before {
@@ -241,34 +328,40 @@
             width: 0;
             height: 0;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.25);
             transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            transition: width 0.6s ease, height 0.6s ease;
         }
 
         .btn-register:hover::before {
-            width: 300px;
-            height: 300px;
+            width: 400px;
+            height: 400px;
         }
 
         .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(44, 159, 95, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 
+                0 15px 35px rgba(44, 159, 95, 0.5),
+                0 0 0 8px rgba(44, 159, 95, 0.1);
         }
 
         .btn-register:active {
-            transform: translateY(0);
+            transform: translateY(-1px);
         }
 
         .btn-register span {
             position: relative;
             z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .login-link {
             text-align: center;
-            margin-top: 25px;
-            color: #666;
+            margin-top: 30px;
+            color: #6b7280;
             font-size: 14px;
         }
 
@@ -276,48 +369,85 @@
             color: #2c9f5f;
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.3s;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .login-link a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #2c9f5f, #1e7e4a);
+            transition: width 0.3s ease;
+        }
+
+        .login-link a:hover::after {
+            width: 100%;
         }
 
         .login-link a:hover {
             color: #1e7e4a;
-            text-decoration: underline;
         }
 
         /* Mensajes de error/éxito */
         .alert {
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
             font-size: 14px;
             display: none;
+            font-weight: 500;
+            position: relative;
+            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .alert.error {
-            background: #fee;
-            color: #c33;
-            border: 1px solid #fcc;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #dc2626;
+            border: 2px solid #fca5a5;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
         }
 
         .alert.success {
-            background: #efe;
-            color: #3c3;
-            border: 1px solid #cfc;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #059669;
+            border: 2px solid #6ee7b7;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
         }
 
         .alert.show {
             display: block;
-            animation: slideDown 0.3s ease-out;
+        }
+
+        .alert::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            border-radius: 12px 0 0 12px;
+        }
+
+        .alert.error::before {
+            background: #dc2626;
+        }
+
+        .alert.success::before {
+            background: #059669;
         }
 
         @keyframes slideDown {
             from {
                 opacity: 0;
-                transform: translateY(-10px);
+                transform: translateY(-15px) scale(0.95);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
@@ -344,11 +474,36 @@
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
+        /* Indicador de validación */
+        .validation-icon {
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .validation-icon.show {
+            opacity: 1;
+        }
+
+        .validation-icon.valid {
+            color: #10b981;
+        }
+
+        .validation-icon.invalid {
+            color: #ef4444;
+        }
+
         /* Responsive Design */
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
             .register-container {
-                padding: 30px 20px;
-                border-radius: 15px;
+                padding: 30px 25px;
+                border-radius: 20px;
+                max-width: 100%;
             }
 
             .register-header h1 {
@@ -356,12 +511,19 @@
             }
 
             .logo-container {
-                width: 70px;
-                height: 70px;
+                width: 85px;
+                height: 85px;
+                padding: 6px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .register-container {
+                padding: 28px 20px;
             }
 
-            .logo-container i {
-                font-size: 35px;
+            .form-control {
+                padding: 12px 12px 12px 42px;
             }
         }
     </style>
@@ -370,7 +532,7 @@
     <div class="register-container">
         <div class="register-header">
             <div class="logo-container">
-                <i class="fas fa-recycle"></i>
+                <img src="assets/img/logo.jpg" alt="HNOSYÁNEZ S.A.">
             </div>
             <h1>Crear Cuenta</h1>
             <p>Regístrate para comenzar</p>
@@ -457,9 +619,13 @@
                         minlength="8"
                         autocomplete="new-password"
                     >
+                    <span class="validation-icon" id="passwordValidation"></span>
                     <button type="button" class="password-toggle" id="togglePassword">
                         <i class="fas fa-eye"></i>
                     </button>
+                </div>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="password-strength-bar"></div>
                 </div>
             </div>
 
@@ -477,6 +643,7 @@
                         minlength="8"
                         autocomplete="new-password"
                     >
+                    <span class="validation-icon" id="confirmPasswordValidation"></span>
                     <button type="button" class="password-toggle" id="toggleConfirmPassword">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -516,6 +683,100 @@
             const icon = this.querySelector('i');
             icon.classList.toggle('fa-eye');
             icon.classList.toggle('fa-eye-slash');
+        });
+
+        // Validación en tiempo real
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const passwordStrength = document.getElementById('passwordStrength');
+        const passwordStrengthBar = passwordStrength.querySelector('.password-strength-bar');
+        const passwordValidation = document.getElementById('passwordValidation');
+        const confirmPasswordValidation = document.getElementById('confirmPasswordValidation');
+
+        // Validar fuerza de contraseña
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            passwordStrength.classList.add('show');
+            
+            if (strength <= 2) {
+                passwordStrengthBar.className = 'password-strength-bar weak';
+            } else if (strength <= 3) {
+                passwordStrengthBar.className = 'password-strength-bar medium';
+            } else {
+                passwordStrengthBar.className = 'password-strength-bar strong';
+            }
+        }
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            if (password.length > 0) {
+                checkPasswordStrength(password);
+                if (password.length >= 8) {
+                    this.classList.add('valid');
+                    this.classList.remove('invalid');
+                    passwordValidation.className = 'validation-icon show valid';
+                    passwordValidation.innerHTML = '<i class="fas fa-check-circle"></i>';
+                } else {
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    passwordValidation.className = 'validation-icon show invalid';
+                    passwordValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                }
+            } else {
+                this.classList.remove('valid', 'invalid');
+                passwordValidation.className = 'validation-icon';
+                passwordStrength.classList.remove('show');
+            }
+            
+            // Validar confirmación
+            if (confirmPasswordInput.value.length > 0) {
+                validatePasswordMatch();
+            }
+        });
+
+        function validatePasswordMatch() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (confirmPassword.length > 0) {
+                if (password === confirmPassword && password.length >= 8) {
+                    confirmPasswordInput.classList.add('valid');
+                    confirmPasswordInput.classList.remove('invalid');
+                    confirmPasswordValidation.className = 'validation-icon show valid';
+                    confirmPasswordValidation.innerHTML = '<i class="fas fa-check-circle"></i>';
+                } else {
+                    confirmPasswordInput.classList.remove('valid');
+                    confirmPasswordInput.classList.add('invalid');
+                    confirmPasswordValidation.className = 'validation-icon show invalid';
+                    confirmPasswordValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                }
+            } else {
+                confirmPasswordInput.classList.remove('valid', 'invalid');
+                confirmPasswordValidation.className = 'validation-icon';
+            }
+        }
+
+        confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+
+        // Validación de otros campos
+        const inputs = document.querySelectorAll('.form-control');
+        inputs.forEach(input => {
+            if (input.id !== 'password' && input.id !== 'confirmPassword') {
+                input.addEventListener('blur', function() {
+                    if (this.value.trim().length > 0) {
+                        this.classList.add('valid');
+                        this.classList.remove('invalid');
+                    } else {
+                        this.classList.remove('valid', 'invalid');
+                    }
+                });
+            }
         });
 
         // Form submission

@@ -59,6 +59,43 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'data' => $ventas]);
+            } elseif ($action === 'inventarios') {
+                // Obtener inventarios disponibles por sucursal
+                $sucursal_id = $_GET['sucursal_id'] ?? null;
+                
+                $sql = "
+                    SELECT i.id as inventario_id,
+                           i.cantidad,
+                           p.id as producto_id,
+                           p.nombre as producto_nombre,
+                           m.nombre as material_nombre,
+                           c.nombre as categoria_nombre,
+                           u.simbolo as unidad,
+                           pr.id as precio_id,
+                           pr.precio_unitario
+                    FROM inventarios i
+                    INNER JOIN productos p ON i.producto_id = p.id
+                    INNER JOIN materiales m ON p.material_id = m.id
+                    LEFT JOIN categorias c ON m.categoria_id = c.id
+                    INNER JOIN unidades u ON p.unidad_id = u.id
+                    LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.tipo_precio = 'venta' AND pr.estado = 'activo'
+                    WHERE i.estado <> 'inactivo' AND i.cantidad > 0
+                ";
+                $params = [];
+                
+                if ($sucursal_id) {
+                    $sql .= " AND i.sucursal_id = ?";
+                    $params[] = $sucursal_id;
+                }
+                
+                $sql .= " ORDER BY p.nombre ASC";
+                
+                $stmt = $db->prepare($sql);
+                $stmt->execute($params);
+                $inventarios = $stmt->fetchAll();
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $inventarios], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'obtener') {
                 $id = $_GET['id'] ?? 0;
                 
@@ -74,8 +111,25 @@ try {
                 $venta = $stmt->fetch();
                 
                 if ($venta) {
-                    // Obtener detalles
-                    $stmt = $db->prepare("SELECT * FROM ventas_detalle WHERE venta_id = ?");
+                    // Obtener detalles con información de productos
+                    $stmt = $db->prepare("
+                        SELECT vd.*, 
+                               i.producto_id,
+                               p.nombre as producto_nombre,
+                               m.nombre as material_nombre,
+                               c.nombre as categoria_nombre,
+                               u.nombre as unidad_nombre,
+                               u.simbolo as unidad_simbolo,
+                               pr.precio_unitario
+                        FROM ventas_detalle vd
+                        INNER JOIN inventarios i ON vd.inventario_id = i.id
+                        INNER JOIN productos p ON i.producto_id = p.id
+                        INNER JOIN materiales m ON p.material_id = m.id
+                        LEFT JOIN categorias c ON m.categoria_id = c.id
+                        INNER JOIN unidades u ON p.unidad_id = u.id
+                        LEFT JOIN precios pr ON vd.precio_id = pr.id
+                        WHERE vd.venta_id = ?
+                    ");
                     $stmt->execute([$id]);
                     $venta['detalles'] = $stmt->fetchAll();
                 }
@@ -152,19 +206,17 @@ try {
                     if (!empty($detalles)) {
                         foreach ($detalles as $detalle) {
                             $inventario_id = intval($detalle['inventario_id'] ?? 0);
-                            $nombre_producto = trim($detalle['nombre_producto'] ?? '');
-                            $categoria = $detalle['categoria'] ?? '';
+                            $producto_id = intval($detalle['producto_id'] ?? 0);
+                            $precio_id = !empty($detalle['precio_id']) ? intval($detalle['precio_id']) : null;
                             $cantidad = floatval($detalle['cantidad'] ?? 0);
-                            $unidad = $detalle['unidad'] ?? 'kg';
-                            $precio_unitario = floatval($detalle['precio_unitario'] ?? 0);
                             $subtotal_detalle = floatval($detalle['subtotal'] ?? 0);
                             
-                            if ($inventario_id <= 0) {
-                                throw new Exception('El inventario es obligatorio para cada detalle');
+                            if ($inventario_id <= 0 || $producto_id <= 0) {
+                                throw new Exception('Inventario y producto son obligatorios para cada detalle');
                             }
                             
                             // Verificar stock disponible
-                            $stmt = $db->prepare("SELECT cantidad FROM inventarios WHERE id = ?");
+                            $stmt = $db->prepare("SELECT cantidad, producto_id FROM inventarios WHERE id = ?");
                             $stmt->execute([$inventario_id]);
                             $inventario = $stmt->fetch();
                             
@@ -172,24 +224,41 @@ try {
                                 throw new Exception('Inventario no encontrado');
                             }
                             
+                            // Verificar que el producto coincida con el inventario
+                            if ($inventario['producto_id'] != $producto_id) {
+                                throw new Exception('El producto no coincide con el inventario seleccionado');
+                            }
+                            
                             if ($inventario['cantidad'] < $cantidad && $estado === 'completada') {
-                                throw new Exception('Stock insuficiente para el producto: ' . $nombre_producto);
+                                throw new Exception('Stock insuficiente para este producto');
+                            }
+                            
+                            // Obtener precio de venta si no se proporciona precio_id
+                            if (!$precio_id) {
+                                $stmt = $db->prepare("
+                                    SELECT id, precio_unitario FROM precios 
+                                    WHERE producto_id = ? AND tipo_precio = 'venta' AND estado = 'activo' 
+                                    LIMIT 1
+                                ");
+                                $stmt->execute([$producto_id]);
+                                $precio = $stmt->fetch();
+                                if ($precio) {
+                                    $precio_id = $precio['id'];
+                                }
                             }
                             
                             $stmt = $db->prepare("
                                 INSERT INTO ventas_detalle 
-                                (venta_id, inventario_id, nombre_producto, categoria, cantidad, unidad, precio_unitario, subtotal) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                (venta_id, inventario_id, producto_id, precio_id, cantidad, subtotal) 
+                                VALUES (?, ?, ?, ?, ?, ?)
                             ");
                             
                             $stmt->execute([
                                 $venta_id,
                                 $inventario_id,
-                                $nombre_producto,
-                                $categoria,
+                                $producto_id,
+                                $precio_id,
                                 $cantidad,
-                                $unidad,
-                                $precio_unitario,
                                 $subtotal_detalle
                             ]);
                             

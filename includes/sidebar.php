@@ -11,7 +11,7 @@ $currentRoute = $currentRoute ?? '';
 // Obtener rol del usuario desde la sesión
 $usuarioRol = isset($_SESSION['usuario_rol']) ? strtolower($_SESSION['usuario_rol']) : '';
 
-$gestionRoutes = ['usuarios', 'roles', 'sucursales'];
+$gestionRoutes = ['usuarios', 'roles', 'sucursales', 'categorias', 'materiales', 'productos'];
 $inventarioRoutes = ['inventarios', 'clientes', 'proveedores', 'compras', 'ventas'];
 
 $gestionOpen = in_array($currentRoute, $gestionRoutes, true);
@@ -61,6 +61,21 @@ $mostrarReportes = true; // Todos los roles ven reportes
         <li class="<?php echo $currentRoute === 'sucursales' ? 'active' : ''; ?>">
           <a href="<?php echo $basePath; ?>sucursales/index.php">
             <span class="sub-item">Sucursales</span>
+          </a>
+        </li>
+        <li class="<?php echo $currentRoute === 'categorias' ? 'active' : ''; ?>">
+          <a href="<?php echo $basePath; ?>categorias/index.php">
+            <span class="sub-item">Categorías</span>
+          </a>
+        </li>
+        <li class="<?php echo $currentRoute === 'materiales' ? 'active' : ''; ?>">
+          <a href="<?php echo $basePath; ?>materiales/index.php">
+            <span class="sub-item">Materiales</span>
+          </a>
+        </li>
+        <li class="<?php echo $currentRoute === 'productos' ? 'active' : ''; ?>">
+          <a href="<?php echo $basePath; ?>productos/index.php">
+            <span class="sub-item">Productos</span>
           </a>
         </li>
       </ul>

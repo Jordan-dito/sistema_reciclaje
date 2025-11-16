@@ -64,7 +64,12 @@ class Auth {
             $_SESSION['usuario_email'] = $usuario['email'];
             $_SESSION['usuario_cedula'] = $usuario['cedula'] ?? '';
             $_SESSION['usuario_rol'] = $usuario['rol_nombre'];
-            $_SESSION['usuario_permisos'] = json_decode($usuario['rol_permisos'], true);
+            // Manejar permisos (puede ser NULL si la tabla no tiene el campo)
+            $permisos = null;
+            if (isset($usuario['rol_permisos']) && !empty($usuario['rol_permisos'])) {
+                $permisos = json_decode($usuario['rol_permisos'], true);
+            }
+            $_SESSION['usuario_permisos'] = $permisos;
             $_SESSION['logged_in'] = true;
             $_SESSION['login_time'] = time();
 

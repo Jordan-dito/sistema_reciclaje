@@ -38,35 +38,33 @@ function loadEnv($filePath) {
     return true;
 }
 
-// Configuración de Base de Datos - Valores directos (sin .env)
-// Si necesitas usar .env, descomenta las líneas siguientes y comenta esta sección
+// =====================================================
+// CONFIGURACIÓN DE BASE DE DATOS DESDE .env
+// =====================================================
 
-// =====================================================
-// CONFIGURACIÓN DIRECTA DE BASE DE DATOS
-// =====================================================
-$dbHost = 'mysql-hermanosyanez.alwaysdata.net';
-$dbPort = '3306';
-$dbName = 'hermanosyanez_base';
-$dbUser = '438328';
-$dbPass = 'belen.jayron.tesis';
-
-// =====================================================
-// OPCIONAL: Cargar desde .env si existe (comentado por defecto)
-// =====================================================
-/*
+// Cargar archivo .env
 $envPath = __DIR__ . '/../.env';
+$envLoaded = false;
+
 if (file_exists($envPath)) {
     $envLoaded = loadEnv($envPath);
-    if ($envLoaded) {
-        // Sobrescribir con valores de .env si existen
-        $dbHost = getenv('DB_HOST') ?: $dbHost;
-        $dbPort = getenv('DB_PORT') ?: $dbPort;
-        $dbName = getenv('DB_NAME') ?: $dbName;
-        $dbUser = getenv('DB_USER') ?: $dbUser;
-        $dbPass = getenv('DB_PASS') ?: $dbPass;
-    }
 }
-*/
+
+// Valores por defecto (si no existe .env)
+$dbHost = 'localhost';
+$dbPort = '3306';
+$dbName = 'hermanosyanez_base';
+$dbUser = 'root';
+$dbPass = '';
+
+// Sobrescribir con valores de .env si existen
+if ($envLoaded) {
+    $dbHost = getenv('DB_HOST') ?: $dbHost;
+    $dbPort = getenv('DB_PORT') ?: $dbPort;
+    $dbName = getenv('DB_NAME') ?: $dbName;
+    $dbUser = getenv('DB_USER') ?: $dbUser;
+    $dbPass = getenv('DB_PASS') ?: $dbPass;
+}
 
 if (empty($dbHost) || empty($dbName) || empty($dbUser)) {
     throw new Exception('Las variables de conexión DB_HOST, DB_NAME y DB_USER son requeridas');

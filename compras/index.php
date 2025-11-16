@@ -151,12 +151,13 @@ if (!$auth->isAuthenticated()) {
                             <th>ID</th>
                             <th>Fecha</th>
                             <th>Sucursal</th>
-                            <th>Categoría</th>
+                            <th>Producto</th>
                             <th>Cantidad</th>
                             <th>Unidad</th>
                             <th>Precio Unitario</th>
                             <th>Total</th>
                             <th>Proveedor</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                           </tr>
                         </thead>
@@ -233,54 +234,26 @@ if (!$auth->isAuthenticated()) {
                     </select>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre del Producto <span class="text-danger">*</span></label>
-                    <input type="text" id="nombre_producto" name="nombre_producto" class="form-control" placeholder="Ej: Papel Reciclado" required>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Categoría <span class="text-danger">*</span></label>
-                    <select id="categoria" name="categoria" class="form-control" required>
-                      <option value="">Seleccione una categoría</option>
-                      <option value="papel">Papel</option>
-                      <option value="plastico">Plástico</option>
-                      <option value="vidrio">Vidrio</option>
-                      <option value="metal">Metal</option>
-                      <option value="PET">PET</option>
-                      <option value="carton">Cartón</option>
-                      <option value="cobre">Cobre</option>
-                      <option value="aluminio">Aluminio</option>
-                      <option value="bronce">Bronce</option>
-                      <option value="bateria">Batería</option>
-                      <option value="pvc">PVC</option>
-                      <option value="otro">Otro</option>
+                    <label>Producto <span class="text-danger">*</span></label>
+                    <select id="producto_id" name="producto_id" class="form-control" required>
+                      <option value="">Seleccione un producto</option>
+                      <!-- Las opciones se cargarán dinámicamente -->
                     </select>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Cantidad <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="form-group">
-                    <label>Unidad <span class="text-danger">*</span></label>
-                    <select id="unidad" name="unidad" class="form-control" required>
-                      <option value="kg">kg</option>
-                      <option value="litros">litros</option>
-                      <option value="unidades">unidades</option>
-                      <option value="toneladas">toneladas</option>
-                      <option value="metros">metros</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Precio Unitario <span class="text-danger">*</span></label>
+                    <label>Precio Unitario (Compra) <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required>
+                    <small class="form-text text-muted">Se cargará automáticamente desde el precio de compra del producto</small>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -390,7 +363,7 @@ if (!$auth->isAuthenticated()) {
         // Establecer fecha actual por defecto
         $('#fecha_compra').val(new Date().toISOString().split('T')[0]);
         
-        // Cargar sucursales y proveedores
+        // Cargar sucursales, proveedores y productos
         function cargarDatos() {
           // Cargar sucursales
           $.ajax({
@@ -425,7 +398,35 @@ if (!$auth->isAuthenticated()) {
               }
             }
           });
+          
+          // Cargar productos
+          $.ajax({
+            url: 'api.php?action=productos',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                var select = $('#producto_id');
+                select.empty().append('<option value="">Seleccione un producto</option>');
+                response.data.forEach(function(producto) {
+                  var texto = producto.nombre + ' (' + producto.material_nombre + ' - ' + producto.unidad + ')';
+                  var precio = producto.precio_unitario ? ' - $' + parseFloat(producto.precio_unitario).toFixed(2) : '';
+                  select.append('<option value="' + producto.id + '" data-precio="' + (producto.precio_unitario || 0) + '" data-precio-id="' + (producto.precio_id || '') + '">' + texto + precio + '</option>');
+                });
+              }
+            }
+          });
         }
+        
+        // Auto-completar precio cuando se selecciona producto
+        $('#producto_id').change(function() {
+          var option = $(this).find('option:selected');
+          if (option.val()) {
+            var precio = option.data('precio') || 0;
+            $('#precio_unitario').val(precio);
+            calcularTotal();
+          }
+        });
         
         window.cargarCompras = cargarCompras;
         
@@ -452,16 +453,46 @@ if (!$auth->isAuthenticated()) {
                       badgeEstado = '<span class="badge badge-danger">Cancelada</span>';
                     }
                     
+                    var productoNombre = detalle.producto_nombre || detalle.nombre_producto || '-';
+                    var unidad = detalle.unidad_simbolo || detalle.unidad || '-';
+                    var precio = detalle.precio_unitario ? parseFloat(detalle.precio_unitario).toFixed(2) : '0.00';
+                    
                     table.row.add([
                       compra.id,
                       compra.fecha_compra,
                       compra.sucursal_nombre,
-                      '<span class="badge badge-info">' + detalle.categoria + '</span>',
+                      '<strong>' + productoNombre + '</strong>',
                       detalle.cantidad,
-                      detalle.unidad,
-                      '$' + parseFloat(detalle.precio_unitario).toFixed(2),
+                      unidad,
+                      '$' + precio,
                       '$' + parseFloat(compra.total).toFixed(2),
                       compra.proveedor_nombre,
+                      badgeEstado,
+                      '<button class="btn btn-link btn-primary btn-sm" onclick="verCompra(' + compra.id + ')"><i class="fa fa-eye"></i></button> ' +
+                      '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCompra(' + compra.id + ')"><i class="fa fa-times"></i></button>'
+                    ]);
+                  } else {
+                    // Si no hay detalles, mostrar la compra sin detalles
+                    var badgeEstado = '';
+                    if (compra.estado === 'completada') {
+                      badgeEstado = '<span class="badge badge-success">Completada</span>';
+                    } else if (compra.estado === 'pendiente') {
+                      badgeEstado = '<span class="badge badge-warning">Pendiente</span>';
+                    } else {
+                      badgeEstado = '<span class="badge badge-danger">Cancelada</span>';
+                    }
+                    
+                    table.row.add([
+                      compra.id,
+                      compra.fecha_compra,
+                      compra.sucursal_nombre,
+                      '-',
+                      '-',
+                      '-',
+                      '-',
+                      '$' + parseFloat(compra.total).toFixed(2),
+                      compra.proveedor_nombre,
+                      badgeEstado,
                       '<button class="btn btn-link btn-primary btn-sm" onclick="verCompra(' + compra.id + ')"><i class="fa fa-eye"></i></button> ' +
                       '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCompra(' + compra.id + ')"><i class="fa fa-times"></i></button>'
                     ]);
@@ -491,11 +522,25 @@ if (!$auth->isAuthenticated()) {
           $('#totalCompra').text('$' + total.toFixed(2));
         }
         
+        // Actualizar subtotal cuando cambia cantidad o precio
+        $('#cantidad, #precio_unitario').on('input', function() {
+          var cantidad = parseFloat($('#cantidad').val()) || 0;
+          var precio = parseFloat($('#precio_unitario').val()) || 0;
+          var subtotal = cantidad * precio;
+          $('#subtotalCompra').text('$' + subtotal.toFixed(2));
+        });
+        
         // Guardar nueva compra
         $('#btnGuardarCompra').click(function() {
           var form = $('#formNuevaCompra')[0];
           if (!form.checkValidity()) {
             form.reportValidity();
+            return;
+          }
+          
+          var producto_id = $('#producto_id').val();
+          if (!producto_id) {
+            swal("Error", "Debe seleccionar un producto", "error");
             return;
           }
           
@@ -505,6 +550,9 @@ if (!$auth->isAuthenticated()) {
           var descuento = parseFloat($('#descuento').val()) || 0;
           var subtotal = cantidad * precio_unitario;
           var total = subtotal + iva - descuento;
+          
+          var productoOption = $('#producto_id option:selected');
+          var precio_id = productoOption.data('precio-id') || null;
           
           var formData = {
             proveedor_id: $('#proveedor_id').val(),
@@ -519,11 +567,9 @@ if (!$auth->isAuthenticated()) {
             estado: $('#estado').val(),
             notas: $('#notas').val(),
             detalles: JSON.stringify([{
-              nombre_producto: $('#nombre_producto').val(),
-              categoria: $('#categoria').val(),
+              producto_id: producto_id,
+              precio_id: precio_id,
               cantidad: cantidad,
-              unidad: $('#unidad').val(),
-              precio_unitario: precio_unitario,
               subtotal: subtotal
             }]),
             action: 'crear'

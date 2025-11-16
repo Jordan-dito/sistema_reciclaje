@@ -112,13 +112,20 @@ try {
         exit;
     }
     
-    // Obtener el rol por defecto (usuario normal - rol_id = 3)
-    $stmt = $db->prepare("SELECT id FROM roles WHERE nombre = 'usuario' LIMIT 1");
+    // Obtener el rol por defecto (Administrador - rol_id = 1)
+    $stmt = $db->prepare("SELECT id FROM roles WHERE nombre = 'Administrador' LIMIT 1");
     $stmt->execute();
     $rol = $stmt->fetch();
     
     if (!$rol) {
-        // Si no existe el rol usuario, usar el primer rol disponible
+        // Si no existe el rol Administrador, buscar por id = 1
+        $stmt = $db->prepare("SELECT id FROM roles WHERE id = 1 LIMIT 1");
+        $stmt->execute();
+        $rol = $stmt->fetch();
+    }
+    
+    if (!$rol) {
+        // Si no existe, usar el primer rol disponible
         $stmt = $db->prepare("SELECT id FROM roles ORDER BY id LIMIT 1");
         $stmt->execute();
         $rol = $stmt->fetch();
@@ -181,4 +188,5 @@ try {
     error_log("Error en register.php: " . $e->getMessage());
 }
 ?>
+
 

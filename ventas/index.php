@@ -151,12 +151,13 @@ if (!$auth->isAuthenticated()) {
                             <th>ID</th>
                             <th>Fecha</th>
                             <th>Sucursal</th>
-                            <th>Categoría</th>
+                            <th>Producto</th>
                             <th>Cantidad</th>
                             <th>Unidad</th>
                             <th>Precio Unitario</th>
                             <th>Total</th>
                             <th>Cliente</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                           </tr>
                         </thead>
@@ -219,9 +220,9 @@ if (!$auth->isAuthenticated()) {
                   <div class="form-group">
                     <label>Inventario <span class="text-danger">*</span></label>
                     <select id="inventario_id" name="inventario_id" class="form-control" required>
-                      <option value="">Seleccione un producto del inventario</option>
+                      <option value="">Primero seleccione una sucursal</option>
                     </select>
-                    <small class="form-text text-muted">Seleccione el producto que desea vender</small>
+                    <small class="form-text text-muted">Seleccione el producto del inventario que desea vender</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -244,52 +245,16 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Nombre del Producto <span class="text-danger">*</span></label>
-                    <input type="text" id="nombre_producto" name="nombre_producto" class="form-control" placeholder="Ej: Papel Reciclado" required>
+                    <label>Cantidad <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
+                    <small class="form-text text-muted" id="stockDisponible">Stock disponible: -</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Categoría <span class="text-danger">*</span></label>
-                    <select id="categoria" name="categoria" class="form-control" required>
-                      <option value="">Seleccione una categoría</option>
-                      <option value="papel">Papel</option>
-                      <option value="plastico">Plástico</option>
-                      <option value="vidrio">Vidrio</option>
-                      <option value="metal">Metal</option>
-                      <option value="PET">PET</option>
-                      <option value="carton">Cartón</option>
-                      <option value="cobre">Cobre</option>
-                      <option value="aluminio">Aluminio</option>
-                      <option value="bronce">Bronce</option>
-                      <option value="bateria">Batería</option>
-                      <option value="pvc">PVC</option>
-                      <option value="otro">Otro</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Unidad <span class="text-danger">*</span></label>
-                    <select id="unidad" name="unidad" class="form-control" required>
-                      <option value="kg">kg</option>
-                      <option value="litros">litros</option>
-                      <option value="unidades">unidades</option>
-                      <option value="toneladas">toneladas</option>
-                      <option value="metros">metros</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label>Precio Unitario <span class="text-danger">*</span></label>
+                    <label>Precio Unitario (Venta) <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required>
+                    <small class="form-text text-muted">Se cargará automáticamente desde el precio de venta del producto</small>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -455,7 +420,7 @@ if (!$auth->isAuthenticated()) {
           var sucursal_id = $(this).val();
           if (sucursal_id) {
             $.ajax({
-              url: '../inventarios/api.php?action=listar&sucursal_id=' + sucursal_id,
+              url: 'api.php?action=inventarios&sucursal_id=' + sucursal_id,
               method: 'GET',
               dataType: 'json',
               success: function(response) {
@@ -463,13 +428,19 @@ if (!$auth->isAuthenticated()) {
                   var select = $('#inventario_id');
                   select.empty().append('<option value="">Seleccione un producto del inventario</option>');
                   response.data.forEach(function(inventario) {
-                    if (inventario.estado === 'disponible' && inventario.cantidad > 0) {
-                      select.append('<option value="' + inventario.id + '" data-categoria="' + inventario.categoria + '" data-nombre="' + inventario.nombre_producto + '" data-precio="' + inventario.precio_unitario + '" data-unidad="' + inventario.unidad + '">' + inventario.nombre_producto + ' (' + inventario.cantidad + ' ' + inventario.unidad + ' disponible)</option>');
-                    }
+                    var texto = inventario.producto_nombre + ' (' + inventario.cantidad + ' ' + inventario.unidad + ' disponible)';
+                    select.append('<option value="' + inventario.inventario_id + '" ' +
+                      'data-producto-id="' + inventario.producto_id + '" ' +
+                      'data-precio="' + (inventario.precio_unitario || 0) + '" ' +
+                      'data-precio-id="' + (inventario.precio_id || '') + '" ' +
+                      'data-cantidad="' + inventario.cantidad + '" ' +
+                      'data-unidad="' + inventario.unidad + '">' + texto + '</option>');
                   });
                 }
               }
             });
+          } else {
+            $('#inventario_id').empty().append('<option value="">Primero seleccione una sucursal</option>');
           }
         });
         
@@ -477,11 +448,14 @@ if (!$auth->isAuthenticated()) {
         $('#inventario_id').change(function() {
           var option = $(this).find('option:selected');
           if (option.val()) {
-            $('#nombre_producto').val(option.data('nombre'));
-            $('#categoria').val(option.data('categoria'));
-            $('#precio_unitario').val(option.data('precio'));
-            $('#unidad').val(option.data('unidad'));
+            var precio = option.data('precio') || 0;
+            var cantidad = option.data('cantidad') || 0;
+            $('#precio_unitario').val(precio);
+            $('#stockDisponible').text('Stock disponible: ' + cantidad + ' ' + option.data('unidad'));
             calcularTotal();
+          } else {
+            $('#precio_unitario').val('');
+            $('#stockDisponible').text('Stock disponible: -');
           }
         });
         
@@ -508,16 +482,46 @@ if (!$auth->isAuthenticated()) {
                       badgeEstado = '<span class="badge badge-danger">Cancelada</span>';
                     }
                     
+                    var productoNombre = detalle.producto_nombre || detalle.nombre_producto || '-';
+                    var unidad = detalle.unidad_simbolo || detalle.unidad || '-';
+                    var precio = detalle.precio_unitario ? parseFloat(detalle.precio_unitario).toFixed(2) : '0.00';
+                    
                     table.row.add([
                       venta.id,
                       venta.fecha_venta,
                       venta.sucursal_nombre,
-                      '<span class="badge badge-info">' + detalle.categoria + '</span>',
+                      '<strong>' + productoNombre + '</strong>',
                       detalle.cantidad,
-                      detalle.unidad,
-                      '$' + parseFloat(detalle.precio_unitario).toFixed(2),
+                      unidad,
+                      '$' + precio,
                       '$' + parseFloat(venta.total).toFixed(2),
                       venta.cliente_nombre,
+                      badgeEstado,
+                      '<button class="btn btn-link btn-primary btn-sm" onclick="verVenta(' + venta.id + ')"><i class="fa fa-eye"></i></button> ' +
+                      '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarVenta(' + venta.id + ')"><i class="fa fa-times"></i></button>'
+                    ]);
+                  } else {
+                    // Si no hay detalles, mostrar la venta sin detalles
+                    var badgeEstado = '';
+                    if (venta.estado === 'completada') {
+                      badgeEstado = '<span class="badge badge-success">Completada</span>';
+                    } else if (venta.estado === 'pendiente') {
+                      badgeEstado = '<span class="badge badge-warning">Pendiente</span>';
+                    } else {
+                      badgeEstado = '<span class="badge badge-danger">Cancelada</span>';
+                    }
+                    
+                    table.row.add([
+                      venta.id,
+                      venta.fecha_venta,
+                      venta.sucursal_nombre,
+                      '-',
+                      '-',
+                      '-',
+                      '-',
+                      '$' + parseFloat(venta.total).toFixed(2),
+                      venta.cliente_nombre,
+                      badgeEstado,
                       '<button class="btn btn-link btn-primary btn-sm" onclick="verVenta(' + venta.id + ')"><i class="fa fa-eye"></i></button> ' +
                       '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarVenta(' + venta.id + ')"><i class="fa fa-times"></i></button>'
                     ]);
@@ -555,12 +559,29 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var inventario_id = $('#inventario_id').val();
+          if (!inventario_id) {
+            swal("Error", "Debe seleccionar un producto del inventario", "error");
+            return;
+          }
+          
+          var inventarioOption = $('#inventario_id option:selected');
+          var producto_id = inventarioOption.data('producto-id');
+          var precio_id = inventarioOption.data('precio-id') || null;
+          
           var cantidad = parseFloat($('#cantidad').val()) || 0;
           var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
           var iva = parseFloat($('#iva').val()) || 0;
           var descuento = parseFloat($('#descuento').val()) || 0;
           var subtotal = cantidad * precio_unitario;
           var total = subtotal + iva - descuento;
+          
+          // Verificar stock disponible
+          var stockDisponible = parseFloat(inventarioOption.data('cantidad')) || 0;
+          if (cantidad > stockDisponible) {
+            swal("Error", "La cantidad solicitada (" + cantidad + ") excede el stock disponible (" + stockDisponible + ")", "error");
+            return;
+          }
           
           var formData = {
             cliente_id: $('#cliente_id').val(),
@@ -576,12 +597,10 @@ if (!$auth->isAuthenticated()) {
             estado: $('#estado').val(),
             notas: $('#notas').val(),
             detalles: JSON.stringify([{
-              inventario_id: $('#inventario_id').val(),
-              nombre_producto: $('#nombre_producto').val(),
-              categoria: $('#categoria').val(),
+              inventario_id: inventario_id,
+              producto_id: producto_id,
+              precio_id: precio_id,
               cantidad: cantidad,
-              unidad: $('#unidad').val(),
-              precio_unitario: precio_unitario,
               subtotal: subtotal
             }]),
             action: 'crear'

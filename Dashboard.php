@@ -31,8 +31,13 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
     />
     <link
       rel="icon"
-      href="assets/img/kaiadmin/favicon.ico"
-      type="image/x-icon"
+      href="assets/img/logo.jpg"
+      type="image/jpeg"
+    />
+    <link
+      rel="shortcut icon"
+      href="assets/img/logo.jpg"
+      type="image/jpeg"
     />
 
     <!-- Fonts and icons -->
@@ -72,10 +77,11 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           <div class="logo-header" data-background-color="dark">
             <a href="Dashboard.php" class="logo">
               <img
-                src="assets/img/kaiadmin/logo_light.svg"
-                alt="navbar brand"
+                src="assets/img/logo.jpg"
+                alt="HNOSYÁNEZ S.A."
                 class="navbar-brand"
-                height="20"
+                height="50"
+                style="object-fit: contain; border-radius: 8px;"
               />
             </a>
             <div class="nav-toggle">

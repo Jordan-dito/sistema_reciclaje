@@ -1,0 +1,155 @@
+<?php
+/**
+ * API para gestión de categorías
+ * Sistema de Gestión de Reciclaje
+ */
+
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
+header('Content-Type: application/json; charset=utf-8');
+ob_start();
+
+try {
+    require_once __DIR__ . '/../config/auth.php';
+    require_once __DIR__ . '/../config/validaciones.php';
+
+    $auth = new Auth();
+    if (!$auth->isAuthenticated()) {
+        ob_end_clean();
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'No autorizado']);
+        exit;
+    }
+
+    $method = $_SERVER['REQUEST_METHOD'];
+    $action = $_GET['action'] ?? $_POST['action'] ?? '';
+    
+    if (empty($action)) {
+        throw new Exception('Acción no especificada');
+    }
+
+    $db = getDB();
+    
+    switch ($method) {
+        case 'GET':
+            if ($action === 'listar') {
+                $stmt = $db->query("
+                    SELECT * FROM categorias 
+                    WHERE estado = 'activo'
+                    ORDER BY nombre ASC
+                ");
+                $categorias = $stmt->fetchAll();
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $categorias], JSON_UNESCAPED_UNICODE);
+            } elseif ($action === 'obtener') {
+                $id = $_GET['id'] ?? 0;
+                $stmt = $db->prepare("SELECT * FROM categorias WHERE id = ?");
+                $stmt->execute([$id]);
+                $categoria = $stmt->fetch();
+                
+                ob_end_clean();
+                if ($categoria) {
+                    echo json_encode(['success' => true, 'data' => $categoria], JSON_UNESCAPED_UNICODE);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Categoría no encontrada']);
+                }
+            }
+            break;
+            
+        case 'POST':
+            if ($action === 'crear') {
+                $nombre = trim($_POST['nombre'] ?? '');
+                $descripcion = trim($_POST['descripcion'] ?? '');
+                $icono = trim($_POST['icono'] ?? '');
+                $estado = $_POST['estado'] ?? 'activo';
+                
+                if (empty($nombre)) {
+                    throw new Exception('El nombre es obligatorio');
+                }
+                
+                $stmt = $db->prepare("
+                    INSERT INTO categorias (nombre, descripcion, icono, estado) 
+                    VALUES (?, ?, ?, ?)
+                ");
+                $stmt->execute([$nombre, $descripcion ?: null, $icono ?: null, $estado]);
+                
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Categoría creada exitosamente',
+                    'id' => $db->lastInsertId()
+                ]);
+            } elseif ($action === 'actualizar') {
+                $id = $_POST['id'] ?? 0;
+                $nombre = trim($_POST['nombre'] ?? '');
+                $descripcion = trim($_POST['descripcion'] ?? '');
+                $icono = trim($_POST['icono'] ?? '');
+                $estado = $_POST['estado'] ?? 'activo';
+                
+                if (empty($nombre)) {
+                    throw new Exception('El nombre es obligatorio');
+                }
+                
+                $stmt = $db->prepare("
+                    UPDATE categorias 
+                    SET nombre = ?, descripcion = ?, icono = ?, estado = ? 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$nombre, $descripcion ?: null, $icono ?: null, $estado, $id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Categoría actualizada exitosamente']);
+            } elseif ($action === 'eliminar') {
+                $id = $_POST['id'] ?? 0;
+                
+                // Verificar si hay materiales usando esta categoría
+                $stmt = $db->prepare("SELECT COUNT(*) as total FROM materiales WHERE categoria_id = ?");
+                $stmt->execute([$id]);
+                $result = $stmt->fetch();
+                
+                if ($result['total'] > 0) {
+                    ob_end_clean();
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'No se puede eliminar: hay materiales asociados a esta categoría'
+                    ]);
+                    exit;
+                }
+                
+                // Cambiar estado a inactivo en lugar de eliminar
+                $stmt = $db->prepare("UPDATE categorias SET estado = 'inactivo' WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Categoría eliminada exitosamente']);
+            }
+            break;
+            
+        default:
+            ob_end_clean();
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+    }
+    
+} catch (PDOException $e) {
+    ob_end_clean();
+    error_log("Error en categorias/api.php: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error en la base de datos: ' . (APP_DEBUG ? $e->getMessage() : 'Error al procesar la solicitud')
+    ]);
+} catch (Exception $e) {
+    ob_end_clean();
+    error_log("Error en categorias/api.php: " . $e->getMessage());
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
+    ]);
+}
+?>
+

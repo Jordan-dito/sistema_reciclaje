@@ -6,6 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Iniciar Sesión - Sistema de Reciclaje</title>
     
+    <!-- Favicon -->
+    <link rel="icon" href="assets/img/logo.jpg" type="image/jpeg">
+    <link rel="shortcut icon" href="assets/img/logo.jpg" type="image/jpeg">
+    
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -108,16 +112,18 @@
         }
 
         .logo-container {
-            width: 80px;
-            height: 80px;
+            width: 120px;
+            height: 120px;
             margin: 0 auto 20px;
-            background: linear-gradient(135deg, #2c9f5f 0%, #1e7e4a 100%);
+            background: white;
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 10px 30px rgba(44, 159, 95, 0.4);
             animation: pulse 2s ease-in-out infinite;
+            padding: 10px;
+            overflow: hidden;
         }
 
         @keyframes pulse {
@@ -129,9 +135,11 @@
             }
         }
 
-        .logo-container i {
-            font-size: 40px;
-            color: white;
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
         }
 
         .login-header h1 {
@@ -334,12 +342,9 @@
             }
 
             .logo-container {
-                width: 70px;
-                height: 70px;
-            }
-
-            .logo-container i {
-                font-size: 35px;
+                width: 90px;
+                height: 90px;
+                padding: 8px;
             }
 
             .remember-forgot {
@@ -414,7 +419,7 @@
     <div class="login-container">
         <div class="login-header">
             <div class="logo-container">
-                <i class="fas fa-recycle"></i>
+                <img src="assets/img/logo.jpg" alt="HNOSYÁNEZ S.A.">
             </div>
             <h1>Bienvenido</h1>
             <p>Inicia sesión para continuar</p>
@@ -589,11 +594,7 @@
             showAlert('Funcionalidad de recuperación de contraseña próximamente', 'success');
         });
 
-        // Signup link handler
-        document.querySelector('.signup-link a').addEventListener('click', function(e) {
-            e.preventDefault();
-            showAlert('Página de registro próximamente', 'success');
-        });
+        // Signup link handler - Removido para permitir navegación a register.php
     </script>
 </body>
 </html>

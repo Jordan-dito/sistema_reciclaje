@@ -59,6 +59,28 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'data' => $compras]);
+            } elseif ($action === 'productos') {
+                // Obtener productos activos con precios de compra
+                $stmt = $db->query("
+                    SELECT p.id, 
+                           p.nombre, 
+                           m.nombre as material_nombre,
+                           c.nombre as categoria_nombre,
+                           u.simbolo as unidad,
+                           pr.id as precio_id,
+                           pr.precio_unitario
+                    FROM productos p 
+                    INNER JOIN materiales m ON p.material_id = m.id
+                    LEFT JOIN categorias c ON m.categoria_id = c.id
+                    INNER JOIN unidades u ON p.unidad_id = u.id
+                    LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.tipo_precio = 'compra' AND pr.estado = 'activo'
+                    WHERE p.estado = 'activo'
+                    ORDER BY p.nombre ASC
+                ");
+                $productos = $stmt->fetchAll();
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $productos], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'obtener') {
                 $id = $_GET['id'] ?? 0;
                 
@@ -74,8 +96,23 @@ try {
                 $compra = $stmt->fetch();
                 
                 if ($compra) {
-                    // Obtener detalles
-                    $stmt = $db->prepare("SELECT * FROM compras_detalle WHERE compra_id = ?");
+                    // Obtener detalles con información de productos
+                    $stmt = $db->prepare("
+                        SELECT cd.*, 
+                               p.nombre as producto_nombre,
+                               m.nombre as material_nombre,
+                               c.nombre as categoria_nombre,
+                               u.nombre as unidad_nombre,
+                               u.simbolo as unidad_simbolo,
+                               pr.precio_unitario
+                        FROM compras_detalle cd
+                        INNER JOIN productos p ON cd.producto_id = p.id
+                        INNER JOIN materiales m ON p.material_id = m.id
+                        LEFT JOIN categorias c ON m.categoria_id = c.id
+                        INNER JOIN unidades u ON p.unidad_id = u.id
+                        LEFT JOIN precios pr ON cd.precio_id = pr.id
+                        WHERE cd.compra_id = ?
+                    ");
                     $stmt->execute([$id]);
                     $compra['detalles'] = $stmt->fetchAll();
                 }
@@ -149,35 +186,64 @@ try {
                     
                     if (!empty($detalles)) {
                         foreach ($detalles as $detalle) {
-                            $inventario_id = !empty($detalle['inventario_id']) ? intval($detalle['inventario_id']) : null;
-                            $nombre_producto = trim($detalle['nombre_producto'] ?? '');
-                            $categoria = $detalle['categoria'] ?? '';
+                            $producto_id = intval($detalle['producto_id'] ?? 0);
+                            $precio_id = !empty($detalle['precio_id']) ? intval($detalle['precio_id']) : null;
                             $cantidad = floatval($detalle['cantidad'] ?? 0);
-                            $unidad = $detalle['unidad'] ?? 'kg';
-                            $precio_unitario = floatval($detalle['precio_unitario'] ?? 0);
                             $subtotal_detalle = floatval($detalle['subtotal'] ?? 0);
+                            
+                            if ($producto_id <= 0) {
+                                throw new Exception('Producto es obligatorio en los detalles');
+                            }
+                            
+                            // Obtener precio de compra si no se proporciona precio_id
+                            if (!$precio_id) {
+                                $stmt = $db->prepare("
+                                    SELECT id, precio_unitario FROM precios 
+                                    WHERE producto_id = ? AND tipo_precio = 'compra' AND estado = 'activo' 
+                                    LIMIT 1
+                                ");
+                                $stmt->execute([$producto_id]);
+                                $precio = $stmt->fetch();
+                                if ($precio) {
+                                    $precio_id = $precio['id'];
+                                }
+                            }
                             
                             $stmt = $db->prepare("
                                 INSERT INTO compras_detalle 
-                                (compra_id, inventario_id, nombre_producto, categoria, cantidad, unidad, precio_unitario, subtotal) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                (compra_id, producto_id, precio_id, cantidad, subtotal) 
+                                VALUES (?, ?, ?, ?, ?)
                             ");
                             
                             $stmt->execute([
                                 $compra_id,
-                                $inventario_id,
-                                $nombre_producto,
-                                $categoria,
+                                $producto_id,
+                                $precio_id,
                                 $cantidad,
-                                $unidad,
-                                $precio_unitario,
                                 $subtotal_detalle
                             ]);
                             
-                            // Si tiene inventario_id, actualizar el inventario
-                            if ($inventario_id && $estado === 'completada') {
-                                $stmt = $db->prepare("UPDATE inventarios SET cantidad = cantidad + ? WHERE id = ?");
-                                $stmt->execute([$cantidad, $inventario_id]);
+                            // Si la compra está completada, actualizar inventario (el trigger lo hará automáticamente)
+                            // Pero por si acaso, también lo hacemos aquí
+                            if ($estado === 'completada') {
+                                // Buscar o crear inventario para este producto en esta sucursal
+                                $stmt = $db->prepare("
+                                    SELECT id, cantidad FROM inventarios 
+                                    WHERE producto_id = ? AND sucursal_id = ? AND estado <> 'inactivo'
+                                ");
+                                $stmt->execute([$producto_id, $sucursal_id]);
+                                $inventario = $stmt->fetch();
+                                
+                                if ($inventario) {
+                                    $stmt = $db->prepare("UPDATE inventarios SET cantidad = cantidad + ? WHERE id = ?");
+                                    $stmt->execute([$cantidad, $inventario['id']]);
+                                } else {
+                                    $stmt = $db->prepare("
+                                        INSERT INTO inventarios (sucursal_id, producto_id, cantidad, estado) 
+                                        VALUES (?, ?, ?, 'disponible')
+                                    ");
+                                    $stmt->execute([$sucursal_id, $producto_id, $cantidad]);
+                                }
                             }
                         }
                     }
