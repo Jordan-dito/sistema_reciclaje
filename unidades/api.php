@@ -105,26 +105,30 @@ try {
             } elseif ($action === 'eliminar') {
                 $id = $_POST['id'] ?? 0;
                 
-                // Verificar si hay productos usando esta unidad
-                $stmt = $db->prepare("SELECT COUNT(*) as total FROM productos WHERE unidad_id = ?");
+                // Verificar si la unidad ya está inactiva
+                $stmt = $db->prepare("SELECT estado FROM unidades WHERE id = ?");
                 $stmt->execute([$id]);
-                $result = $stmt->fetch();
+                $unidad = $stmt->fetch();
                 
-                if ($result['total'] > 0) {
+                if (!$unidad) {
+                    throw new Exception('Unidad no encontrada');
+                }
+                
+                if ($unidad['estado'] === 'inactivo') {
                     ob_end_clean();
                     echo json_encode([
                         'success' => false,
-                        'message' => 'No se puede eliminar: hay productos asociados a esta unidad'
+                        'message' => 'La unidad ya está inactiva'
                     ]);
                     exit;
                 }
                 
-                // Cambiar estado a inactivo en lugar de eliminar
+                // Siempre cambiar estado a inactivo (no se elimina físicamente)
                 $stmt = $db->prepare("UPDATE unidades SET estado = 'inactivo' WHERE id = ?");
                 $stmt->execute([$id]);
                 
                 ob_end_clean();
-                echo json_encode(['success' => true, 'message' => 'Unidad eliminada exitosamente']);
+                echo json_encode(['success' => true, 'message' => 'Unidad desactivada exitosamente']);
             }
             break;
             

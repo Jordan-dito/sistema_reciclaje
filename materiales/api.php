@@ -134,26 +134,30 @@ try {
             } elseif ($action === 'eliminar') {
                 $id = $_POST['id'] ?? 0;
                 
-                // Verificar si hay productos usando este material
-                $stmt = $db->prepare("SELECT COUNT(*) as total FROM productos WHERE material_id = ?");
+                // Verificar si el material ya está inactivo
+                $stmt = $db->prepare("SELECT estado FROM materiales WHERE id = ?");
                 $stmt->execute([$id]);
-                $result = $stmt->fetch();
+                $material = $stmt->fetch();
                 
-                if ($result['total'] > 0) {
+                if (!$material) {
+                    throw new Exception('Material no encontrado');
+                }
+                
+                if ($material['estado'] === 'inactivo') {
                     ob_end_clean();
                     echo json_encode([
                         'success' => false,
-                        'message' => 'No se puede eliminar: hay productos asociados a este material'
+                        'message' => 'El material ya está inactivo'
                     ]);
                     exit;
                 }
                 
-                // Cambiar estado a inactivo
+                // Siempre cambiar estado a inactivo (no se elimina físicamente)
                 $stmt = $db->prepare("UPDATE materiales SET estado = 'inactivo' WHERE id = ?");
                 $stmt->execute([$id]);
                 
                 ob_end_clean();
-                echo json_encode(['success' => true, 'message' => 'Material eliminado exitosamente']);
+                echo json_encode(['success' => true, 'message' => 'Material desactivado exitosamente']);
             }
             break;
             

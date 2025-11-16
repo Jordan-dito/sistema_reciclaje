@@ -136,26 +136,30 @@ try {
             } elseif ($action === 'eliminar') {
                 $id = $_POST['id'] ?? 0;
                 
-                // Verificar si hay materiales usando esta categoría
-                $stmt = $db->prepare("SELECT COUNT(*) as total FROM materiales WHERE categoria_id = ?");
+                // Verificar si la categoría ya está inactiva
+                $stmt = $db->prepare("SELECT estado FROM categorias WHERE id = ?");
                 $stmt->execute([$id]);
-                $result = $stmt->fetch();
+                $categoria = $stmt->fetch();
                 
-                if ($result['total'] > 0) {
+                if (!$categoria) {
+                    throw new Exception('Categoría no encontrada');
+                }
+                
+                if ($categoria['estado'] === 'inactivo') {
                     ob_end_clean();
                     echo json_encode([
                         'success' => false,
-                        'message' => 'No se puede eliminar: hay materiales asociados a esta categoría'
+                        'message' => 'La categoría ya está inactiva'
                     ]);
                     exit;
                 }
                 
-                // Cambiar estado a inactivo en lugar de eliminar
+                // Siempre cambiar estado a inactivo (no se elimina físicamente)
                 $stmt = $db->prepare("UPDATE categorias SET estado = 'inactivo' WHERE id = ?");
                 $stmt->execute([$id]);
                 
                 ob_end_clean();
-                echo json_encode(['success' => true, 'message' => 'Categoría eliminada exitosamente']);
+                echo json_encode(['success' => true, 'message' => 'Categoría desactivada exitosamente']);
             }
             break;
             

@@ -230,26 +230,30 @@ try {
             } elseif ($action === 'eliminar') {
                 $id = $_POST['id'] ?? 0;
                 
-                // Verificar si hay inventarios usando este producto
-                $stmt = $db->prepare("SELECT COUNT(*) as total FROM inventarios WHERE producto_id = ?");
+                // Verificar si el producto ya está inactivo
+                $stmt = $db->prepare("SELECT estado FROM productos WHERE id = ?");
                 $stmt->execute([$id]);
-                $result = $stmt->fetch();
+                $producto = $stmt->fetch();
                 
-                if ($result['total'] > 0) {
+                if (!$producto) {
+                    throw new Exception('Producto no encontrado');
+                }
+                
+                if ($producto['estado'] === 'inactivo') {
                     ob_end_clean();
                     echo json_encode([
                         'success' => false,
-                        'message' => 'No se puede eliminar: hay inventarios asociados a este producto'
+                        'message' => 'El producto ya está inactivo'
                     ]);
                     exit;
                 }
                 
-                // Cambiar estado a inactivo
+                // Siempre cambiar estado a inactivo (no se elimina físicamente)
                 $stmt = $db->prepare("UPDATE productos SET estado = 'inactivo' WHERE id = ?");
                 $stmt->execute([$id]);
                 
                 ob_end_clean();
-                echo json_encode(['success' => true, 'message' => 'Producto eliminado exitosamente']);
+                echo json_encode(['success' => true, 'message' => 'Producto desactivado exitosamente']);
             }
             break;
             
