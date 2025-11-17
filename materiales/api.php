@@ -90,6 +90,19 @@ try {
                 $descripcion = limpiarEspacios($descripcion);
                 $icono = limpiarEspacios($icono);
                 
+                // Verificar que no exista un material con el mismo nombre (case-insensitive)
+                $stmt = $db->prepare("
+                    SELECT id FROM materiales 
+                    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) 
+                    AND estado = 'activo'
+                ");
+                $stmt->execute([$nombre]);
+                $materialExistente = $stmt->fetch();
+                
+                if ($materialExistente) {
+                    throw new Exception('Ya existe un material activo con el nombre "' . $nombre . '"');
+                }
+                
                 $stmt = $db->prepare("
                     INSERT INTO materiales (nombre, categoria_id, descripcion, icono, estado) 
                     VALUES (?, ?, ?, ?, ?)
@@ -116,8 +129,27 @@ try {
                 $icono = trim($_POST['icono'] ?? '');
                 $estado = $_POST['estado'] ?? 'activo';
                 
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                // Validar nombre: no solo espacios
+                $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
+                }
+                $nombre = limpiarEspacios($nombre);
+                $descripcion = limpiarEspacios($descripcion);
+                $icono = limpiarEspacios($icono);
+                
+                // Verificar que no exista otro material con el mismo nombre (case-insensitive)
+                $stmt = $db->prepare("
+                    SELECT id FROM materiales 
+                    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) 
+                    AND id != ? 
+                    AND estado = 'activo'
+                ");
+                $stmt->execute([$nombre, $id]);
+                $materialExistente = $stmt->fetch();
+                
+                if ($materialExistente) {
+                    throw new Exception('Ya existe otro material activo con el nombre "' . $nombre . '"');
                 }
                 
                 $stmt = $db->prepare("

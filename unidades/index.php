@@ -248,6 +248,8 @@ if (!$auth->isAuthenticated()) {
         var table = $('#unidadesTable').DataTable({
           "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
         });
+        
+        var unidadesList = [];
 
         function cargarUnidades() {
           $.ajax({
@@ -256,6 +258,7 @@ if (!$auth->isAuthenticated()) {
             dataType: 'json',
             success: function(response) {
               if (response.success) {
+                unidadesList = response.data;
                 table.clear();
                 response.data.forEach(function(unidad) {
                   var badgeEstado = unidad.estado === 'activo' 
@@ -288,6 +291,54 @@ if (!$auth->isAuthenticated()) {
           });
         }
 
+        // Validar nombre en tiempo real
+        $('#nombre').on('blur', function() {
+          var nombre = $(this).val().trim();
+          if (nombre.length > 0) {
+            var nombreExiste = unidadesList.some(function(uni) {
+              return uni.estado === 'activo' && uni.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+            });
+            
+            if (nombreExiste) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">Ya existe una unidad activa con este nombre</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          }
+        });
+        
+        $('#edit_nombre').on('blur', function() {
+          var nombre = $(this).val().trim();
+          var idActual = $('#edit_id').val();
+          if (nombre.length > 0) {
+            var nombreExiste = unidadesList.some(function(uni) {
+              return uni.estado === 'activo' 
+                && uni.id != idActual 
+                && uni.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+            });
+            
+            if (nombreExiste) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">Ya existe otra unidad activa con este nombre</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          }
+        });
+
         $('#btnGuardarUnidad').click(function() {
           var form = $('#formAgregarUnidad')[0];
           if (!form.checkValidity()) {
@@ -295,8 +346,21 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var nombre = $('#nombre').val().trim();
+          
+          // Validar que el nombre no exista
+          var nombreExiste = unidadesList.some(function(uni) {
+            return uni.estado === 'activo' && uni.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+          });
+          
+          if (nombreExiste) {
+            swal("Error", "Ya existe una unidad activa con el nombre \"" + nombre + "\"", "error");
+            $('#nombre').focus();
+            return;
+          }
+          
           var formData = {
-            nombre: $('#nombre').val(),
+            nombre: nombre,
             simbolo: $('#simbolo').val(),
             tipo: $('#tipo').val(),
             estado: $('#estado').val(),
@@ -313,6 +377,8 @@ if (!$auth->isAuthenticated()) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalAgregarUnidad').modal('hide');
                 $('#formAgregarUnidad')[0].reset();
+                $('#nombre').removeClass('is-valid is-invalid');
+                $('#nombre').next('.invalid-feedback').remove();
                 cargarUnidades();
               } else {
                 swal("Error", response.message, "error");
@@ -332,9 +398,25 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var idActual = $('#edit_id').val();
+          var nombre = $('#edit_nombre').val().trim();
+          
+          // Validar que el nombre no exista en otra unidad
+          var nombreExiste = unidadesList.some(function(uni) {
+            return uni.estado === 'activo' 
+              && uni.id != idActual 
+              && uni.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+          });
+          
+          if (nombreExiste) {
+            swal("Error", "Ya existe otra unidad activa con el nombre \"" + nombre + "\"", "error");
+            $('#edit_nombre').focus();
+            return;
+          }
+          
           var formData = {
-            id: $('#edit_id').val(),
-            nombre: $('#edit_nombre').val(),
+            id: idActual,
+            nombre: nombre,
             simbolo: $('#edit_simbolo').val(),
             tipo: $('#edit_tipo').val(),
             estado: $('#edit_estado').val(),
@@ -350,6 +432,8 @@ if (!$auth->isAuthenticated()) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalEditarUnidad').modal('hide');
+                $('#edit_nombre').removeClass('is-valid is-invalid');
+                $('#edit_nombre').next('.invalid-feedback').remove();
                 cargarUnidades();
               } else {
                 swal("Error", response.message, "error");

@@ -273,6 +273,8 @@ if (!$auth->isAuthenticated()) {
         var table = $('#materialesTable').DataTable({
           "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
         });
+        
+        var materialesList = [];
 
         cargarCategorias();
 
@@ -283,6 +285,7 @@ if (!$auth->isAuthenticated()) {
             dataType: 'json',
             success: function(response) {
               if (response.success) {
+                materialesList = response.data;
                 table.clear();
                 response.data.forEach(function(material) {
                   var badgeEstado = material.estado === 'activo' 
@@ -310,6 +313,54 @@ if (!$auth->isAuthenticated()) {
           });
         }
 
+        // Validar nombre en tiempo real
+        $('#nombre').on('blur', function() {
+          var nombre = $(this).val().trim();
+          if (nombre.length > 0) {
+            var nombreExiste = materialesList.some(function(mat) {
+              return mat.estado === 'activo' && mat.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+            });
+            
+            if (nombreExiste) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">Ya existe un material activo con este nombre</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          }
+        });
+        
+        $('#edit_nombre').on('blur', function() {
+          var nombre = $(this).val().trim();
+          var idActual = $('#edit_id').val();
+          if (nombre.length > 0) {
+            var nombreExiste = materialesList.some(function(mat) {
+              return mat.estado === 'activo' 
+                && mat.id != idActual 
+                && mat.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+            });
+            
+            if (nombreExiste) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">Ya existe otro material activo con este nombre</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          }
+        });
+
         $('#btnGuardarMaterial').click(function() {
           var form = $('#formAgregarMaterial')[0];
           if (!form.checkValidity()) {
@@ -317,8 +368,21 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var nombre = $('#nombre').val().trim();
+          
+          // Validar que el nombre no exista
+          var nombreExiste = materialesList.some(function(mat) {
+            return mat.estado === 'activo' && mat.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+          });
+          
+          if (nombreExiste) {
+            swal("Error", "Ya existe un material activo con el nombre \"" + nombre + "\"", "error");
+            $('#nombre').focus();
+            return;
+          }
+          
           var formData = {
-            nombre: $('#nombre').val(),
+            nombre: nombre,
             categoria_id: $('#categoria_id').val() || null,
             descripcion: $('#descripcion').val(),
             icono: $('#icono').val(),
@@ -336,6 +400,8 @@ if (!$auth->isAuthenticated()) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalAgregarMaterial').modal('hide');
                 $('#formAgregarMaterial')[0].reset();
+                $('#nombre').removeClass('is-valid is-invalid');
+                $('#nombre').next('.invalid-feedback').remove();
                 cargarMateriales();
               } else {
                 swal("Error", response.message, "error");
@@ -355,9 +421,25 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var idActual = $('#edit_id').val();
+          var nombre = $('#edit_nombre').val().trim();
+          
+          // Validar que el nombre no exista en otro material
+          var nombreExiste = materialesList.some(function(mat) {
+            return mat.estado === 'activo' 
+              && mat.id != idActual 
+              && mat.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+          });
+          
+          if (nombreExiste) {
+            swal("Error", "Ya existe otro material activo con el nombre \"" + nombre + "\"", "error");
+            $('#edit_nombre').focus();
+            return;
+          }
+          
           var formData = {
-            id: $('#edit_id').val(),
-            nombre: $('#edit_nombre').val(),
+            id: idActual,
+            nombre: nombre,
             categoria_id: $('#edit_categoria_id').val() || null,
             descripcion: $('#edit_descripcion').val(),
             icono: $('#edit_icono').val(),
@@ -374,6 +456,8 @@ if (!$auth->isAuthenticated()) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalEditarMaterial').modal('hide');
+                $('#edit_nombre').removeClass('is-valid is-invalid');
+                $('#edit_nombre').next('.invalid-feedback').remove();
                 cargarMateriales();
               } else {
                 swal("Error", response.message, "error");

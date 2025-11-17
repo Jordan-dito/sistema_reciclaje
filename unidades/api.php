@@ -66,8 +66,25 @@ try {
                 $tipo = $_POST['tipo'] ?? 'peso';
                 $estado = $_POST['estado'] ?? 'activo';
                 
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                // Validar nombre: no solo espacios
+                $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
+                }
+                $nombre = limpiarEspacios($nombre);
+                $simbolo = limpiarEspacios($simbolo);
+                
+                // Verificar que no exista una unidad con el mismo nombre (case-insensitive)
+                $stmt = $db->prepare("
+                    SELECT id FROM unidades 
+                    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) 
+                    AND estado = 'activo'
+                ");
+                $stmt->execute([$nombre]);
+                $unidadExistente = $stmt->fetch();
+                
+                if ($unidadExistente) {
+                    throw new Exception('Ya existe una unidad activa con el nombre "' . $nombre . '"');
                 }
                 
                 $stmt = $db->prepare("
@@ -89,8 +106,26 @@ try {
                 $tipo = $_POST['tipo'] ?? 'peso';
                 $estado = $_POST['estado'] ?? 'activo';
                 
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                // Validar nombre: no solo espacios
+                $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
+                }
+                $nombre = limpiarEspacios($nombre);
+                $simbolo = limpiarEspacios($simbolo);
+                
+                // Verificar que no exista otra unidad con el mismo nombre (case-insensitive)
+                $stmt = $db->prepare("
+                    SELECT id FROM unidades 
+                    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) 
+                    AND id != ? 
+                    AND estado = 'activo'
+                ");
+                $stmt->execute([$nombre, $id]);
+                $unidadExistente = $stmt->fetch();
+                
+                if ($unidadExistente) {
+                    throw new Exception('Ya existe otra unidad activa con el nombre "' . $nombre . '"');
                 }
                 
                 $stmt = $db->prepare("
