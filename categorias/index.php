@@ -244,6 +244,8 @@ if (!$auth->isAuthenticated()) {
         var table = $('#categoriasTable').DataTable({
           "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
         });
+        
+        var categoriasList = [];
 
         function cargarCategorias() {
           $.ajax({
@@ -252,6 +254,7 @@ if (!$auth->isAuthenticated()) {
             dataType: 'json',
             success: function(response) {
               if (response.success) {
+                categoriasList = response.data;
                 table.clear();
                 response.data.forEach(function(categoria) {
                   var badgeEstado = categoria.estado === 'activo' 
@@ -278,6 +281,54 @@ if (!$auth->isAuthenticated()) {
           });
         }
 
+        // Validar nombre en tiempo real
+        $('#nombre').on('blur', function() {
+          var nombre = $(this).val().trim();
+          if (nombre.length > 0) {
+            var nombreExiste = categoriasList.some(function(cat) {
+              return cat.estado === 'activo' && cat.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+            });
+            
+            if (nombreExiste) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">Ya existe una categoría activa con este nombre</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          }
+        });
+        
+        $('#edit_nombre').on('blur', function() {
+          var nombre = $(this).val().trim();
+          var idActual = $('#edit_id').val();
+          if (nombre.length > 0) {
+            var nombreExiste = categoriasList.some(function(cat) {
+              return cat.estado === 'activo' 
+                && cat.id != idActual 
+                && cat.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+            });
+            
+            if (nombreExiste) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">Ya existe otra categoría activa con este nombre</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          }
+        });
+
         $('#btnGuardarCategoria').click(function() {
           var form = $('#formAgregarCategoria')[0];
           if (!form.checkValidity()) {
@@ -285,8 +336,21 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var nombre = $('#nombre').val().trim();
+          
+          // Validar que el nombre no exista
+          var nombreExiste = categoriasList.some(function(cat) {
+            return cat.estado === 'activo' && cat.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+          });
+          
+          if (nombreExiste) {
+            swal("Error", "Ya existe una categoría activa con el nombre \"" + nombre + "\"", "error");
+            $('#nombre').focus();
+            return;
+          }
+          
           var formData = {
-            nombre: $('#nombre').val(),
+            nombre: nombre,
             descripcion: $('#descripcion').val(),
             icono: $('#icono').val(),
             estado: $('#estado').val(),
@@ -303,6 +367,8 @@ if (!$auth->isAuthenticated()) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalAgregarCategoria').modal('hide');
                 $('#formAgregarCategoria')[0].reset();
+                $('#nombre').removeClass('is-valid is-invalid');
+                $('#nombre').next('.invalid-feedback').remove();
                 cargarCategorias();
               } else {
                 swal("Error", response.message, "error");
@@ -322,9 +388,25 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var idActual = $('#edit_id').val();
+          var nombre = $('#edit_nombre').val().trim();
+          
+          // Validar que el nombre no exista en otra categoría
+          var nombreExiste = categoriasList.some(function(cat) {
+            return cat.estado === 'activo' 
+              && cat.id != idActual 
+              && cat.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+          });
+          
+          if (nombreExiste) {
+            swal("Error", "Ya existe otra categoría activa con el nombre \"" + nombre + "\"", "error");
+            $('#edit_nombre').focus();
+            return;
+          }
+          
           var formData = {
-            id: $('#edit_id').val(),
-            nombre: $('#edit_nombre').val(),
+            id: idActual,
+            nombre: nombre,
             descripcion: $('#edit_descripcion').val(),
             icono: $('#edit_icono').val(),
             estado: $('#edit_estado').val(),
@@ -340,6 +422,8 @@ if (!$auth->isAuthenticated()) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalEditarCategoria').modal('hide');
+                $('#edit_nombre').removeClass('is-valid is-invalid');
+                $('#edit_nombre').next('.invalid-feedback').remove();
                 cargarCategorias();
               } else {
                 swal("Error", response.message, "error");

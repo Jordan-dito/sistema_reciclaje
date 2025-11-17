@@ -624,7 +624,9 @@
                         required
                         autocomplete="name"
                     >
+                    <span class="validation-icon" id="nombreValidation"></span>
                 </div>
+                <small class="error-message" id="nombreError"></small>
             </div>
 
             <div class="form-group">
@@ -1001,10 +1003,77 @@
                 });
             }
 
+            // Validación de nombre (solo letras y espacios)
+            const nombreInput = document.getElementById('nombre');
+            const nombreValidation = document.getElementById('nombreValidation');
+            
+            if (nombreInput) {
+                nombreInput.addEventListener('input', function() {
+                    // Solo permitir letras, espacios y caracteres especiales del español (á, é, í, ó, ú, ñ, etc.)
+                    let valor = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+                    this.value = valor;
+                    
+                    limpiarMensaje('nombre');
+                    
+                    if (valor.length > 0) {
+                        // Validar que no sean solo espacios
+                        if (valor.trim().length === 0) {
+                            this.classList.remove('valid');
+                            this.classList.add('invalid');
+                            if (nombreValidation) {
+                                nombreValidation.className = 'validation-icon show invalid';
+                                nombreValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                            }
+                            mostrarError('nombre', 'El nombre no puede contener solo espacios');
+                            return;
+                        }
+                        
+                        // Validar que tenga al menos 2 caracteres
+                        if (valor.trim().length < 2) {
+                            this.classList.remove('valid');
+                            this.classList.add('invalid');
+                            if (nombreValidation) {
+                                nombreValidation.className = 'validation-icon show invalid';
+                                nombreValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                            }
+                            mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
+                            return;
+                        }
+                        
+                        // Validar que solo contenga letras y espacios
+                        if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor)) {
+                            this.classList.remove('valid');
+                            this.classList.add('invalid');
+                            if (nombreValidation) {
+                                nombreValidation.className = 'validation-icon show invalid';
+                                nombreValidation.innerHTML = '<i class="fas fa-times-circle"></i>';
+                            }
+                            mostrarError('nombre', 'El nombre solo puede contener letras y espacios');
+                            return;
+                        }
+                        
+                        // Nombre válido
+                        this.classList.add('valid');
+                        this.classList.remove('invalid');
+                        if (nombreValidation) {
+                            nombreValidation.className = 'validation-icon show valid';
+                            nombreValidation.innerHTML = '<i class="fas fa-check-circle"></i>';
+                        }
+                        mostrarExito('nombre', '✓ Nombre válido');
+                    } else {
+                        this.classList.remove('valid', 'invalid');
+                        if (nombreValidation) {
+                            nombreValidation.className = 'validation-icon';
+                            nombreValidation.innerHTML = '';
+                        }
+                    }
+                });
+            }
+
             // Validación de otros campos
             const inputs = document.querySelectorAll('.form-control');
             inputs.forEach(input => {
-                if (input.id !== 'password' && input.id !== 'confirmPassword' && input.id !== 'cedula') {
+                if (input.id !== 'password' && input.id !== 'confirmPassword' && input.id !== 'cedula' && input.id !== 'nombre') {
                     input.addEventListener('blur', function() {
                         if (this.value.trim().length > 0) {
                             this.classList.add('valid');
@@ -1035,6 +1104,20 @@
             // Validación básica
             if (!nombre || !cedula || !email || !password || !confirmPassword) {
                 showAlert('Por favor, completa todos los campos obligatorios', 'error');
+                return;
+            }
+            
+            // Validar nombre (solo letras y espacios)
+            const nombreLimpio = nombre.trim();
+            if (nombreLimpio.length < 2) {
+                mostrarError('nombre', 'El nombre debe tener al menos 2 caracteres');
+                document.getElementById('nombre').focus();
+                return;
+            }
+            
+            if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(nombreLimpio)) {
+                mostrarError('nombre', 'El nombre solo puede contener letras y espacios');
+                document.getElementById('nombre').focus();
                 return;
             }
 

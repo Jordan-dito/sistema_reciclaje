@@ -75,6 +75,19 @@ try {
                 $descripcion = limpiarEspacios($descripcion);
                 $icono = limpiarEspacios($icono);
                 
+                // Verificar que no exista una categoría con el mismo nombre (case-insensitive)
+                $stmt = $db->prepare("
+                    SELECT id FROM categorias 
+                    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) 
+                    AND estado = 'activo'
+                ");
+                $stmt->execute([$nombre]);
+                $categoriaExistente = $stmt->fetch();
+                
+                if ($categoriaExistente) {
+                    throw new Exception('Ya existe una categoría activa con el nombre "' . $nombre . '"');
+                }
+                
                 // Crear categoría
                 $stmt = $db->prepare("
                     INSERT INTO categorias (nombre, descripcion, icono, estado) 
@@ -98,6 +111,24 @@ try {
                 
                 if (empty($nombre)) {
                     throw new Exception('El nombre es obligatorio');
+                }
+                
+                $nombre = limpiarEspacios($nombre);
+                $descripcion = limpiarEspacios($descripcion);
+                $icono = limpiarEspacios($icono);
+                
+                // Verificar que no exista otra categoría con el mismo nombre (case-insensitive)
+                $stmt = $db->prepare("
+                    SELECT id FROM categorias 
+                    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) 
+                    AND id != ? 
+                    AND estado = 'activo'
+                ");
+                $stmt->execute([$nombre, $id]);
+                $categoriaExistente = $stmt->fetch();
+                
+                if ($categoriaExistente) {
+                    throw new Exception('Ya existe otra categoría activa con el nombre "' . $nombre . '"');
                 }
                 
                 $stmt = $db->prepare("
