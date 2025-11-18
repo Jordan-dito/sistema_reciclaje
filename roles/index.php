@@ -122,26 +122,79 @@
                 <div class="card card-round">
                   <div class="card-header">
                     <div class="card-head-row">
-                      <div class="card-title">Lista de Roles</div>
+                      <div class="card-title">Gestión de Roles y Módulos</div>
                     </div>
                   </div>
                   <div class="card-body">
-                    <div class="table-responsive">
-                      <table id="rolesTable" class="display table table-striped table-hover">
-                        <thead>
-                          <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Descripción</th>
-                            <th>Estado</th>
-                            <th>Fecha Creación</th>
-                            <th>Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <!-- Los datos se cargarán dinámicamente -->
-                        </tbody>
-                      </table>
+                    <!-- Pestañas -->
+                    <ul class="nav nav-pills nav-secondary" id="pills-tab" role="tablist">
+                      <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pills-modulos-tab" data-bs-toggle="tab" data-bs-target="#pills-modulos" type="button" role="tab" aria-controls="pills-modulos" aria-selected="true">
+                          <i class="fas fa-th-large"></i> Módulos
+                        </button>
+                      </li>
+                      <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-roles-tab" data-bs-toggle="tab" data-bs-target="#pills-roles" type="button" role="tab" aria-controls="pills-roles" aria-selected="false">
+                          <i class="fas fa-user-tag"></i> Roles
+                        </button>
+                      </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-2 mb-3" id="pills-tabContent">
+                      <!-- Pestaña de Módulos (por defecto) -->
+                      <div class="tab-pane fade show active" id="pills-modulos" role="tabpanel" aria-labelledby="pills-modulos-tab">
+                        <div class="row mt-3">
+                          <div class="col-md-12">
+                            <div class="form-group">
+                              <label>Seleccionar Rol</label>
+                              <select id="selectRolModulos" class="form-control">
+                                <option value="">-- Seleccione un rol --</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row mt-3">
+                          <div class="col-md-12">
+                            <div class="table-responsive">
+                              <table id="modulosTable" class="display table table-striped table-hover">
+                                <thead>
+                                  <tr>
+                                    <th>Módulo</th>
+                                    <th>Descripción</th>
+                                    <th>Ruta</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <!-- Los datos se cargarán dinámicamente -->
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Pestaña de Roles -->
+                      <div class="tab-pane fade" id="pills-roles" role="tabpanel" aria-labelledby="pills-roles-tab">
+                        <div class="table-responsive mt-3">
+                          <table id="rolesTable" class="display table table-striped table-hover">
+                            <thead>
+                              <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Estado</th>
+                                <th>Fecha Creación</th>
+                                <th>Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <!-- Los datos se cargarán dinámicamente -->
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -265,7 +318,14 @@
           "order": [[0, "desc"]]
         });
         
-        // Cargar roles dinámicamente
+        var modulosTable = $('#modulosTable').DataTable({
+          "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
+          },
+          "order": [[0, "asc"]]
+        });
+        
+        // Cargar roles en el select y en la tabla
         window.cargarRoles = function() {
           $.ajax({
             url: 'api.php?action=listar',
@@ -312,6 +372,116 @@
         
         // Cargar roles al iniciar
         cargarRoles();
+        
+        // Cargar roles en el select de módulos
+        function cargarRolesEnSelect() {
+          $.ajax({
+            url: 'api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                var select = $('#selectRolModulos');
+                select.empty().append('<option value="">-- Seleccione un rol --</option>');
+                var rolGerenteId = null;
+                response.data.forEach(function(rol) {
+                  select.append('<option value="' + rol.id + '">' + rol.nombre + '</option>');
+                  // Identificar el rol Gerente
+                  if (rol.nombre.toLowerCase() === 'gerente') {
+                    rolGerenteId = rol.id;
+                  }
+                });
+                
+                // Si existe el rol Gerente, seleccionarlo automáticamente y cargar sus módulos
+                if (rolGerenteId) {
+                  select.val(rolGerenteId);
+                  cargarModulosPorRol(rolGerenteId);
+                }
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar los roles", "error");
+            }
+          });
+        }
+        
+        // Cargar módulos cuando se selecciona un rol
+        $('#selectRolModulos').on('change', function() {
+          var rolId = $(this).val();
+          if (rolId) {
+            cargarModulosPorRol(rolId);
+          } else {
+            modulosTable.clear().draw();
+          }
+        });
+        
+        // Cargar módulos por rol (función global)
+        window.cargarModulosPorRol = function(rolId) {
+          $.ajax({
+            url: 'api.php?action=modulos_por_rol&rol_id=' + rolId,
+            method: 'GET',
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                modulosTable.clear();
+                
+                // Primero obtener todos los módulos disponibles
+                $.ajax({
+                  url: 'api.php?action=listar_modulos',
+                  method: 'GET',
+                  dataType: 'json',
+                  xhrFields: {
+                    withCredentials: true
+                  },
+                  crossDomain: false,
+                  success: function(modulosResponse) {
+                    if (modulosResponse.success) {
+                      modulosResponse.data.forEach(function(modulo) {
+                        var estaAsignado = modulo.asignado === 1 || false;
+                        var badgeEstado = modulo.estado === 'activo' 
+                          ? '<span class="badge badge-success">Activo</span>'
+                          : '<span class="badge badge-danger">Inactivo</span>';
+                        
+                        var botonAccion = '';
+                        if (estaAsignado) {
+                          botonAccion = '<span class="badge badge-success"><i class="fa fa-check"></i> Asignado</span>';
+                        } else {
+                          botonAccion = '<span class="badge badge-secondary"><i class="fa fa-times"></i> No asignado</span>';
+                        }
+                        
+                        modulosTable.row.add([
+                          '<i class="' + (modulo.icono || 'fas fa-cube') + '"></i> <strong>' + modulo.nombre + '</strong>',
+                          modulo.descripcion || '-',
+                          modulo.ruta || '-',
+                          badgeEstado,
+                          botonAccion
+                        ]);
+                      });
+                      modulosTable.draw();
+                    }
+                  },
+                  error: function() {
+                    swal("Error", "No se pudieron cargar los módulos", "error");
+                  }
+                });
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar los módulos del rol", "error");
+            }
+          });
+        }
+        
+        // Cargar roles en el select al iniciar
+        cargarRolesEnSelect();
         
         // Actualizar rol
         $('#btnActualizarRol').click(function() {
@@ -448,6 +618,77 @@
               },
               error: function(xhr) {
                 var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al activar el rol';
+                swal("Error", error, "error");
+              }
+            });
+          }
+        });
+      }
+      
+      // Asignar módulo a un rol
+      function asignarModulo(rolId, ruta) {
+        $.ajax({
+          url: 'api.php',
+          method: 'POST',
+          data: {
+            action: 'asignar_modulo',
+            rol_id: rolId,
+            ruta: ruta
+          },
+          dataType: 'json',
+          xhrFields: {
+            withCredentials: true
+          },
+          crossDomain: false,
+          success: function(response) {
+            if (response.success) {
+              swal("¡Éxito!", response.message, "success");
+              cargarModulosPorRol(rolId);
+            } else {
+              swal("Error", response.message, "error");
+            }
+          },
+          error: function(xhr) {
+            var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al asignar el módulo';
+            swal("Error", error, "error");
+          }
+        });
+      }
+      
+      // Quitar módulo de un rol
+      function quitarModulo(rolId, ruta) {
+        swal({
+          title: "¿Está seguro?",
+          text: "El módulo será removido de este rol",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: {
+                action: 'quitar_modulo',
+                rol_id: rolId,
+                ruta: ruta
+              },
+              dataType: 'json',
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarModulosPorRol(rolId);
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al quitar el módulo';
                 swal("Error", error, "error");
               }
             });

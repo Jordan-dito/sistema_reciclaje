@@ -13,6 +13,7 @@ ob_start();
 
 try {
     require_once __DIR__ . '/../config/auth.php';
+    require_once __DIR__ . '/../config/modulos_por_rol.php';
 
     $auth = new Auth();
     if (!$auth->isAuthenticated()) {
@@ -51,6 +52,25 @@ try {
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Rol no encontrado']);
                 }
+            } elseif ($action === 'listar_modulos') {
+                // Listar todos los módulos disponibles (definidos estáticamente)
+                global $MODULOS_DISPONIBLES;
+                $modulos = [];
+                foreach ($MODULOS_DISPONIBLES as $modulo) {
+                    $modulo['estado'] = 'activo';
+                    $modulos[] = $modulo;
+                }
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $modulos], JSON_UNESCAPED_UNICODE);
+            } elseif ($action === 'modulos_por_rol') {
+                // Obtener módulos asignados a un rol específico (desde código PHP, no BD)
+                $rol_id = intval($_GET['rol_id'] ?? 0);
+                
+                $modulos = getModulosConAsignacion($rol_id);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $modulos], JSON_UNESCAPED_UNICODE);
             }
             break;
             
@@ -199,6 +219,22 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Rol activado exitosamente']);
+            } elseif ($action === 'asignar_modulo') {
+                // Los módulos están definidos estáticamente en el código
+                // Esta acción solo informa que no se puede modificar desde la interfaz
+                ob_end_clean();
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Los módulos están definidos estáticamente en el código. No se pueden modificar desde la interfaz.'
+                ]);
+            } elseif ($action === 'quitar_modulo') {
+                // Los módulos están definidos estáticamente en el código
+                // Esta acción solo informa que no se puede modificar desde la interfaz
+                ob_end_clean();
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Los módulos están definidos estáticamente en el código. No se pueden modificar desde la interfaz.'
+                ]);
             }
             break;
             
