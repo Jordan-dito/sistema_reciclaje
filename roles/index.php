@@ -1,3 +1,22 @@
+<?php
+/**
+ * Gestión de Roles
+ * Sistema de Gestión de Reciclaje
+ */
+
+// Verificar autenticación
+require_once __DIR__ . '/../config/auth.php';
+
+// Verificar si el usuario está autenticado
+$auth = new Auth();
+if (!$auth->isAuthenticated()) {
+    header('Location: ../index.php');
+    exit;
+}
+
+// Obtener datos del usuario actual
+$usuario = $auth->getCurrentUser();
+?>
 <!DOCTYPE html>
 <html lang="es">
   <head>

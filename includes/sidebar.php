@@ -9,8 +9,8 @@ $basePath = $basePath !== '' ? $basePath . '/' : '';
 $currentRoute = $currentRoute ?? '';
 
 // Obtener rol del usuario desde la sesión
-$usuarioRol = isset($_SESSION['usuario_rol']) ? trim(strtolower($_SESSION['usuario_rol'])) : '';
 $usuarioRolNombre = isset($_SESSION['usuario_rol']) ? trim($_SESSION['usuario_rol']) : '';
+$usuarioRol = isset($_SESSION['usuario_rol']) ? trim(strtolower($_SESSION['usuario_rol'])) : '';
 
 $gestionRoutes = ['usuarios', 'roles', 'sucursales', 'categorias', 'materiales', 'productos', 'unidades'];
 $inventarioRoutes = ['inventarios', 'proveedores', 'compras', 'ventas', 'clientes'];
