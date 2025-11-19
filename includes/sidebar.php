@@ -124,7 +124,7 @@ $gerenteRelacionesComercialesOpen = in_array($currentRoute, $gerenteRelacionesCo
           </li>
           <li class="<?php echo $currentRoute === 'inventarios' ? 'active' : ''; ?>">
             <a href="<?php echo $basePath; ?>inventarios/index.php">
-              <span class="sub-item">Gestión de Materiales por Sucursal (Producto)</span>
+              <span class="sub-item">Gestión de Materiales por Sucursal </span>
             </a>
           </li>
         </ul>
@@ -204,7 +204,7 @@ $gerenteRelacionesComercialesOpen = in_array($currentRoute, $gerenteRelacionesCo
     </li>
 
   <?php else: ?>
-    <!-- MENÚ PARA OTROS ROLES (Administrador, etc.) -->
+    <!-- MENÚ PARA ADMINISTRADOR -->
     <li class="nav-item <?php echo $currentRoute === 'dashboard' ? 'active' : ''; ?>">
       <a href="<?php echo $basePath; ?>Dashboard.php">
         <i class="fas fa-home"></i>
@@ -212,131 +212,74 @@ $gerenteRelacionesComercialesOpen = in_array($currentRoute, $gerenteRelacionesCo
       </a>
     </li>
 
-  <?php if ($mostrarGestion): ?>
-  <li class="nav-section">
-    <span class="sidebar-mini-icon">
-      <i class="fa fa-ellipsis-h"></i>
-    </span>
-    <h4 class="text-section">Administrador</h4>
-  </li>
+    <!-- Gestión de Inventario -->
+    <li class="nav-item submenu <?php echo $gestionInventarioOpen ? 'active' : ''; ?>">
+      <a data-bs-toggle="collapse" href="#menuGestionInventario" class="<?php echo $gestionInventarioOpen ? '' : 'collapsed'; ?>" aria-expanded="<?php echo $gestionInventarioOpen ? 'true' : 'false'; ?>">
+        <i class="fas fa-warehouse"></i>
+        <p>Gestión de Inventario</p>
+        <span class="caret"></span>
+      </a>
+      <div class="collapse <?php echo $gestionInventarioOpen ? 'show' : ''; ?>" id="menuGestionInventario">
+        <ul class="nav nav-collapse">
+          <li class="<?php echo $currentRoute === 'compras' ? 'active' : ''; ?>">
+            <a href="<?php echo $basePath; ?>compras/index.php">
+              <span class="sub-item">Compra</span>
+            </a>
+          </li>
+          <li class="<?php echo $currentRoute === 'ventas' ? 'active' : ''; ?>">
+            <a href="<?php echo $basePath; ?>ventas/index.php">
+              <span class="sub-item">Venta</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
 
-  <li class="nav-item submenu <?php echo $gestionOpen ? 'active' : ''; ?>">
-    <a data-bs-toggle="collapse" href="#menuGestion" class="<?php echo $gestionOpen ? '' : 'collapsed'; ?>" aria-expanded="<?php echo $gestionOpen ? 'true' : 'false'; ?>">
-      <i class="fas fa-user-cog"></i>
-      <p>Gestión</p>
-      <span class="caret"></span>
-    </a>
-    <div class="collapse <?php echo $gestionOpen ? 'show' : ''; ?>" id="menuGestion">
-      <ul class="nav nav-collapse">
-        <li class="<?php echo $currentRoute === 'usuarios' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>usuarios/index.php">
-            <span class="sub-item">Usuarios</span>
-          </a>
-        </li>
-        <li class="<?php echo $currentRoute === 'roles' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>roles/index.php">
-            <span class="sub-item">Roles</span>
-          </a>
-        </li>
-        <li class="<?php echo $currentRoute === 'sucursales' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>sucursales/index.php">
-            <span class="sub-item">Sucursales</span>
-          </a>
-        </li>
-        <li class="<?php echo $currentRoute === 'categorias' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>categorias/index.php">
-            <span class="sub-item">Categorías</span>
-          </a>
-        </li>
-        <li class="<?php echo $currentRoute === 'materiales' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>materiales/index.php">
-            <span class="sub-item">Materiales</span>
-          </a>
-        </li>
-        <li class="<?php echo $currentRoute === 'productos' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>productos/index.php">
-            <span class="sub-item">Productos</span>
-          </a>
-        </li>
-        <li class="<?php echo $currentRoute === 'unidades' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>unidades/index.php">
-            <span class="sub-item">Unidades</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </li>
-  <?php endif; ?>
+    <!-- Relaciones Comerciales -->
+    <li class="nav-item submenu <?php echo $relacionesComercialesOpen ? 'active' : ''; ?>">
+      <a data-bs-toggle="collapse" href="#menuRelacionesComerciales" class="<?php echo $relacionesComercialesOpen ? '' : 'collapsed'; ?>" aria-expanded="<?php echo $relacionesComercialesOpen ? 'true' : 'false'; ?>">
+        <i class="fas fa-handshake"></i>
+        <p>Relaciones Comerciales</p>
+        <span class="caret"></span>
+      </a>
+      <div class="collapse <?php echo $relacionesComercialesOpen ? 'show' : ''; ?>" id="menuRelacionesComerciales">
+        <ul class="nav nav-collapse">
+          <li class="<?php echo $currentRoute === 'proveedores' ? 'active' : ''; ?>">
+            <a href="<?php echo $basePath; ?>proveedores/index.php">
+              <span class="sub-item">Proveedores</span>
+            </a>
+          </li>
+          <li class="<?php echo $currentRoute === 'clientes' ? 'active' : ''; ?>">
+            <a href="<?php echo $basePath; ?>clientes/index.php">
+              <span class="sub-item">Cliente</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
 
-  <!-- Gestión de Inventario -->
-  <li class="nav-item submenu <?php echo $gestionInventarioOpen ? 'active' : ''; ?>">
-    <a data-bs-toggle="collapse" href="#menuGestionInventario" class="<?php echo $gestionInventarioOpen ? '' : 'collapsed'; ?>" aria-expanded="<?php echo $gestionInventarioOpen ? 'true' : 'false'; ?>">
-      <i class="fas fa-warehouse"></i>
-      <p>Gestión de Inventario</p>
-      <span class="caret"></span>
-    </a>
-    <div class="collapse <?php echo $gestionInventarioOpen ? 'show' : ''; ?>" id="menuGestionInventario">
-      <ul class="nav nav-collapse">
-        <li class="<?php echo $currentRoute === 'compras' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>compras/index.php">
-            <span class="sub-item">Compra</span>
-          </a>
-        </li>
-        <li class="<?php echo $currentRoute === 'ventas' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>ventas/index.php">
-            <span class="sub-item">Venta</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </li>
-
-  <!-- Relaciones Comerciales -->
-  <li class="nav-item submenu <?php echo $relacionesComercialesOpen ? 'active' : ''; ?>">
-    <a data-bs-toggle="collapse" href="#menuRelacionesComerciales" class="<?php echo $relacionesComercialesOpen ? '' : 'collapsed'; ?>" aria-expanded="<?php echo $relacionesComercialesOpen ? 'true' : 'false'; ?>">
-      <i class="fas fa-handshake"></i>
-      <p>Relaciones Comerciales</p>
-      <span class="caret"></span>
-    </a>
-    <div class="collapse <?php echo $relacionesComercialesOpen ? 'show' : ''; ?>" id="menuRelacionesComerciales">
-      <ul class="nav nav-collapse">
-        <li class="<?php echo $currentRoute === 'proveedores' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>proveedores/index.php">
-            <span class="sub-item">Proveedores</span>
-          </a>
-        </li>
-        <li class="<?php echo $currentRoute === 'clientes' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>clientes/index.php">
-            <span class="sub-item">Cliente</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </li>
-
-  <?php if ($mostrarReportes): ?>
-  <li class="nav-section">
-    <span class="sidebar-mini-icon">
-      <i class="fa fa-ellipsis-h"></i>
-    </span>
-    <h4 class="text-section">Reporte</h4>
-  </li>
-  <li class="nav-item submenu <?php echo ($currentRoute === 'reportes') ? 'active' : ''; ?>">
-    <a data-bs-toggle="collapse" href="#menuReportesAdmin" class="<?php echo ($currentRoute === 'reportes') ? '' : 'collapsed'; ?>" aria-expanded="<?php echo ($currentRoute === 'reportes') ? 'true' : 'false'; ?>">
-      <i class="fas fa-chart-line"></i>
-      <p>Reporte</p>
-      <span class="caret"></span>
-    </a>
-    <div class="collapse <?php echo ($currentRoute === 'reportes') ? 'show' : ''; ?>" id="menuReportesAdmin">
-      <ul class="nav nav-collapse">
-        <li class="<?php echo $currentRoute === 'reportes' ? 'active' : ''; ?>">
-          <a href="<?php echo $basePath; ?>reportes/index.php?sucursal=all">
-            <span class="sub-item">Reportes de Sucursal</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </li>
-  <?php endif; ?>
+    <!-- Reporte -->
+    <li class="nav-section">
+      <span class="sidebar-mini-icon">
+        <i class="fa fa-ellipsis-h"></i>
+      </span>
+      <h4 class="text-section">Reporte</h4>
+    </li>
+    <li class="nav-item submenu <?php echo ($currentRoute === 'reportes') ? 'active' : ''; ?>">
+      <a data-bs-toggle="collapse" href="#menuReportesAdmin" class="<?php echo ($currentRoute === 'reportes') ? '' : 'collapsed'; ?>" aria-expanded="<?php echo ($currentRoute === 'reportes') ? 'true' : 'false'; ?>">
+        <i class="fas fa-chart-line"></i>
+        <p>Reporte</p>
+        <span class="caret"></span>
+      </a>
+      <div class="collapse <?php echo ($currentRoute === 'reportes') ? 'show' : ''; ?>" id="menuReportesAdmin">
+        <ul class="nav nav-collapse">
+          <li class="<?php echo $currentRoute === 'reportes' ? 'active' : ''; ?>">
+            <a href="<?php echo $basePath; ?>reportes/index.php?sucursal=all">
+              <span class="sub-item">Reportes de Sucursal</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
   <?php endif; ?>
 </ul>
