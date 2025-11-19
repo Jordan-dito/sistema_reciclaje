@@ -238,7 +238,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Producto <span class="text-danger">*</span></label>
-                    <div class="input-group">
+                    <div class="input-group mb-2">
                       <input type="text" id="producto_seleccionado" class="form-control" placeholder="Ningún producto seleccionado" readonly style="background-color: #f8f9fa;">
                       <input type="hidden" id="producto_id" name="producto_id" required>
                       <input type="hidden" id="producto_precio" name="producto_precio">
@@ -246,6 +246,20 @@ if (!$auth->isAuthenticated()) {
                       <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
                         <i class="fa fa-search"></i> Buscar Producto
                       </button>
+                    </div>
+                    <!-- Panel de información del producto seleccionado -->
+                    <div id="productoInfo" class="alert alert-info" style="display: none; margin-top: 10px;">
+                      <div class="d-flex align-items-center">
+                        <i class="fa fa-check-circle text-success me-2" style="font-size: 1.5em;"></i>
+                        <div class="flex-grow-1">
+                          <strong id="productoInfoNombre">-</strong>
+                          <br>
+                          <small id="productoInfoDetalles" class="text-muted">-</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarProducto()" title="Quitar producto">
+                          <i class="fa fa-times"></i>
+                        </button>
+                      </div>
                     </div>
                     <small class="form-text text-muted"><i class="fa fa-info-circle"></i> Haga clic en "Buscar Producto" para seleccionar un producto de la lista</small>
                   </div>
@@ -449,6 +463,7 @@ if (!$auth->isAuthenticated()) {
           $('#producto_seleccionado').val('').css('background-color', '#f8f9fa').css('border-color', '');
           $('#producto_precio').val('');
           $('#producto_precio_id').val('');
+          $('#productoInfo').hide();
           // Cargar el siguiente número desde la base de datos
           cargarSiguienteNumeroFactura();
         });
@@ -642,7 +657,10 @@ if (!$auth->isAuthenticated()) {
                   producto.id,
                   producto.nombre,
                   producto.precio_unitario || 0,
-                  producto.precio_id || null
+                  producto.precio_id || null,
+                  producto.material_nombre || '',
+                  producto.categoria_nombre || '',
+                  producto.unidad || ''
                 );
                 return false;
               });
@@ -665,7 +683,7 @@ if (!$auth->isAuthenticated()) {
         });
         
         // Función para seleccionar producto
-        function seleccionarProducto(id, nombre, precio, precioId) {
+        function seleccionarProducto(id, nombre, precio, precioId, material, categoria, unidad) {
           console.log('Seleccionando producto:', {id: id, nombre: nombre, precio: precio, precioId: precioId});
           
           // Validar que tenemos los datos necesarios
@@ -685,16 +703,27 @@ if (!$auth->isAuthenticated()) {
           // Cambiar el estilo del campo para indicar que está seleccionado
           $('#producto_seleccionado').css('background-color', '#d4edda').css('border-color', '#28a745');
           
-          // Cerrar el modal
-          var modal = bootstrap.Modal.getInstance(document.getElementById('modalBuscarProducto'));
-          if (modal) {
-            modal.hide();
-          } else {
-            $('#modalBuscarProducto').modal('hide');
-          }
+          // Mostrar panel de información del producto
+          var detalles = [];
+          if (material) detalles.push('Material: ' + material);
+          if (categoria) detalles.push('Categoría: ' + categoria);
+          if (unidad) detalles.push('Unidad: ' + unidad);
+          if (precio) detalles.push('Precio: $' + parseFloat(precio).toFixed(2));
           
-          // Calcular total después de un pequeño delay
+          $('#productoInfoNombre').text(nombre);
+          $('#productoInfoDetalles').text(detalles.join(' | '));
+          $('#productoInfo').fadeIn(300);
+          
+          // Cerrar el modal después de un pequeño delay para que se vea la actualización
           setTimeout(function() {
+            var modal = bootstrap.Modal.getInstance(document.getElementById('modalBuscarProducto'));
+            if (modal) {
+              modal.hide();
+            } else {
+              $('#modalBuscarProducto').modal('hide');
+            }
+            
+            // Calcular total
             calcularTotal();
             console.log('Producto seleccionado correctamente:', nombre);
             console.log('Valores actualizados:', {
@@ -702,8 +731,22 @@ if (!$auth->isAuthenticated()) {
               producto_seleccionado: $('#producto_seleccionado').val(),
               precio_unitario: $('#precio_unitario').val()
             });
-          }, 200);
+          }, 300);
         }
+        
+        // Función para limpiar producto seleccionado
+        function limpiarProducto() {
+          $('#producto_id').val('');
+          $('#producto_seleccionado').val('').css('background-color', '#f8f9fa').css('border-color', '');
+          $('#producto_precio').val('');
+          $('#producto_precio_id').val('');
+          $('#precio_unitario').val('');
+          $('#productoInfo').fadeOut(300);
+          calcularTotal();
+        }
+        
+        // Hacer la función global para que funcione desde el onclick
+        window.limpiarProducto = limpiarProducto;
         
         window.cargarCompras = cargarCompras;
         
@@ -870,6 +913,7 @@ if (!$auth->isAuthenticated()) {
                 $('#producto_seleccionado').val('').css('background-color', '#f8f9fa').css('border-color', '');
                 $('#producto_precio').val('');
                 $('#producto_precio_id').val('');
+                $('#productoInfo').hide();
                 calcularTotal();
                 cargarCompras();
               } else {
