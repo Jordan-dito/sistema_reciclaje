@@ -219,7 +219,8 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Número de Factura</label>
-                    <input type="text" id="numero_factura" name="numero_factura" class="form-control" placeholder="Opcional">
+                    <input type="text" id="numero_factura" name="numero_factura" class="form-control" placeholder="Se generará automáticamente" readonly>
+                    <small class="form-text text-muted">Se genera automáticamente al crear la compra</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -237,10 +238,16 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Producto <span class="text-danger">*</span></label>
-                    <select id="producto_id" name="producto_id" class="form-control" required>
-                      <option value="">Seleccione un producto</option>
-                      <!-- Las opciones se cargarán dinámicamente -->
-                    </select>
+                    <div class="input-group">
+                      <input type="text" id="producto_seleccionado" class="form-control" placeholder="Ningún producto seleccionado" readonly style="background-color: #f8f9fa;">
+                      <input type="hidden" id="producto_id" name="producto_id" required>
+                      <input type="hidden" id="producto_precio" name="producto_precio">
+                      <input type="hidden" id="producto_precio_id" name="producto_precio_id">
+                      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
+                        <i class="fa fa-search"></i> Buscar Producto
+                      </button>
+                    </div>
+                    <small class="form-text text-muted"><i class="fa fa-info-circle"></i> Haga clic en "Buscar Producto" para seleccionar un producto de la lista</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -342,6 +349,76 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
+    <!-- Modal Buscar Producto -->
+    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Buscar y Seleccionar Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Filtros de búsqueda -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Buscar por nombre</label>
+                  <input type="text" id="filtroNombre" class="form-control" placeholder="Nombre del producto...">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Filtrar por material</label>
+                  <select id="filtroMaterial" class="form-control">
+                    <option value="">Todos los materiales</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Filtrar por categoría</label>
+                  <select id="filtroCategoria" class="form-control">
+                    <option value="">Todas las categorías</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Tabla de productos -->
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+              <table class="table table-hover table-striped" id="tablaProductos">
+                <thead class="thead-dark" style="position: sticky; top: 0; background: white; z-index: 10;">
+                  <tr>
+                    <th style="width: 50px;">Seleccionar</th>
+                    <th>Nombre</th>
+                    <th>Material</th>
+                    <th>Categoría</th>
+                    <th>Unidad</th>
+                    <th>Precio Compra</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyProductos">
+                  <tr>
+                    <td colspan="6" class="text-center">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Cargando...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="sinResultados" class="alert alert-info mt-3" style="display: none;">
+              <i class="fa fa-info-circle"></i> No se encontraron productos con los filtros seleccionados.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Core JS Files -->
     <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
     <script src="../assets/js/core/popper.min.js"></script>
@@ -362,6 +439,47 @@ if (!$auth->isAuthenticated()) {
         
         // Establecer fecha actual por defecto
         $('#fecha_compra').val(new Date().toISOString().split('T')[0]);
+        
+        // Cargar siguiente número de factura cuando se abre el modal
+        $('#modalNuevaCompra').on('show.bs.modal', function() {
+          // Limpiar el campo primero
+          $('#numero_factura').val('');
+          // Limpiar producto seleccionado
+          $('#producto_id').val('');
+          $('#producto_seleccionado').val('').css('background-color', '#f8f9fa').css('border-color', '');
+          $('#producto_precio').val('');
+          $('#producto_precio_id').val('');
+          // Cargar el siguiente número desde la base de datos
+          cargarSiguienteNumeroFactura();
+        });
+        
+        // Función para cargar el siguiente número de factura desde la base de datos
+        function cargarSiguienteNumeroFactura() {
+          // Mostrar indicador de carga
+          $('#numero_factura').val('Cargando...');
+          
+          $.ajax({
+            url: 'api.php?action=siguiente_numero_factura',
+            method: 'GET',
+            dataType: 'json',
+            cache: false, // No usar caché para obtener siempre el último número
+            success: function(response) {
+              if (response.success && response.numero_factura) {
+                $('#numero_factura').val(response.numero_factura);
+                console.log('Número de factura cargado desde BD:', response.numero_factura);
+              } else {
+                // Si no hay respuesta válida, usar 00001
+                $('#numero_factura').val('00001');
+                console.log('No se pudo obtener número de BD, usando 00001');
+              }
+            },
+            error: function(xhr, status, error) {
+              // Si hay error, establecer un número por defecto
+              $('#numero_factura').val('00001');
+              console.error('Error al cargar número de factura:', error);
+            }
+          });
+        }
         
         // Cargar sucursales, proveedores y productos
         function cargarDatos() {
@@ -399,34 +517,193 @@ if (!$auth->isAuthenticated()) {
             }
           });
           
-          // Cargar productos
+          // Cargar materiales y categorías para los filtros del modal
+          cargarFiltrosProductos();
+        }
+        
+        // Variables globales para productos
+        var todosLosProductos = [];
+        var materialesUnicos = [];
+        var categoriasUnicas = [];
+        
+        // Cargar filtros del modal de productos
+        function cargarFiltrosProductos() {
           $.ajax({
             url: 'api.php?action=productos',
             method: 'GET',
             dataType: 'json',
             success: function(response) {
               if (response.success) {
-                var select = $('#producto_id');
-                select.empty().append('<option value="">Seleccione un producto</option>');
+                todosLosProductos = response.data;
+                
+                // Extraer materiales y categorías únicos
+                var materiales = {};
+                var categorias = {};
+                
                 response.data.forEach(function(producto) {
-                  var texto = producto.nombre + ' (' + producto.material_nombre + ' - ' + producto.unidad + ')';
-                  var precio = producto.precio_unitario ? ' - $' + parseFloat(producto.precio_unitario).toFixed(2) : '';
-                  select.append('<option value="' + producto.id + '" data-precio="' + (producto.precio_unitario || 0) + '" data-precio-id="' + (producto.precio_id || '') + '">' + texto + precio + '</option>');
+                  if (producto.material_nombre && !materiales[producto.material_nombre]) {
+                    materiales[producto.material_nombre] = producto.material_nombre;
+                  }
+                  if (producto.categoria_nombre && !categorias[producto.categoria_nombre]) {
+                    categorias[producto.categoria_nombre] = producto.categoria_nombre;
+                  }
+                });
+                
+                // Llenar select de materiales
+                var selectMaterial = $('#filtroMaterial');
+                selectMaterial.empty().append('<option value="">Todos los materiales</option>');
+                Object.keys(materiales).sort().forEach(function(material) {
+                  selectMaterial.append('<option value="' + material + '">' + material + '</option>');
+                });
+                
+                // Llenar select de categorías
+                var selectCategoria = $('#filtroCategoria');
+                selectCategoria.empty().append('<option value="">Todas las categorías</option>');
+                Object.keys(categorias).sort().forEach(function(categoria) {
+                  selectCategoria.append('<option value="' + categoria + '">' + categoria + '</option>');
                 });
               }
             }
           });
         }
         
-        // Auto-completar precio cuando se selecciona producto
-        $('#producto_id').change(function() {
-          var option = $(this).find('option:selected');
-          if (option.val()) {
-            var precio = option.data('precio') || 0;
-            $('#precio_unitario').val(precio);
-            calcularTotal();
-          }
+        // Cargar productos en el modal cuando se abre
+        $('#modalBuscarProducto').on('show.bs.modal', function() {
+          // Limpiar filtros
+          $('#filtroNombre').val('');
+          $('#filtroMaterial').val('');
+          $('#filtroCategoria').val('');
+          cargarProductosEnModal();
         });
+        
+        // Función para cargar y mostrar productos en el modal
+        function cargarProductosEnModal() {
+          var tbody = $('#tbodyProductos');
+          tbody.html('<tr><td colspan="6" class="text-center"><div class="spinner-border text-primary" role="status"><span class="sr-only">Cargando...</span></div></td></tr>');
+          
+          $.ajax({
+            url: 'api.php?action=productos',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                todosLosProductos = response.data;
+                filtrarYMostrarProductos();
+              } else {
+                tbody.html('<tr><td colspan="6" class="text-center text-danger">Error al cargar productos</td></tr>');
+              }
+            },
+            error: function() {
+              tbody.html('<tr><td colspan="6" class="text-center text-danger">Error al cargar productos</td></tr>');
+            }
+          });
+        }
+        
+        // Función para filtrar y mostrar productos
+        function filtrarYMostrarProductos() {
+          var filtroNombre = $('#filtroNombre').val().toLowerCase();
+          var filtroMaterial = $('#filtroMaterial').val();
+          var filtroCategoria = $('#filtroCategoria').val();
+          var tbody = $('#tbodyProductos');
+          var sinResultados = $('#sinResultados');
+          
+          var productosFiltrados = todosLosProductos.filter(function(producto) {
+            var coincideNombre = !filtroNombre || producto.nombre.toLowerCase().includes(filtroNombre);
+            var coincideMaterial = !filtroMaterial || producto.material_nombre === filtroMaterial;
+            var coincideCategoria = !filtroCategoria || producto.categoria_nombre === filtroCategoria;
+            
+            return coincideNombre && coincideMaterial && coincideCategoria;
+          });
+          
+          tbody.empty();
+          
+          if (productosFiltrados.length === 0) {
+            sinResultados.show();
+            return;
+          }
+          
+          sinResultados.hide();
+          
+          productosFiltrados.forEach(function(producto) {
+            var precio = producto.precio_unitario ? parseFloat(producto.precio_unitario).toFixed(2) : '0.00';
+            var categoria = producto.categoria_nombre || '-';
+            var nombreEscapado = $('<div>').text(producto.nombre).html();
+            
+            var fila = $('<tr>');
+            var btnCell = $('<td>');
+            var btn = $('<button>')
+              .attr('type', 'button')
+              .addClass('btn btn-sm btn-primary')
+              .html('<i class="fa fa-check"></i>')
+              .on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                seleccionarProducto(
+                  producto.id,
+                  producto.nombre,
+                  producto.precio_unitario || 0,
+                  producto.precio_id || null
+                );
+                return false;
+              });
+            btnCell.append(btn);
+            
+            fila.append(btnCell);
+            fila.append($('<td>').html('<strong>' + nombreEscapado + '</strong>'));
+            fila.append($('<td>').text(producto.material_nombre));
+            fila.append($('<td>').text(categoria));
+            fila.append($('<td>').text(producto.unidad));
+            fila.append($('<td>').text('$' + precio));
+            
+            tbody.append(fila);
+          });
+        }
+        
+        // Aplicar filtros cuando cambian
+        $('#filtroNombre, #filtroMaterial, #filtroCategoria').on('input change', function() {
+          filtrarYMostrarProductos();
+        });
+        
+        // Función para seleccionar producto
+        function seleccionarProducto(id, nombre, precio, precioId) {
+          console.log('Seleccionando producto:', {id: id, nombre: nombre, precio: precio, precioId: precioId});
+          
+          // Validar que tenemos los datos necesarios
+          if (!id || !nombre) {
+            console.error('Error: Datos de producto incompletos');
+            swal("Error", "No se pudo seleccionar el producto. Por favor, intente nuevamente.", "error");
+            return;
+          }
+          
+          // Actualizar los campos del formulario
+          $('#producto_id').val(id);
+          $('#producto_seleccionado').val(nombre);
+          $('#producto_precio').val(precio || 0);
+          $('#producto_precio_id').val(precioId || '');
+          $('#precio_unitario').val(precio || 0);
+          
+          // Cambiar el estilo del campo para indicar que está seleccionado
+          $('#producto_seleccionado').css('background-color', '#d4edda').css('border-color', '#28a745');
+          
+          // Cerrar el modal
+          var modal = bootstrap.Modal.getInstance(document.getElementById('modalBuscarProducto'));
+          if (modal) {
+            modal.hide();
+          } else {
+            $('#modalBuscarProducto').modal('hide');
+          }
+          
+          // Calcular total después de un pequeño delay
+          setTimeout(function() {
+            calcularTotal();
+            console.log('Producto seleccionado correctamente:', nombre);
+            console.log('Valores actualizados:', {
+              producto_id: $('#producto_id').val(),
+              producto_seleccionado: $('#producto_seleccionado').val(),
+              precio_unitario: $('#precio_unitario').val()
+            });
+          }, 200);
+        }
         
         window.cargarCompras = cargarCompras;
         
@@ -533,14 +810,17 @@ if (!$auth->isAuthenticated()) {
         // Guardar nueva compra
         $('#btnGuardarCompra').click(function() {
           var form = $('#formNuevaCompra')[0];
-          if (!form.checkValidity()) {
-            form.reportValidity();
+          
+          // Validar producto seleccionado primero
+          var producto_id = $('#producto_id').val();
+          if (!producto_id) {
+            swal("Error", "Debe seleccionar un producto haciendo clic en 'Buscar Producto'", "error");
+            $('#producto_seleccionado').css('border-color', '#dc3545').focus();
             return;
           }
           
-          var producto_id = $('#producto_id').val();
-          if (!producto_id) {
-            swal("Error", "Debe seleccionar un producto", "error");
+          if (!form.checkValidity()) {
+            form.reportValidity();
             return;
           }
           
@@ -551,8 +831,7 @@ if (!$auth->isAuthenticated()) {
           var subtotal = cantidad * precio_unitario;
           var total = subtotal + iva - descuento;
           
-          var productoOption = $('#producto_id option:selected');
-          var precio_id = productoOption.data('precio-id') || null;
+          var precio_id = $('#producto_precio_id').val() || null;
           
           var formData = {
             proveedor_id: $('#proveedor_id').val(),
@@ -586,6 +865,11 @@ if (!$auth->isAuthenticated()) {
                 $('#modalNuevaCompra').modal('hide');
                 $('#formNuevaCompra')[0].reset();
                 $('#fecha_compra').val(new Date().toISOString().split('T')[0]);
+                $('#numero_factura').val(''); // Limpiar para que se recargue al abrir de nuevo
+                $('#producto_id').val('');
+                $('#producto_seleccionado').val('').css('background-color', '#f8f9fa').css('border-color', '');
+                $('#producto_precio').val('');
+                $('#producto_precio_id').val('');
                 calcularTotal();
                 cargarCompras();
               } else {

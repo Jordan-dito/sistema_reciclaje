@@ -123,6 +123,50 @@ try {
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Compra no encontrada']);
                 }
+            } elseif ($action === 'siguiente_numero_factura') {
+                // Obtener el siguiente número de factura disponible
+                // Consulta directa a la base de datos para obtener el último número
+                $siguienteNumero = 1;
+                
+                try {
+                    // Obtener todos los números de factura que sean numéricos
+                    $stmt = $db->query("
+                        SELECT numero_factura 
+                        FROM compras 
+                        WHERE numero_factura IS NOT NULL 
+                          AND numero_factura <> ''
+                          AND estado <> 'cancelada'
+                        ORDER BY id DESC
+                    ");
+                    $todos = $stmt->fetchAll();
+                    
+                    // Buscar el número más alto
+                    foreach ($todos as $row) {
+                        if (!empty($row['numero_factura'])) {
+                            // Limpiar el número (quitar espacios, guiones, etc.) y extraer solo dígitos
+                            $numeroLimpio = preg_replace('/[^0-9]/', '', $row['numero_factura']);
+                            if (!empty($numeroLimpio) && is_numeric($numeroLimpio)) {
+                                $num = intval($numeroLimpio);
+                                if ($num >= $siguienteNumero) {
+                                    $siguienteNumero = $num + 1;
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Si hay error, usar 1 como valor por defecto
+                    error_log("Error al obtener siguiente número de factura: " . $e->getMessage());
+                    $siguienteNumero = 1;
+                }
+                
+                // Formatear con ceros a la izquierda (5 dígitos: 00001, 00002, etc.)
+                $numeroFormateado = str_pad($siguienteNumero, 5, '0', STR_PAD_LEFT);
+                
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true, 
+                    'numero_factura' => $numeroFormateado
+                ], JSON_UNESCAPED_UNICODE);
             }
             break;
             
