@@ -57,8 +57,30 @@ try {
                 $stmt->execute($params);
                 $compras = $stmt->fetchAll();
                 
+                // Obtener detalles de cada compra
+                foreach ($compras as &$compra) {
+                    $stmt = $db->prepare("
+                        SELECT cd.*, 
+                               p.nombre as producto_nombre,
+                               m.nombre as material_nombre,
+                               c.nombre as categoria_nombre,
+                               u.nombre as unidad_nombre,
+                               u.simbolo as unidad_simbolo,
+                               pr.precio_unitario
+                        FROM compras_detalle cd
+                        INNER JOIN productos p ON cd.producto_id = p.id
+                        INNER JOIN materiales m ON p.material_id = m.id
+                        LEFT JOIN categorias c ON m.categoria_id = c.id
+                        INNER JOIN unidades u ON p.unidad_id = u.id
+                        LEFT JOIN precios pr ON cd.precio_id = pr.id
+                        WHERE cd.compra_id = ?
+                    ");
+                    $stmt->execute([$compra['id']]);
+                    $compra['detalles'] = $stmt->fetchAll();
+                }
+                
                 ob_end_clean();
-                echo json_encode(['success' => true, 'data' => $compras]);
+                echo json_encode(['success' => true, 'data' => $compras], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'productos') {
                 // Obtener productos activos con precios de compra
                 $stmt = $db->query("
