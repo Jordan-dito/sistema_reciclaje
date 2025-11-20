@@ -63,7 +63,6 @@ try {
             if ($action === 'crear') {
                 $nombre = trim($_POST['nombre'] ?? '');
                 $descripcion = trim($_POST['descripcion'] ?? '');
-                $icono = trim($_POST['icono'] ?? '');
                 $estado = $_POST['estado'] ?? 'activo';
                 
                 // Validar nombre: no solo espacios
@@ -73,7 +72,6 @@ try {
                 }
                 $nombre = limpiarEspacios($nombre);
                 $descripcion = limpiarEspacios($descripcion);
-                $icono = limpiarEspacios($icono);
                 
                 // Verificar que no exista una categoría con el mismo nombre (case-insensitive)
                 $stmt = $db->prepare("
@@ -90,10 +88,10 @@ try {
                 
                 // Crear categoría
                 $stmt = $db->prepare("
-                    INSERT INTO categorias (nombre, descripcion, icono, estado) 
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO categorias (nombre, descripcion, estado) 
+                    VALUES (?, ?, ?)
                 ");
-                $stmt->execute([$nombre, $descripcion ?: null, $icono ?: null, $estado]);
+                $stmt->execute([$nombre, $descripcion ?: null, $estado]);
                 $categoria_id = $db->lastInsertId();
                 
                 ob_end_clean();
@@ -106,7 +104,6 @@ try {
                 $id = $_POST['id'] ?? 0;
                 $nombre = trim($_POST['nombre'] ?? '');
                 $descripcion = trim($_POST['descripcion'] ?? '');
-                $icono = trim($_POST['icono'] ?? '');
                 $estado = $_POST['estado'] ?? 'activo';
                 
                 if (empty($nombre)) {
@@ -115,7 +112,6 @@ try {
                 
                 $nombre = limpiarEspacios($nombre);
                 $descripcion = limpiarEspacios($descripcion);
-                $icono = limpiarEspacios($icono);
                 
                 // Verificar que no exista otra categoría con el mismo nombre (case-insensitive)
                 $stmt = $db->prepare("
@@ -133,10 +129,10 @@ try {
                 
                 $stmt = $db->prepare("
                     UPDATE categorias 
-                    SET nombre = ?, descripcion = ?, icono = ?, estado = ? 
+                    SET nombre = ?, descripcion = ?, estado = ? 
                     WHERE id = ?
                 ");
-                $stmt->execute([$nombre, $descripcion ?: null, $icono ?: null, $estado, $id]);
+                $stmt->execute([$nombre, $descripcion ?: null, $estado, $id]);
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Categoría actualizada exitosamente']);

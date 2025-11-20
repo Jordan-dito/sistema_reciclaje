@@ -78,7 +78,6 @@ try {
                 $nombre = trim($_POST['nombre'] ?? '');
                 $categoria_id = $_POST['categoria_id'] ?? null;
                 $descripcion = trim($_POST['descripcion'] ?? '');
-                $icono = trim($_POST['icono'] ?? '');
                 $estado = $_POST['estado'] ?? 'activo';
                 
                 // Validar nombre: no solo espacios
@@ -88,7 +87,6 @@ try {
                 }
                 $nombre = limpiarEspacios($nombre);
                 $descripcion = limpiarEspacios($descripcion);
-                $icono = limpiarEspacios($icono);
                 
                 // Verificar que no exista un material con el mismo nombre (case-insensitive)
                 $stmt = $db->prepare("
@@ -104,14 +102,13 @@ try {
                 }
                 
                 $stmt = $db->prepare("
-                    INSERT INTO materiales (nombre, categoria_id, descripcion, icono, estado) 
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO materiales (nombre, categoria_id, descripcion, estado) 
+                    VALUES (?, ?, ?, ?)
                 ");
                 $stmt->execute([
                     $nombre, 
                     $categoria_id ?: null, 
                     $descripcion ?: null, 
-                    $icono ?: null, 
                     $estado
                 ]);
                 
@@ -126,7 +123,6 @@ try {
                 $nombre = trim($_POST['nombre'] ?? '');
                 $categoria_id = $_POST['categoria_id'] ?? null;
                 $descripcion = trim($_POST['descripcion'] ?? '');
-                $icono = trim($_POST['icono'] ?? '');
                 $estado = $_POST['estado'] ?? 'activo';
                 
                 // Validar nombre: no solo espacios
@@ -136,7 +132,6 @@ try {
                 }
                 $nombre = limpiarEspacios($nombre);
                 $descripcion = limpiarEspacios($descripcion);
-                $icono = limpiarEspacios($icono);
                 
                 // Verificar que no exista otro material con el mismo nombre (case-insensitive)
                 $stmt = $db->prepare("
@@ -154,14 +149,13 @@ try {
                 
                 $stmt = $db->prepare("
                     UPDATE materiales 
-                    SET nombre = ?, categoria_id = ?, descripcion = ?, icono = ?, estado = ? 
+                    SET nombre = ?, categoria_id = ?, descripcion = ?, estado = ? 
                     WHERE id = ?
                 ");
                 $stmt->execute([
                     $nombre, 
                     $categoria_id ?: null, 
                     $descripcion ?: null, 
-                    $icono ?: null, 
                     $estado, 
                     $id
                 ]);

@@ -118,7 +118,6 @@ if (!$auth->isAuthenticated()) {
                             <th>ID</th>
                             <th>Nombre</th>
                             <th>Descripción</th>
-                            <th>Icono</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                           </tr>
@@ -159,23 +158,12 @@ if (!$auth->isAuthenticated()) {
                 <label>Descripción</label>
                 <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción de la categoría"></textarea>
               </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Icono (clase Font Awesome)</label>
-                    <input type="text" id="icono" name="icono" class="form-control" placeholder="Ej: fa-recycle">
-                    <small class="form-text text-muted">Clase de icono de Font Awesome (opcional)</small>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
-                </div>
+              <div class="form-group">
+                <label>Estado</label>
+                <select id="estado" name="estado" class="form-control">
+                  <option value="activo">Activo</option>
+                  <option value="inactivo">Inactivo</option>
+                </select>
               </div>
             </form>
           </div>
@@ -205,10 +193,6 @@ if (!$auth->isAuthenticated()) {
               <div class="form-group">
                 <label>Descripción</label>
                 <textarea id="edit_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Icono (clase Font Awesome)</label>
-                <input type="text" id="edit_icono" name="icono" class="form-control">
               </div>
               <div class="form-group">
                 <label>Estado</label>
@@ -260,13 +244,11 @@ if (!$auth->isAuthenticated()) {
                   var badgeEstado = categoria.estado === 'activo' 
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
-                  var icono = categoria.icono ? '<i class="' + categoria.icono + '"></i>' : '-';
                   
                   table.row.add([
                     categoria.id,
                     '<strong>' + categoria.nombre + '</strong>',
                     categoria.descripcion || '-',
-                    icono,
                     badgeEstado,
                     '<button class="btn btn-link btn-primary btn-sm" onclick="editarCategoria(' + categoria.id + ')"><i class="fa fa-edit"></i></button> ' +
                     '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCategoria(' + categoria.id + ')"><i class="fa fa-times"></i></button>'
@@ -352,7 +334,6 @@ if (!$auth->isAuthenticated()) {
           var formData = {
             nombre: nombre,
             descripcion: $('#descripcion').val(),
-            icono: $('#icono').val(),
             estado: $('#estado').val(),
             action: 'crear'
           };
@@ -408,7 +389,6 @@ if (!$auth->isAuthenticated()) {
             id: idActual,
             nombre: nombre,
             descripcion: $('#edit_descripcion').val(),
-            icono: $('#edit_icono').val(),
             estado: $('#edit_estado').val(),
             action: 'actualizar'
           };
@@ -447,7 +427,6 @@ if (!$auth->isAuthenticated()) {
                 $('#edit_id').val(cat.id);
                 $('#edit_nombre').val(cat.nombre);
                 $('#edit_descripcion').val(cat.descripcion || '');
-                $('#edit_icono').val(cat.icono || '');
                 $('#edit_estado').val(cat.estado);
                 $('#modalEditarCategoria').modal('show');
               }

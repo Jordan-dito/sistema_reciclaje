@@ -552,7 +552,6 @@ function generarVistaPreviaMateriales($db) {
         SELECT 
             m.*,
             c.nombre as categoria_nombre,
-            c.icono as categoria_icono,
             COUNT(DISTINCT p.id) as total_productos
         FROM materiales m
         LEFT JOIN categorias c ON m.categoria_id = c.id
@@ -587,9 +586,6 @@ function generarVistaPreviaMateriales($db) {
     
     foreach ($porCategoria as $categoria => $mats) {
         $html .= '<h5 class="mt-4 mb-3">';
-        if (!empty($mats[0]['categoria_icono'])) {
-            $html .= '<i class="' . htmlspecialchars($mats[0]['categoria_icono']) . '"></i> ';
-        }
         $html .= htmlspecialchars($categoria) . ' (' . count($mats) . ' materiales)</h5>';
         
         $html .= '<table class="table table-bordered table-striped mb-4">';

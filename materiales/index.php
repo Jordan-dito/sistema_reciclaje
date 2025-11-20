@@ -119,7 +119,6 @@ if (!$auth->isAuthenticated()) {
                             <th>Nombre</th>
                             <th>Categoría</th>
                             <th>Descripción</th>
-                            <th>Icono</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                           </tr>
@@ -167,10 +166,6 @@ if (!$auth->isAuthenticated()) {
                 <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del material"></textarea>
               </div>
               <div class="form-group">
-                <label>Icono (clase Font Awesome)</label>
-                <input type="text" id="icono" name="icono" class="form-control" placeholder="Ej: fa-recycle">
-              </div>
-              <div class="form-group">
                 <label>Estado</label>
                 <select id="estado" name="estado" class="form-control">
                   <option value="activo">Activo</option>
@@ -211,10 +206,6 @@ if (!$auth->isAuthenticated()) {
               <div class="form-group">
                 <label>Descripción</label>
                 <textarea id="edit_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Icono (clase Font Awesome)</label>
-                <input type="text" id="edit_icono" name="icono" class="form-control">
               </div>
               <div class="form-group">
                 <label>Estado</label>
@@ -291,14 +282,12 @@ if (!$auth->isAuthenticated()) {
                   var badgeEstado = material.estado === 'activo' 
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
-                  var icono = material.icono ? '<i class="' + material.icono + '"></i>' : '-';
                   
                   table.row.add([
                     material.id,
                     '<strong>' + material.nombre + '</strong>',
                     material.categoria_nombre || '-',
                     material.descripcion || '-',
-                    icono,
                     badgeEstado,
                     '<button class="btn btn-link btn-primary btn-sm" onclick="editarMaterial(' + material.id + ')"><i class="fa fa-edit"></i></button> ' +
                     '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarMaterial(' + material.id + ')"><i class="fa fa-times"></i></button>'
@@ -385,7 +374,6 @@ if (!$auth->isAuthenticated()) {
             nombre: nombre,
             categoria_id: $('#categoria_id').val() || null,
             descripcion: $('#descripcion').val(),
-            icono: $('#icono').val(),
             estado: $('#estado').val(),
             action: 'crear'
           };
@@ -442,7 +430,6 @@ if (!$auth->isAuthenticated()) {
             nombre: nombre,
             categoria_id: $('#edit_categoria_id').val() || null,
             descripcion: $('#edit_descripcion').val(),
-            icono: $('#edit_icono').val(),
             estado: $('#edit_estado').val(),
             action: 'actualizar'
           };
@@ -488,7 +475,6 @@ if (!$auth->isAuthenticated()) {
                   $('#edit_nombre').val(mat.nombre);
                   $('#edit_categoria_id').val(mat.categoria_id || '');
                   $('#edit_descripcion').val(mat.descripcion || '');
-                  $('#edit_icono').val(mat.icono || '');
                   $('#edit_estado').val(mat.estado);
                   $('#modalEditarMaterial').modal('show');
                 }, 200); // Pequeño delay para asegurar que el dropdown se cargó
