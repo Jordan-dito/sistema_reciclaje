@@ -414,7 +414,7 @@ function validarTelefonoEcuatoriano($telefono) {
     $telefono = preg_replace('/[^0-9]/', '', $telefono);
     
     // Teléfonos ecuatorianos: 9 dígitos (celular) o 7 dígitos (fijo)
-    if (strlen($telefono) === 9) {
+    if (strlen($telefono) === 10) {
         // Celular: debe empezar con 09
         if (substr($telefono, 0, 2) === '09') {
             return [
@@ -422,17 +422,13 @@ function validarTelefonoEcuatoriano($telefono) {
                 'message' => 'Teléfono válido'
             ];
         }
-    } elseif (strlen($telefono) === 7) {
-        // Fijo: 7 dígitos
-        return [
-            'valid' => true,
-            'message' => 'Teléfono válido'
-        ];
     }
+
     
     return [
         'valid' => false,
-        'message' => 'El teléfono debe tener 9 dígitos (celular: 09XXXXXXXX) o 7 dígitos (fijo)'
+        'message' => 'El teléfono debe tener 9 dígitos (celular: 09XXXXXXXX) '
     ];
 }
+
 
