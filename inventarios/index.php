@@ -120,16 +120,13 @@ if (!$auth->isAuthenticated()) {
                       <table id="inventariosTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Sucursal</th>
                             <th>Producto</th>
                             <th>Material</th>
                             <th>Categoría</th>
-                            <th>Cantidad</th>
+                            <th>Peso</th>
                             <th>Unidad</th>
                             <th>Precio Venta</th>
-                            <th>Valor Total</th>
-                            <th>Estado</th>
                             <th>Acciones</th>
                           </tr>
                         </thead>
@@ -180,7 +177,7 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Cantidad *</label>
+                    <label>Peso *</label>
                     <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
                   </div>
                 </div>
@@ -194,17 +191,6 @@ if (!$auth->isAuthenticated()) {
                   <div class="form-group">
                     <label>Stock Máximo</label>
                     <input type="number" step="0.01" id="stock_maximo" name="stock_maximo" class="form-control" placeholder="0.00">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="estado" name="estado" class="form-control">
-                      <option value="disponible">Disponible</option>
-                      <option value="agotado">Agotado</option>
-                      <option value="reservado">Reservado</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -230,7 +216,7 @@ if (!$auth->isAuthenticated()) {
       $(document).ready(function() {
         var table = $('#inventariosTable').DataTable({
           "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" },
-          "order": [[0, "desc"]]
+          "order": [[0, "asc"]]
         });
         
         function cargarSucursales() {
@@ -289,20 +275,8 @@ if (!$auth->isAuthenticated()) {
                 table.clear();
                 response.data.forEach(function(inventario) {
                   var precioVenta = parseFloat(inventario.precio_venta) || 0;
-                  var valorTotal = parseFloat(inventario.cantidad) * precioVenta;
-                  var badgeEstado = '';
-                  if (inventario.estado === 'disponible') {
-                    badgeEstado = '<span class="badge badge-success">Disponible</span>';
-                  } else if (inventario.estado === 'agotado') {
-                    badgeEstado = '<span class="badge badge-danger">Agotado</span>';
-                  } else if (inventario.estado === 'reservado') {
-                    badgeEstado = '<span class="badge badge-warning">Reservado</span>';
-                  } else {
-                    badgeEstado = '<span class="badge badge-secondary">Inactivo</span>';
-                  }
                   
                   table.row.add([
-                    inventario.id,
                     inventario.sucursal_nombre,
                     '<strong>' + (inventario.producto_nombre || '-') + '</strong>',
                     inventario.material_nombre || '-',
@@ -310,8 +284,6 @@ if (!$auth->isAuthenticated()) {
                     inventario.cantidad,
                     inventario.unidad_simbolo || inventario.unidad_nombre || '-',
                     precioVenta > 0 ? '$' + precioVenta.toFixed(2) : '-',
-                    valorTotal > 0 ? '$' + valorTotal.toFixed(2) : '-',
-                    badgeEstado,
                     '<button class="btn btn-link btn-primary btn-sm" onclick="editarInventario(' + inventario.id + ')"><i class="fa fa-edit"></i></button> ' +
                     '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarInventario(' + inventario.id + ')"><i class="fa fa-times"></i></button>'
                   ]);
@@ -348,7 +320,7 @@ if (!$auth->isAuthenticated()) {
             cantidad: $('#cantidad').val(),
             stock_minimo: $('#stock_minimo').val() || 0,
             stock_maximo: $('#stock_maximo').val() || 0,
-            estado: $('#estado').val(),
+            estado: 'disponible',
             action: 'crear'
           };
           

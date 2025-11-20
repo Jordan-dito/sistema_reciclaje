@@ -32,7 +32,7 @@ $mostrarReportes = true; // Todos los roles ven reportes
 
 // Rutas para menú de Gerente
 $gerenteGestionUsuarioRoutes = ['usuarios', 'roles'];
-$gerenteParametrosRoutes = ['categorias', 'materiales', 'unidades'];
+$gerenteParametrosRoutes = ['categorias', 'materiales', 'unidades', 'productos'];
 $gerenteSucursalesRoutes = ['sucursales'];
 $gerenteInventarioRoutes = ['inventarios'];
 $gerenteReportesRoutes = ['reportes'];
@@ -102,6 +102,11 @@ $gerenteRelacionesComercialesOpen = in_array($currentRoute, $gerenteRelacionesCo
           <li class="<?php echo $currentRoute === 'unidades' ? 'active' : ''; ?>">
             <a href="<?php echo $basePath; ?>unidades/index.php">
               <span class="sub-item">Unidad de Medición</span>
+            </a>
+          </li>
+          <li class="<?php echo $currentRoute === 'productos' ? 'active' : ''; ?>">
+            <a href="<?php echo $basePath; ?>productos/index.php">
+              <span class="sub-item">Producto</span>
             </a>
           </li>
         </ul>
