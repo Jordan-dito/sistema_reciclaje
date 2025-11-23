@@ -90,32 +90,10 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
 
       <div class="main-panel">
         <div class="main-header">
-          <div class="main-header-logo">
-            <!-- Logo Header -->
-            <div class="logo-header" data-background-color="dark">
-            <a href="Dashboard.php" class="logo">
-              <img
-                src="assets/img/logo.jpg"
-                alt="HNOSYÁNEZ S.A."
-                class="navbar-brand"
-                height="50"
-                style="object-fit: contain; border-radius: 8px;"
-              />
-            </a>
-              <div class="nav-toggle">
-                <button class="btn btn-toggle toggle-sidebar">
-                  <i class="gg-menu-right"></i>
-                </button>
-                <button class="btn btn-toggle sidenav-toggler">
-                  <i class="gg-menu-left"></i>
-                </button>
-              </div>
-              <button class="topbar-toggler more">
-                <i class="gg-more-vertical-alt"></i>
-              </button>
-            </div>
-            <!-- End Logo Header -->
-          </div>
+          <?php
+            $basePath = '';
+            include __DIR__ . '/includes/main-header-logo.php';
+          ?>
           <!-- Navbar Header -->
           <nav
             class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom"

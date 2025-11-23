@@ -75,19 +75,10 @@ if (!$auth->isAuthenticated()) {
 
       <div class="main-panel">
         <div class="main-header">
-          <div class="main-header-logo">
-            <div class="logo-header" data-background-color="dark">
-              <a href="../Dashboard.php" class="logo">
-                <img
-                  src="../assets/img/logo.jpg"
-                  alt="HNOSYÁNEZ S.A."
-                  class="navbar-brand"
-                  height="50"
-                  style="object-fit: contain; border-radius: 8px;"
-                />
-              </a>
-            </div>
-          </div>
+          <?php
+            $basePath = '..';
+            include __DIR__ . '/../includes/main-header-logo.php';
+          ?>
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
