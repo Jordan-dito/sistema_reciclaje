@@ -53,19 +53,18 @@ try {
                     echo json_encode(['success' => false, 'message' => 'Rol no encontrado']);
                 }
             } elseif ($action === 'listar_modulos') {
-                // Listar todos los módulos disponibles (definidos estáticamente)
-                global $MODULOS_DISPONIBLES;
-                $modulos = [];
-                foreach ($MODULOS_DISPONIBLES as $modulo) {
-                    $modulo['estado'] = 'activo';
-                    $modulos[] = $modulo;
-                }
+                // Listar todos los módulos disponibles desde la base de datos
+                $modulos = getModulosDisponibles();
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'data' => $modulos], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'modulos_por_rol') {
-                // Obtener módulos asignados a un rol específico (desde código PHP, no BD)
+                // Obtener módulos asignados a un rol específico desde la base de datos
                 $rol_id = intval($_GET['rol_id'] ?? 0);
+                
+                if ($rol_id <= 0) {
+                    throw new Exception('ID de rol inválido');
+                }
                 
                 $modulos = getModulosConAsignacion($rol_id);
                 
@@ -220,21 +219,29 @@ try {
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Rol activado exitosamente']);
             } elseif ($action === 'asignar_modulo') {
-                // Los módulos están definidos estáticamente en el código
-                // Esta acción solo informa que no se puede modificar desde la interfaz
+                $rol_id = intval($_POST['rol_id'] ?? 0);
+                $modulo_id = intval($_POST['modulo_id'] ?? 0);
+                
+                if ($rol_id <= 0 || $modulo_id <= 0) {
+                    throw new Exception('ID de rol o módulo inválido');
+                }
+                
+                $resultado = asignarModuloARol($rol_id, $modulo_id);
+                
                 ob_end_clean();
-                echo json_encode([
-                    'success' => false, 
-                    'message' => 'Los módulos están definidos estáticamente en el código. No se pueden modificar desde la interfaz.'
-                ]);
+                echo json_encode($resultado);
             } elseif ($action === 'quitar_modulo') {
-                // Los módulos están definidos estáticamente en el código
-                // Esta acción solo informa que no se puede modificar desde la interfaz
+                $rol_id = intval($_POST['rol_id'] ?? 0);
+                $modulo_id = intval($_POST['modulo_id'] ?? 0);
+                
+                if ($rol_id <= 0 || $modulo_id <= 0) {
+                    throw new Exception('ID de rol o módulo inválido');
+                }
+                
+                $resultado = quitarModuloDeRol($rol_id, $modulo_id);
+                
                 ob_end_clean();
-                echo json_encode([
-                    'success' => false, 
-                    'message' => 'Los módulos están definidos estáticamente en el código. No se pueden modificar desde la interfaz.'
-                ]);
+                echo json_encode($resultado);
             }
             break;
             

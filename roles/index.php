@@ -95,6 +95,7 @@ $usuario = $auth->getCurrentUser();
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
+            include __DIR__ . '/../includes/modal-foto-perfil.php';
           ?>
         </div>
 
@@ -156,7 +157,6 @@ $usuario = $auth->getCurrentUser();
                                   <tr>
                                     <th>Módulo</th>
                                     <th>Descripción</th>
-                                    <th>Ruta</th>
                                     <th>Estado</th>
                                     <th>Acción</th>
                                   </tr>
@@ -408,6 +408,11 @@ $usuario = $auth->getCurrentUser();
         
         // Cargar módulos por rol (función global)
         window.cargarModulosPorRol = function(rolId) {
+          if (!rolId) {
+            modulosTable.clear().draw();
+            return;
+          }
+          
           $.ajax({
             url: 'api.php?action=modulos_por_rol&rol_id=' + rolId,
             method: 'GET',
@@ -420,55 +425,132 @@ $usuario = $auth->getCurrentUser();
               if (response.success) {
                 modulosTable.clear();
                 
-                // Primero obtener todos los módulos disponibles
-                $.ajax({
-                  url: 'api.php?action=listar_modulos',
-                  method: 'GET',
-                  dataType: 'json',
-                  xhrFields: {
-                    withCredentials: true
-                  },
-                  crossDomain: false,
-                  success: function(modulosResponse) {
-                    if (modulosResponse.success) {
-                      modulosResponse.data.forEach(function(modulo) {
-                        var estaAsignado = modulo.asignado === 1 || false;
-                        var badgeEstado = modulo.estado === 'activo' 
-                          ? '<span class="badge badge-success">Activo</span>'
-                          : '<span class="badge badge-danger">Inactivo</span>';
-                        
-                        var botonAccion = '';
-                        if (estaAsignado) {
-                          botonAccion = '<span class="badge badge-success"><i class="fa fa-check"></i> Asignado</span>';
-                        } else {
-                          botonAccion = '<span class="badge badge-secondary"><i class="fa fa-times"></i> No asignado</span>';
-                        }
-                        
-                        modulosTable.row.add([
-                          '<i class="' + (modulo.icono || 'fas fa-cube') + '"></i> <strong>' + modulo.nombre + '</strong>',
-                          modulo.descripcion || '-',
-                          modulo.ruta || '-',
-                          badgeEstado,
-                          botonAccion
-                        ]);
-                      });
-                      modulosTable.draw();
-                    }
-                  },
-                  error: function() {
-                    swal("Error", "No se pudieron cargar los módulos", "error");
+                response.data.forEach(function(modulo) {
+                  var estaAsignado = modulo.asignado === 1 || modulo.asignacion === 'asignado' || false;
+                  var badgeEstado = modulo.estado === 'activo' 
+                    ? '<span class="badge badge-success">Activo</span>'
+                    : '<span class="badge badge-danger">Inactivo</span>';
+                  
+                  var botonAccion = '';
+                  if (estaAsignado) {
+                    botonAccion = '<button class="btn btn-sm btn-danger" onclick="quitarModulo(' + rolId + ', ' + modulo.id + ')" title="Quitar módulo">' +
+                                  '<i class="fa fa-times"></i> Quitar</button>';
+                  } else {
+                    botonAccion = '<button class="btn btn-sm btn-success" onclick="asignarModulo(' + rolId + ', ' + modulo.id + ')" title="Asignar módulo">' +
+                                  '<i class="fa fa-check"></i> Asignar</button>';
                   }
+                  
+                  modulosTable.row.add([
+                    '<i class="' + (modulo.icono || 'fas fa-cube') + '"></i> <strong>' + modulo.nombre + '</strong>',
+                    modulo.descripcion || '-',
+                    badgeEstado,
+                    botonAccion
+                  ]);
                 });
+                modulosTable.draw();
+              } else {
+                swal("Error", response.message || "No se pudieron cargar los módulos", "error");
               }
             },
-            error: function() {
-              swal("Error", "No se pudieron cargar los módulos del rol", "error");
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al cargar los módulos del rol';
+              swal("Error", error, "error");
             }
           });
         }
         
         // Cargar roles en el select al iniciar
         cargarRolesEnSelect();
+        
+        // Función para actualizar el sidebar dinámicamente
+        window.actualizarSidebar = function() {
+          // Obtener la ruta actual para mantener el estado activo
+          var currentPath = window.location.pathname;
+          var currentRoute = 'roles'; // Por defecto roles ya que estamos en roles/index.php
+          
+          // Determinar la ruta actual basándose en la URL
+          if (currentPath.includes('Dashboard.php')) {
+            currentRoute = 'dashboard';
+          } else if (currentPath.includes('usuarios/index.php')) {
+            currentRoute = 'usuarios';
+          } else if (currentPath.includes('roles/index.php')) {
+            currentRoute = 'roles';
+          } else if (currentPath.includes('categorias/index.php')) {
+            currentRoute = 'categorias';
+          } else if (currentPath.includes('materiales/index.php')) {
+            currentRoute = 'materiales';
+          } else if (currentPath.includes('unidades/index.php')) {
+            currentRoute = 'unidades';
+          } else if (currentPath.includes('productos/index.php')) {
+            currentRoute = 'productos';
+          } else if (currentPath.includes('sucursales/index.php')) {
+            currentRoute = 'sucursales';
+          } else if (currentPath.includes('inventarios/index.php')) {
+            currentRoute = 'inventarios';
+          } else if (currentPath.includes('proveedores/index.php')) {
+            currentRoute = 'proveedores';
+          } else if (currentPath.includes('clientes/index.php')) {
+            currentRoute = 'clientes';
+          } else if (currentPath.includes('compras/index.php')) {
+            currentRoute = 'compras';
+          } else if (currentPath.includes('ventas/index.php')) {
+            currentRoute = 'ventas';
+          } else if (currentPath.includes('reportes/index.php')) {
+            currentRoute = 'reportes';
+          }
+          
+          // Guardar el estado de los menús abiertos antes de actualizar
+          var menusAbiertos = [];
+          $('.nav-item.submenu .collapse.show').each(function() {
+            var menuId = $(this).attr('id');
+            if (menuId) {
+              menusAbiertos.push(menuId);
+            }
+          });
+          
+          // Recargar el contenido del sidebar mediante AJAX
+          $.ajax({
+            url: '../includes/sidebar-api.php',
+            method: 'GET',
+            data: {
+              basePath: '..',
+              currentRoute: currentRoute
+            },
+            dataType: 'html',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(html) {
+              // Reemplazar el contenido del sidebar
+              $('.sidebar-content').html(html);
+              
+              // Restaurar el estado de los menús abiertos
+              menusAbiertos.forEach(function(menuId) {
+                $('#' + menuId).addClass('show');
+                $('#' + menuId).parent().addClass('submenu');
+                $('a[href="#' + menuId + '"]').removeClass('collapsed').attr('aria-expanded', 'true');
+              });
+              
+              // Reinicializar el scrollbar si existe
+              if ($('.sidebar .scrollbar').length > 0) {
+                $('.sidebar .scrollbar').scrollbar();
+              }
+              
+              // Reinicializar los eventos de los menús colapsables
+              $(".nav-item a").off('click').on('click', function(){
+                if ($(this).parent().find('.collapse').hasClass("show")) {
+                  $(this).parent().removeClass('submenu');
+                } else {
+                  $(this).parent().addClass('submenu');
+                }
+              });
+            },
+            error: function(xhr, status, error) {
+              console.log('Error al actualizar el sidebar:', error);
+            }
+          });
+        }
         
         // Actualizar rol
         $('#btnActualizarRol').click(function() {
@@ -613,14 +695,14 @@ $usuario = $auth->getCurrentUser();
       }
       
       // Asignar módulo a un rol
-      function asignarModulo(rolId, ruta) {
+      window.asignarModulo = function(rolId, moduloId) {
         $.ajax({
           url: 'api.php',
           method: 'POST',
           data: {
             action: 'asignar_modulo',
             rol_id: rolId,
-            ruta: ruta
+            modulo_id: moduloId
           },
           dataType: 'json',
           xhrFields: {
@@ -631,6 +713,7 @@ $usuario = $auth->getCurrentUser();
             if (response.success) {
               swal("¡Éxito!", response.message, "success");
               cargarModulosPorRol(rolId);
+              actualizarSidebar(); // Actualizar el sidebar sin recargar la página
             } else {
               swal("Error", response.message, "error");
             }
@@ -643,7 +726,7 @@ $usuario = $auth->getCurrentUser();
       }
       
       // Quitar módulo de un rol
-      function quitarModulo(rolId, ruta) {
+      window.quitarModulo = function(rolId, moduloId) {
         swal({
           title: "¿Está seguro?",
           text: "El módulo será removido de este rol",
@@ -659,7 +742,7 @@ $usuario = $auth->getCurrentUser();
               data: {
                 action: 'quitar_modulo',
                 rol_id: rolId,
-                ruta: ruta
+                modulo_id: moduloId
               },
               dataType: 'json',
               xhrFields: {
@@ -670,6 +753,7 @@ $usuario = $auth->getCurrentUser();
                 if (response.success) {
                   swal("¡Éxito!", response.message, "success");
                   cargarModulosPorRol(rolId);
+                  actualizarSidebar(); // Actualizar el sidebar sin recargar la página
                 } else {
                   swal("Error", response.message, "error");
                 }

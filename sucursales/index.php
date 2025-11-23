@@ -91,6 +91,7 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
+            include __DIR__ . '/../includes/modal-foto-perfil.php';
           ?>
         </div>
 

@@ -92,7 +92,26 @@ try {
     $auth = new Auth();
     $resultado = $auth->login($email, $password);
     
-    echo json_encode($resultado);
+    // Si el login fue exitoso, mejorar la URL de la foto de perfil
+    if ($resultado['success'] && isset($resultado['usuario']['foto_perfil_ruta']) && !empty($resultado['usuario']['foto_perfil_ruta'])) {
+        // Construir URL completa de la foto
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || 
+                    (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) 
+                    ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+        
+        // Obtener el path base del proyecto
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        $scriptDir = dirname($scriptName); // config/
+        $scriptDir = dirname($scriptDir);  // raíz del proyecto
+        $scriptDir = rtrim($scriptDir, '/');
+        
+        $baseUrl = $protocol . '://' . $host . $scriptDir;
+        $fotoRuta = $resultado['usuario']['foto_perfil_ruta'];
+        $resultado['usuario']['foto_perfil'] = $baseUrl . '/' . ltrim($fotoRuta, '/');
+    }
+    
+    echo json_encode($resultado, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([

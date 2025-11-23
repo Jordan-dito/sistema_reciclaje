@@ -64,6 +64,13 @@ class Auth {
             $_SESSION['usuario_email'] = $usuario['email'];
             $_SESSION['usuario_cedula'] = $usuario['cedula'] ?? '';
             $_SESSION['usuario_rol'] = $usuario['rol_nombre'];
+            
+            // Cargar foto de perfil si existe
+            $fotoPerfil = isset($usuario['foto_perfil']) && !empty($usuario['foto_perfil']) 
+                ? $usuario['foto_perfil'] 
+                : null;
+            $_SESSION['usuario_foto_perfil'] = $fotoPerfil;
+            
             // Manejar permisos (puede ser NULL si la tabla no tiene el campo)
             $permisos = null;
             if (isset($usuario['rol_permisos']) && !empty($usuario['rol_permisos'])) {
@@ -80,7 +87,11 @@ class Auth {
                     'id' => $usuario['id'],
                     'nombre' => $usuario['nombre'],
                     'email' => $usuario['email'],
-                    'rol' => $usuario['rol_nombre']
+                    'cedula' => $usuario['cedula'] ?? '',
+                    'telefono' => $usuario['telefono'] ?? '',
+                    'rol' => $usuario['rol_nombre'],
+                    'rol_id' => $usuario['rol_id'],
+                    'foto_perfil_ruta' => $fotoPerfil // Ruta relativa, se convertirá a URL completa en login.php
                 ]
             ];
 
