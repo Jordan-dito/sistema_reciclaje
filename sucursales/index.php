@@ -203,7 +203,8 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Teléfono</label>
-                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="555-0000">
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="0987654321" maxlength="10" pattern="[0-9]{10}">
+                    <small class="form-text text-muted">Debe tener exactamente 10 dígitos</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -267,7 +268,8 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Teléfono</label>
-                    <input type="tel" id="editar_telefono" name="telefono" class="form-control">
+                    <input type="tel" id="editar_telefono" name="telefono" class="form-control" maxlength="10" pattern="[0-9]{10}">
+                    <small class="form-text text-muted">Debe tener exactamente 10 dígitos</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -389,6 +391,68 @@ if (!$auth->isAuthenticated()) {
         
         window.cargarSucursales = cargarSucursales;
         
+        // Validar teléfono de 10 dígitos
+        function validarTelefono10Digitos(telefono) {
+          // Limpiar: solo números
+          var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+          return telefonoLimpio.length === 10;
+        }
+        
+        // Validación en tiempo real para teléfono (agregar)
+        $('#telefono').on('input blur', function() {
+          var telefono = $(this).val();
+          if (telefono.trim() !== '') {
+            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+            if (telefonoLimpio.length !== 10) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">El teléfono debe tener exactamente 10 dígitos</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          } else {
+            $(this).removeClass('is-invalid is-valid');
+            $(this).next('.invalid-feedback').remove();
+          }
+        });
+        
+        // Validación en tiempo real para teléfono (editar)
+        $('#editar_telefono').on('input blur', function() {
+          var telefono = $(this).val();
+          if (telefono.trim() !== '') {
+            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+            if (telefonoLimpio.length !== 10) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">El teléfono debe tener exactamente 10 dígitos</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          } else {
+            $(this).removeClass('is-invalid is-valid');
+            $(this).next('.invalid-feedback').remove();
+          }
+        });
+        
+        // Limitar entrada a solo números en teléfono
+        $('#telefono, #editar_telefono').on('input', function() {
+          var valor = $(this).val().replace(/[^0-9]/g, '');
+          if (valor.length > 10) {
+            valor = valor.substring(0, 10);
+          }
+          $(this).val(valor);
+        });
+        
         // Cargar datos al iniciar
         cargarUsuarios();
         cargarSucursales();
@@ -399,6 +463,17 @@ if (!$auth->isAuthenticated()) {
           if (!form.checkValidity()) {
             form.reportValidity();
             return;
+          }
+          
+          // Validar teléfono antes de enviar
+          var telefono = $('#telefono').val().trim();
+          if (telefono !== '') {
+            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+            if (telefonoLimpio.length !== 10) {
+              swal("Error", "El teléfono debe tener exactamente 10 dígitos", "error");
+              $('#telefono').focus();
+              return;
+            }
           }
           
           var formData = {
@@ -439,6 +514,17 @@ if (!$auth->isAuthenticated()) {
           if (!form.checkValidity()) {
             form.reportValidity();
             return;
+          }
+          
+          // Validar teléfono antes de enviar
+          var telefono = $('#editar_telefono').val().trim();
+          if (telefono !== '') {
+            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+            if (telefonoLimpio.length !== 10) {
+              swal("Error", "El teléfono debe tener exactamente 10 dígitos", "error");
+              $('#editar_telefono').focus();
+              return;
+            }
           }
           
           var formData = {

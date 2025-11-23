@@ -431,4 +431,27 @@ function validarTelefonoEcuatoriano($telefono) {
     ];
 }
 
+/**
+ * Validar teléfono de 10 dígitos (para sucursales)
+ * @param string $telefono Teléfono a validar
+ * @return array ['valid' => bool, 'message' => string]
+ */
+function validarTelefono10Digitos($telefono) {
+    // Limpiar el teléfono: solo números
+    $telefono = preg_replace('/[^0-9]/', '', $telefono);
+    
+    // Validar que tenga exactamente 10 dígitos
+    if (strlen($telefono) === 10) {
+        return [
+            'valid' => true,
+            'message' => 'Teléfono válido'
+        ];
+    }
+    
+    return [
+        'valid' => false,
+        'message' => 'El teléfono debe tener exactamente 10 dígitos'
+    ];
+}
+
 

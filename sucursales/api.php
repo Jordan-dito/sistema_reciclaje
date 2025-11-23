@@ -13,6 +13,7 @@ ob_start();
 
 try {
     require_once __DIR__ . '/../config/auth.php';
+    require_once __DIR__ . '/../config/validaciones.php';
 
     $auth = new Auth();
     if (!$auth->isAuthenticated()) {
@@ -93,6 +94,15 @@ try {
                     throw new Exception('Email inválido');
                 }
                 
+                // Validar teléfono: debe tener 10 dígitos si se proporciona
+                if (!empty($telefono)) {
+                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
+                    $validacionTelefono = validarTelefono10Digitos($telefono);
+                    if (!$validacionTelefono['valid']) {
+                        throw new Exception($validacionTelefono['message']);
+                    }
+                }
+                
                 if ($responsable_id) {
                     $stmt = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
                     $stmt->execute([$responsable_id]);
@@ -136,6 +146,15 @@ try {
                 
                 if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     throw new Exception('Email inválido');
+                }
+                
+                // Validar teléfono: debe tener 10 dígitos si se proporciona
+                if (!empty($telefono)) {
+                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
+                    $validacionTelefono = validarTelefono10Digitos($telefono);
+                    if (!$validacionTelefono['valid']) {
+                        throw new Exception($validacionTelefono['message']);
+                    }
                 }
                 
                 if ($responsable_id) {

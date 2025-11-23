@@ -170,15 +170,27 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Producto *</label>
-                    <select id="producto_id" name="producto_id" class="form-control" required>
-                      <option value="">Seleccione un producto</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Peso *</label>
-                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
+                    <button type="button" class="btn btn-primary btn-block mb-2" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
+                      <i class="fa fa-search"></i> Buscar y Seleccionar Producto
+                    </button>
+                    <div id="productoSeleccionado" class="alert alert-info" style="display: none;">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>Producto seleccionado:</strong>
+                          <span id="productoNombreSeleccionado" class="ml-2"></span>
+                          <small class="d-block text-muted mt-1">
+                            <span id="productoMaterialSeleccionado"></span>
+                            <span id="productoCategoriaSeleccionado" class="ml-2"></span>
+                            <span id="productoUnidadSeleccionado" class="ml-2"></span>
+                          </small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarProducto()">
+                          <i class="fa fa-times"></i> Quitar
+                        </button>
+                      </div>
+                    </div>
+                    <input type="hidden" id="producto_id" name="producto_id" required>
+                    <small class="form-text text-muted"><i class="fa fa-info-circle"></i> Haga clic en el botón para buscar y seleccionar un producto.</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -199,6 +211,75 @@ if (!$auth->isAuthenticated()) {
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-primary" id="btnGuardarInventario">Guardar Inventario</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Buscar Producto -->
+    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Buscar y Seleccionar Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Filtros de búsqueda -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Buscar por nombre</label>
+                  <input type="text" id="filtroNombre" class="form-control" placeholder="Nombre del producto...">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Filtrar por material</label>
+                  <select id="filtroMaterial" class="form-control">
+                    <option value="">Todos los materiales</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label>Filtrar por categoría</label>
+                  <select id="filtroCategoria" class="form-control">
+                    <option value="">Todas las categorías</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Tabla de productos -->
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+              <table class="table table-hover table-striped" id="tablaProductos">
+                <thead class="thead-dark" style="position: sticky; top: 0; background: white; z-index: 10;">
+                  <tr>
+                    <th style="width: 50px;">Seleccionar</th>
+                    <th>Nombre</th>
+                    <th>Material</th>
+                    <th>Categoría</th>
+                    <th>Unidad</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyProductos">
+                  <tr>
+                    <td colspan="5" class="text-center">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Cargando...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="sinResultados" class="alert alert-info mt-3" style="display: none;">
+              <i class="fa fa-info-circle"></i> No se encontraron productos con los filtros seleccionados.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           </div>
         </div>
       </div>
@@ -239,6 +320,9 @@ if (!$auth->isAuthenticated()) {
           });
         }
         
+        var todosLosProductos = [];
+        var productoSeleccionado = null;
+        
         function cargarProductos() {
           $.ajax({
             url: 'api.php?action=productos',
@@ -246,11 +330,21 @@ if (!$auth->isAuthenticated()) {
             dataType: 'json',
             success: function(response) {
               if (response.success) {
-                var select = $('#producto_id');
-                select.empty().append('<option value="">Seleccione un producto</option>');
-                response.data.forEach(function(producto) {
-                  var texto = producto.nombre + ' (' + producto.material_nombre + ' - ' + producto.unidad + ')';
-                  select.append('<option value="' + producto.id + '">' + texto + '</option>');
+                todosLosProductos = response.data;
+                // Cargar materiales únicos para el filtro
+                var materiales = [...new Set(response.data.map(p => p.material_nombre).filter(Boolean))];
+                var selectMaterial = $('#filtroMaterial');
+                selectMaterial.empty().append('<option value="">Todos los materiales</option>');
+                materiales.sort().forEach(function(material) {
+                  selectMaterial.append('<option value="' + material + '">' + material + '</option>');
+                });
+                
+                // Cargar categorías únicas para el filtro
+                var categorias = [...new Set(response.data.map(p => p.categoria_nombre).filter(Boolean))];
+                var selectCategoria = $('#filtroCategoria');
+                selectCategoria.empty().append('<option value="">Todas las categorías</option>');
+                categorias.sort().forEach(function(categoria) {
+                  selectCategoria.append('<option value="' + categoria + '">' + categoria + '</option>');
                 });
               }
             },
@@ -259,6 +353,119 @@ if (!$auth->isAuthenticated()) {
             }
           });
         }
+        
+        // Cargar productos en el modal cuando se abre
+        $('#modalBuscarProducto').on('show.bs.modal', function() {
+          // Limpiar filtros
+          $('#filtroNombre').val('');
+          $('#filtroMaterial').val('');
+          $('#filtroCategoria').val('');
+          cargarProductosEnModal();
+        });
+        
+        // Función para cargar y mostrar productos en el modal
+        function cargarProductosEnModal() {
+          var tbody = $('#tbodyProductos');
+          tbody.html('<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary" role="status"><span class="sr-only">Cargando...</span></div></td></tr>');
+          
+          if (todosLosProductos.length === 0) {
+            cargarProductos();
+            setTimeout(cargarProductosEnModal, 500);
+            return;
+          }
+          
+          filtrarYMostrarProductos();
+        }
+        
+        // Función para filtrar y mostrar productos
+        function filtrarYMostrarProductos() {
+          var filtroNombre = $('#filtroNombre').val().toLowerCase();
+          var filtroMaterial = $('#filtroMaterial').val();
+          var filtroCategoria = $('#filtroCategoria').val();
+          var tbody = $('#tbodyProductos');
+          var sinResultados = $('#sinResultados');
+          
+          var productosFiltrados = todosLosProductos.filter(function(producto) {
+            var coincideNombre = !filtroNombre || producto.nombre.toLowerCase().includes(filtroNombre);
+            var coincideMaterial = !filtroMaterial || producto.material_nombre === filtroMaterial;
+            var coincideCategoria = !filtroCategoria || producto.categoria_nombre === filtroCategoria;
+            
+            return coincideNombre && coincideMaterial && coincideCategoria;
+          });
+          
+          tbody.empty();
+          
+          if (productosFiltrados.length === 0) {
+            sinResultados.show();
+            return;
+          }
+          
+          sinResultados.hide();
+          
+          productosFiltrados.forEach(function(producto) {
+            var categoria = producto.categoria_nombre || '-';
+            var nombreEscapado = $('<div>').text(producto.nombre).html();
+            
+            var fila = $('<tr>');
+            var btnCell = $('<td>');
+            var btn = $('<button>')
+              .attr('type', 'button')
+              .addClass('btn btn-sm btn-primary')
+              .html('<i class="fa fa-check"></i>')
+              .on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                seleccionarProducto(producto);
+                return false;
+              });
+            btnCell.append(btn);
+            
+            fila.append(btnCell);
+            fila.append($('<td>').html('<strong>' + nombreEscapado + '</strong>'));
+            fila.append($('<td>').text(producto.material_nombre));
+            fila.append($('<td>').text(categoria));
+            fila.append($('<td>').text(producto.unidad));
+            
+            tbody.append(fila);
+          });
+        }
+        
+        // Aplicar filtros cuando cambian
+        $('#filtroNombre, #filtroMaterial, #filtroCategoria').on('input change', function() {
+          filtrarYMostrarProductos();
+        });
+        
+        // Función para seleccionar producto
+        function seleccionarProducto(producto) {
+          productoSeleccionado = producto;
+          $('#producto_id').val(producto.id);
+          $('#productoNombreSeleccionado').text(producto.nombre);
+          $('#productoMaterialSeleccionado').text('Material: ' + (producto.material_nombre || '-'));
+          $('#productoCategoriaSeleccionado').text('Categoría: ' + (producto.categoria_nombre || '-'));
+          $('#productoUnidadSeleccionado').text('Unidad: ' + (producto.unidad || '-'));
+          $('#productoSeleccionado').slideDown();
+          
+          // Cerrar el modal
+          var modal = bootstrap.Modal.getInstance(document.getElementById('modalBuscarProducto'));
+          if (modal) {
+            modal.hide();
+          }
+          
+          swal({
+            title: "¡Producto seleccionado!",
+            text: producto.nombre + " ha sido seleccionado",
+            icon: "success",
+            timer: 1500,
+            buttons: false
+          });
+        }
+        
+        // Función para limpiar producto seleccionado
+        window.limpiarProducto = function() {
+          productoSeleccionado = null;
+          $('#producto_id').val('');
+          $('#productoSeleccionado').slideUp();
+        };
         
         window.cargarInventarios = function(sucursal_id = null) {
           var url = 'api.php?action=listar';
@@ -317,7 +524,7 @@ if (!$auth->isAuthenticated()) {
           var formData = {
             sucursal_id: $('#sucursal_id').val(),
             producto_id: productoId,
-            cantidad: $('#cantidad').val(),
+            cantidad: null, // El campo peso no se captura en el formulario
             stock_minimo: $('#stock_minimo').val() || 0,
             stock_maximo: $('#stock_maximo').val() || 0,
             estado: 'disponible',
@@ -348,6 +555,7 @@ if (!$auth->isAuthenticated()) {
         
         $('#modalAgregarInventario').on('hidden.bs.modal', function() {
           $('#formAgregarInventario')[0].reset();
+          limpiarProducto();
         });
         
         cargarSucursales();

@@ -70,11 +70,16 @@ try {
                 ob_end_clean();
                 echo json_encode(['success' => true, 'data' => $inventarios], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'productos') {
-                // Obtener productos activos
+                // Obtener productos activos con categoría
                 $stmt = $db->query("
-                    SELECT p.id, p.nombre, m.nombre as material_nombre, u.simbolo as unidad
+                    SELECT p.id, 
+                           p.nombre, 
+                           m.nombre as material_nombre,
+                           c.nombre as categoria_nombre,
+                           u.simbolo as unidad
                     FROM productos p 
                     INNER JOIN materiales m ON p.material_id = m.id
+                    LEFT JOIN categorias c ON m.categoria_id = c.id
                     INNER JOIN unidades u ON p.unidad_id = u.id
                     WHERE p.estado = 'activo'
                     ORDER BY p.nombre ASC
@@ -126,7 +131,10 @@ try {
             if ($action === 'crear') {
                 $sucursal_id = intval($_POST['sucursal_id'] ?? 0);
                 $producto_id = intval($_POST['producto_id'] ?? 0);
-                $cantidad = floatval($_POST['cantidad'] ?? 0);
+                // Permitir NULL en cantidad
+                $cantidad = isset($_POST['cantidad']) && $_POST['cantidad'] !== '' && $_POST['cantidad'] !== null 
+                    ? floatval($_POST['cantidad']) 
+                    : null;
                 $stock_minimo = floatval($_POST['stock_minimo'] ?? 0);
                 $stock_maximo = floatval($_POST['stock_maximo'] ?? 0);
                 $estado = $_POST['estado'] ?? 'disponible';
@@ -156,7 +164,13 @@ try {
                 
                 if ($inventarioExistente) {
                     // Actualizar cantidad existente
-                    $nuevaCantidad = $inventarioExistente['cantidad'] + $cantidad;
+                    // Si cantidad es NULL, mantener la cantidad existente
+                    if ($cantidad !== null) {
+                        $cantidadExistente = $inventarioExistente['cantidad'] ?? 0;
+                        $nuevaCantidad = $cantidadExistente + $cantidad;
+                    } else {
+                        $nuevaCantidad = $inventarioExistente['cantidad'];
+                    }
                     $stmt = $db->prepare("
                         UPDATE inventarios 
                         SET cantidad = ?, stock_minimo = ?, stock_maximo = ?, estado = ?
@@ -198,7 +212,10 @@ try {
                 $id = intval($_POST['id'] ?? 0);
                 $sucursal_id = intval($_POST['sucursal_id'] ?? 0);
                 $producto_id = intval($_POST['producto_id'] ?? 0);
-                $cantidad = floatval($_POST['cantidad'] ?? 0);
+                // Permitir NULL en cantidad
+                $cantidad = isset($_POST['cantidad']) && $_POST['cantidad'] !== '' && $_POST['cantidad'] !== null 
+                    ? floatval($_POST['cantidad']) 
+                    : null;
                 $stock_minimo = floatval($_POST['stock_minimo'] ?? 0);
                 $stock_maximo = floatval($_POST['stock_maximo'] ?? 0);
                 $estado = $_POST['estado'] ?? 'disponible';
