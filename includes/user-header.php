@@ -226,6 +226,93 @@ if (!empty($usuarioNombre)) {
   padding: 0 !important;
   position: absolute !important;
   left: -9999px !important;
+  pointer-events: none !important;
+}
+
+/* REGLA ESPECÍFICA PARA ELIMINAR EL BOTÓN GD QUE APARECE JUNTO A "Cambiar Foto de Perfil" */
+.cambiar-foto-item .bg-primary.rounded-circle:not(.btn-info),
+.cambiar-foto-item .btn-primary.rounded-circle:not(.btn-info),
+.cambiar-foto-item div.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-item button.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-item a.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-item span.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-item > .bg-primary.rounded-circle:not(.btn-info),
+.cambiar-foto-item > .btn-primary.rounded-circle:not(.btn-info),
+.cambiar-foto-item > div.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-item > button.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-item > a.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-item > span.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-link .bg-primary.rounded-circle:not(.btn-info),
+.cambiar-foto-link .btn-primary.rounded-circle:not(.btn-info),
+.cambiar-foto-link div.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-link button.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-link a.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-link span.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-link > .bg-primary.rounded-circle:not(.btn-info),
+.cambiar-foto-link > .btn-primary.rounded-circle:not(.btn-info),
+.cambiar-foto-link > div.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-link > button.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-link > a.rounded-circle.bg-primary:not(.btn-info),
+.cambiar-foto-link > span.rounded-circle.bg-primary:not(.btn-info) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  pointer-events: none !important;
+}
+
+/* OCULTAR CUALQUIER ELEMENTO HERMANO DEL LI DE CAMBIAR FOTO */
+.cambiar-foto-item + li:has(.bg-primary.rounded-circle),
+.cambiar-foto-item + li:has(.btn-primary.rounded-circle),
+.cambiar-foto-item + li:has(div.rounded-circle.bg-primary),
+.cambiar-foto-item + li:has(button.rounded-circle.bg-primary),
+.cambiar-foto-item + li:has(a.rounded-circle.bg-primary),
+.cambiar-foto-item + li:has(span.rounded-circle.bg-primary),
+/* OCULTAR CUALQUIER LI QUE CONTENGA SOLO "GD" O DOS LETRAS MAYÚSCULAS */
+.dropdown-user-scroll > li:not(:has(.user-box)):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):has(.bg-primary.rounded-circle),
+.dropdown-user-scroll > li:not(:has(.user-box)):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):has(.btn-primary.rounded-circle),
+.dropdown-user-scroll > li:not(:has(.user-box)):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):has(div.rounded-circle.bg-primary),
+.dropdown-user-scroll > li:not(:has(.user-box)):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):has(button.rounded-circle.bg-primary),
+.dropdown-user-scroll > li:not(:has(.user-box)):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):has(a.rounded-circle.bg-primary),
+.dropdown-user-scroll > li:not(:has(.user-box)):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):has(span.rounded-circle.bg-primary),
+/* REGLA ULTRA ESPECÍFICA: OCULTAR CUALQUIER LI ENTRE DIVIDERS QUE CONTENGA UN BOTÓN CIRCULAR AZUL */
+.dropdown-user-scroll > li:has(.dropdown-divider) + li:not(:has(.dropdown-item)):not(:has(.dropdown-divider)):not(:has(.user-box)),
+.dropdown-user-scroll > li:has(.dropdown-divider) + li:has(.bg-primary.rounded-circle):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider) + li:has(.btn-primary.rounded-circle):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider) + li:has(div.rounded-circle.bg-primary):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider) + li:has(button.rounded-circle.bg-primary):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider) + li:has(a.rounded-circle.bg-primary):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider) + li:has(span.rounded-circle.bg-primary):not(:has(.dropdown-item)),
+/* REGLA ADICIONAL: OCULTAR CUALQUIER LI QUE ESTÉ ENTRE EL PRIMER DIVIDER Y EL CAMBIAR-FOTO-ITEM */
+.dropdown-user-scroll > li:has(.dropdown-divider):nth-of-type(2) ~ li:not(.cambiar-foto-item):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):not(:has(.user-box)),
+.dropdown-user-scroll > li:has(.dropdown-divider):nth-of-type(2) ~ li:has(.bg-primary.rounded-circle):not(.cambiar-foto-item):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider):nth-of-type(2) ~ li:has(.btn-primary.rounded-circle):not(.cambiar-foto-item):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider):nth-of-type(2) ~ li:has(div.rounded-circle.bg-primary):not(.cambiar-foto-item):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider):nth-of-type(2) ~ li:has(button.rounded-circle.bg-primary):not(.cambiar-foto-item):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider):nth-of-type(2) ~ li:has(a.rounded-circle.bg-primary):not(.cambiar-foto-item):not(:has(.dropdown-item)),
+.dropdown-user-scroll > li:has(.dropdown-divider):nth-of-type(2) ~ li:has(span.rounded-circle.bg-primary):not(.cambiar-foto-item):not(:has(.dropdown-item)),
+/* REGLA FINAL: OCULTAR CUALQUIER LI QUE NO SEA VÁLIDO Y ESTÉ ANTES DE CAMBIAR-FOTO-ITEM */
+.dropdown-user-scroll > li:not(.cambiar-foto-item):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):not(:has(.user-box)):has(.bg-primary.rounded-circle):not(:has(.avatar-lg)),
+.dropdown-user-scroll > li:not(.cambiar-foto-item):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):not(:has(.user-box)):has(.btn-primary.rounded-circle),
+.dropdown-user-scroll > li:not(.cambiar-foto-item):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):not(:has(.user-box)):has(div.rounded-circle.bg-primary):not(:has(.avatar-lg)),
+.dropdown-user-scroll > li:not(.cambiar-foto-item):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):not(:has(.user-box)):has(button.rounded-circle.bg-primary),
+.dropdown-user-scroll > li:not(.cambiar-foto-item):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):not(:has(.user-box)):has(a.rounded-circle.bg-primary),
+.dropdown-user-scroll > li:not(.cambiar-foto-item):not(:has(.dropdown-item)):not(:has(.dropdown-divider)):not(:has(.user-box)):has(span.rounded-circle.bg-primary) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
 }
 </style>
 <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
@@ -239,14 +326,12 @@ if (!empty($usuarioNombre)) {
                    alt="Foto de perfil" 
                    class="avatar-img rounded-circle" 
                    style="width: 40px; height: 40px; object-fit: cover; display: block;"
-                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-              <div class="avatar-img rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px; line-height: 40px; display: none; position: absolute; top: 0; left: 0;">
-                <?php echo htmlspecialchars($iniciales); ?>
-              </div>
+                   onerror="this.src='<?php echo $basePath; ?>assets/img/default-avatar.png';">
             <?php else: ?>
-              <div class="avatar-img rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold" style="width: 40px; height: 40px; font-size: 14px; line-height: 40px; display: block;">
-                <?php echo htmlspecialchars($iniciales); ?>
-              </div>
+              <img src="<?php echo $basePath; ?>assets/img/default-avatar.png" 
+                   alt="Foto de perfil" 
+                   class="avatar-img rounded-circle" 
+                   style="width: 40px; height: 40px; object-fit: cover; display: block;">
             <?php endif; ?>
           </div>
           <span class="profile-username">
@@ -264,14 +349,12 @@ if (!empty($usuarioNombre)) {
                          alt="Foto de perfil" 
                          class="avatar-img rounded-circle" 
                          style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="avatar-img rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold" style="width: 60px; height: 60px; font-size: 20px; line-height: 60px; display: none; border: 3px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                      <?php echo htmlspecialchars($iniciales); ?>
-                    </div>
+                         onerror="this.src='<?php echo $basePath; ?>assets/img/default-avatar.png';">
                   <?php else: ?>
-                    <div class="avatar-img rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold" style="width: 60px; height: 60px; font-size: 20px; line-height: 60px; border: 3px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                      <?php echo htmlspecialchars($iniciales); ?>
-                    </div>
+                    <img src="<?php echo $basePath; ?>assets/img/default-avatar.png" 
+                         alt="Foto de perfil" 
+                         class="avatar-img rounded-circle" 
+                         style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                   <?php endif; ?>
                   <button class="btn btn-sm btn-info position-absolute bottom-0 end-0 rounded-circle shadow" 
                           style="width: 28px; height: 28px; padding: 0; font-size: 11px; border: 2px solid white; z-index: 10; display: flex; align-items: center; justify-content: center;"
@@ -292,13 +375,13 @@ if (!empty($usuarioNombre)) {
             <li>
               <div class="dropdown-divider my-1"></div>
             </li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center py-2 px-3" 
+            <li style="position: relative;" class="cambiar-foto-item">
+              <a class="dropdown-item d-flex align-items-center py-2 px-3 cambiar-foto-link" 
                  href="#" 
                  onclick="abrirModalFotoPerfil(); event.stopPropagation(); return false;" 
-                 style="transition: background-color 0.2s; text-decoration: none; position: relative; overflow: hidden;">
-                <i class="fas fa-camera me-3" style="width: 18px; text-align: center; color: #6c757d; z-index: 10; position: relative;"></i> 
-                <span style="color: #212529; z-index: 10; position: relative;">Cambiar Foto de Perfil</span>
+                 style="transition: background-color 0.2s; text-decoration: none; position: relative; overflow: visible;">
+                <i class="fas fa-camera me-3" style="width: 18px; text-align: center; color: #6c757d; z-index: 10; position: relative; flex-shrink: 0;"></i> 
+                <span style="color: #212529; z-index: 10; position: relative; flex: 1;">Cambiar Foto de Perfil</span>
               </a>
             </li>
             <li>
@@ -419,16 +502,47 @@ if (!empty($usuarioNombre)) {
           }
         });
         
-        // Buscar elementos con texto "GD"
-        const allText = dropdownItem.textContent || dropdownItem.innerText || '';
-        if (allText.includes('GD') && !allText.includes('Gerente del Sistema')) {
-          const gdTextElements = Array.from(dropdownItem.querySelectorAll('*'));
-          gdTextElements.forEach(function(el) {
-            if (el.textContent && el.textContent.trim() === 'GD') {
-              const parent = el.parentElement;
-              if (parent && (parent.classList.contains('rounded-circle') || parent.classList.contains('bg-primary'))) {
-                parent.style.display = 'none';
-                parent.style.visibility = 'hidden';
+      // Buscar elementos con texto "GD" - SOLUCIÓN MÁS AGRESIVA
+      const allText = dropdownItem.textContent || dropdownItem.innerText || '';
+      if (allText.includes('GD') && !allText.includes('Gerente del Sistema')) {
+        // Buscar cualquier elemento que contenga exactamente "GD"
+        const gdTextElements = Array.from(dropdownItem.querySelectorAll('*'));
+        gdTextElements.forEach(function(el) {
+          const text = el.textContent ? el.textContent.trim() : '';
+          if (text === 'GD' || text === 'G D' || (text.length === 2 && text.match(/^[A-Z]{2}$/))) {
+            // Eliminar el elemento y su padre si es circular
+            const parent = el.parentElement;
+            if (parent && (parent.classList.contains('rounded-circle') || parent.classList.contains('bg-primary') || parent.classList.contains('btn-primary'))) {
+              parent.style.display = 'none';
+              parent.style.visibility = 'hidden';
+              parent.style.opacity = '0';
+              parent.style.width = '0';
+              parent.style.height = '0';
+              try { parent.remove(); } catch(e) {}
+            }
+            el.style.display = 'none';
+            el.style.visibility = 'hidden';
+            el.style.opacity = '0';
+            try { el.remove(); } catch(e) {}
+          }
+        });
+        
+        // Buscar elementos hermanos del dropdown-item que contengan GD
+        const parentLi = dropdownItem.closest('li');
+        if (parentLi) {
+          const siblings = Array.from(parentLi.children);
+          siblings.forEach(function(sibling) {
+            if (sibling !== dropdownItem && (sibling.classList.contains('bg-primary') || sibling.classList.contains('btn-primary') || sibling.classList.contains('rounded-circle'))) {
+              const siblingText = sibling.textContent ? sibling.textContent.trim() : '';
+              if (siblingText === 'GD' || siblingText.match(/^[A-Z]{2}$/)) {
+                sibling.style.display = 'none';
+                sibling.style.visibility = 'hidden';
+                sibling.style.opacity = '0';
+                try { sibling.remove(); } catch(e) {}
+              }
+            }
+          });
+        }
                 try { parent.remove(); } catch(e) {}
               } else {
                 el.style.display = 'none';
@@ -529,19 +643,138 @@ if (!empty($usuarioNombre)) {
   removeGDFromHeader();
   }
   
+  // Función específica para eliminar GD del dropdown-item de "Cambiar Foto de Perfil"
+  function removeGDFromCambiarFoto() {
+    // Buscar TODOS los li dentro del dropdown que no sean user-box, dropdown-item o divider
+    const allLis = document.querySelectorAll('.dropdown-user-scroll > li');
+    allLis.forEach(function(li) {
+      // Si el li no tiene user-box, dropdown-item ni dropdown-divider
+      if (!li.querySelector('.user-box') && 
+          !li.querySelector('.dropdown-item') && 
+          !li.querySelector('.dropdown-divider')) {
+        // Verificar si contiene un botón circular azul con GD
+        const circularElements = li.querySelectorAll('.bg-primary.rounded-circle, .btn-primary.rounded-circle, div.rounded-circle.bg-primary, button.rounded-circle.bg-primary, a.rounded-circle.bg-primary, span.rounded-circle.bg-primary');
+        let shouldRemove = false;
+        
+        circularElements.forEach(function(el) {
+          const text = el.textContent ? el.textContent.trim() : '';
+          // Si el elemento contiene GD o dos letras mayúsculas, y no está en el user-box
+          if ((text === 'GD' || text === 'G D' || (text.length === 2 && text.match(/^[A-Z]{2}$/))) &&
+              !el.closest('.user-box') && !el.closest('.avatar-lg')) {
+            shouldRemove = true;
+          }
+        });
+        
+        // También verificar el texto completo del li
+        const liText = li.textContent ? li.textContent.trim() : '';
+        if (liText === 'GD' || liText === 'G D' || (liText.length === 2 && liText.match(/^[A-Z]{2}$/))) {
+          shouldRemove = true;
+        }
+        
+        // Si tiene un elemento circular azul pero no tiene dropdown-item, también eliminarlo
+        if (circularElements.length > 0 && !li.querySelector('.dropdown-item')) {
+          shouldRemove = true;
+        }
+        
+        if (shouldRemove) {
+          // Eliminar todo el li
+          li.style.display = 'none';
+          li.style.visibility = 'hidden';
+          li.style.opacity = '0';
+          li.style.height = '0';
+          li.style.margin = '0';
+          li.style.padding = '0';
+          li.style.overflow = 'hidden';
+          li.style.width = '0';
+          try { li.remove(); } catch(e) {}
+        }
+      }
+    });
+    
+    // Buscar el dropdown-item que contiene "Cambiar Foto de Perfil"
+    const cambiarFotoItems = document.querySelectorAll('.dropdown-item');
+    cambiarFotoItems.forEach(function(item) {
+      if (item.textContent && item.textContent.includes('Cambiar Foto de Perfil')) {
+        // Buscar cualquier elemento dentro del item que no sea el icono ni el span
+        const allChildren = item.querySelectorAll('*');
+        allChildren.forEach(function(child) {
+          const text = child.textContent ? child.textContent.trim() : '';
+          // Si es un elemento circular azul o contiene GD
+          if ((child.classList.contains('bg-primary') || 
+               child.classList.contains('btn-primary') || 
+               child.classList.contains('rounded-circle')) &&
+              !child.classList.contains('fas') &&
+              !child.classList.contains('fa-camera') &&
+              child.tagName !== 'I' &&
+              (text === 'GD' || text.match(/^[A-Z]{2}$/) || text.match(/GD/))) {
+            child.style.display = 'none';
+            child.style.visibility = 'hidden';
+            child.style.opacity = '0';
+            child.style.width = '0';
+            child.style.height = '0';
+            child.style.margin = '0';
+            child.style.padding = '0';
+            try { child.remove(); } catch(e) {}
+          }
+        });
+        
+        // Buscar elementos hermanos dentro del mismo li
+        const parentLi = item.closest('li');
+        if (parentLi) {
+          const siblings = Array.from(parentLi.children);
+          siblings.forEach(function(sibling) {
+            if (sibling !== item) {
+              const siblingText = sibling.textContent ? sibling.textContent.trim() : '';
+              if ((sibling.classList.contains('bg-primary') || 
+                   sibling.classList.contains('btn-primary') || 
+                   sibling.classList.contains('rounded-circle')) &&
+                  (siblingText === 'GD' || siblingText.match(/^[A-Z]{2}$/) || siblingText.match(/GD/))) {
+                sibling.style.display = 'none';
+                sibling.style.visibility = 'hidden';
+                sibling.style.opacity = '0';
+                sibling.style.width = '0';
+                sibling.style.height = '0';
+                try { sibling.remove(); } catch(e) {}
+              }
+            }
+          });
+        }
+        
+        // Buscar el siguiente li hermano que pueda contener GD
+        if (parentLi) {
+          const nextLi = parentLi.nextElementSibling;
+          if (nextLi && !nextLi.querySelector('.dropdown-item') && !nextLi.querySelector('.dropdown-divider')) {
+            const nextLiText = nextLi.textContent ? nextLi.textContent.trim() : '';
+            if (nextLiText === 'GD' || nextLiText.match(/^[A-Z]{2}$/) || nextLiText.match(/GD/)) {
+              nextLi.style.display = 'none';
+              nextLi.style.visibility = 'hidden';
+              nextLi.style.opacity = '0';
+              nextLi.style.height = '0';
+              nextLi.style.margin = '0';
+              nextLi.style.padding = '0';
+              try { nextLi.remove(); } catch(e) {}
+            }
+          }
+        }
+      }
+    });
+  }
+  
   // Ejecutar múltiples veces para asegurar
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       removeGDButtons();
       removeGDFromHeader();
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 100);
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 500);
+      removeGDFromCambiarFoto();
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 100);
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 500);
     });
   } else {
     removeGDButtons();
     removeGDFromHeader();
-    setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 100);
-    setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 500);
+    removeGDFromCambiarFoto();
+    setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 100);
+    setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 500);
   }
   
   // Ejecutar cuando se abra el dropdown usando eventos de Bootstrap
@@ -549,23 +782,25 @@ if (!empty($usuarioNombre)) {
   if (dropdownElement) {
     dropdownElement.addEventListener('show.bs.dropdown', function() {
       removeGDButtons();
+      removeGDFromCambiarFoto();
     });
     dropdownElement.addEventListener('shown.bs.dropdown', function() {
       removeGDButtons();
       removeGDFromHeader();
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 50);
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 200);
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 500);
+      removeGDFromCambiarFoto();
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 50);
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 200);
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 500);
     });
   }
   
   // También ejecutar cuando se haga clic
   document.addEventListener('click', function(e) {
     if (e.target.closest('.dropdown-toggle.profile-pic')) {
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 50);
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 200);
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 500);
-      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); }, 1000);
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 50);
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 200);
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 500);
+      setTimeout(function() { removeGDButtons(); removeGDFromHeader(); removeGDFromCambiarFoto(); }, 1000);
     }
   });
   
@@ -573,6 +808,7 @@ if (!empty($usuarioNombre)) {
   const observer = new MutationObserver(function(mutations) {
     removeGDButtons();
     removeGDFromHeader();
+    removeGDFromCambiarFoto();
   });
   
   const dropdown = document.querySelector('.dropdown-user');
@@ -602,6 +838,7 @@ if (!empty($usuarioNombre)) {
   const bodyObserver = new MutationObserver(function(mutations) {
     if (document.querySelector('.dropdown-user')) {
       removeGDButtons();
+      removeGDFromCambiarFoto();
     }
     if (document.querySelector('.navbar-header')) {
       removeGDFromHeader();
@@ -615,16 +852,53 @@ if (!empty($usuarioNombre)) {
     });
   }
   
-  // Función ultra agresiva para eliminar botones GD - ejecutar cada segundo
+  // Función ultra agresiva para eliminar botones GD - ejecutar cada 100ms
   setInterval(function() {
+    removeGDFromCambiarFoto();
+    removeGDButtons();
+    
+    // Buscar específicamente li que contengan solo GD - SOLUCIÓN MÁS AGRESIVA
+    const allLis = document.querySelectorAll('.dropdown-user-scroll > li');
+    allLis.forEach(function(li) {
+      if (!li.querySelector('.user-box') && 
+          !li.querySelector('.dropdown-item') && 
+          !li.querySelector('.dropdown-divider')) {
+        const liText = li.textContent ? li.textContent.trim() : '';
+        const hasCircular = li.querySelector('.bg-primary.rounded-circle, .btn-primary.rounded-circle, div.rounded-circle.bg-primary, button.rounded-circle.bg-primary, a.rounded-circle.bg-primary, span.rounded-circle.bg-primary');
+        
+        // Si tiene un elemento circular azul y no tiene dropdown-item, eliminarlo
+        if (hasCircular && !li.querySelector('.dropdown-item') && !li.querySelector('.user-box')) {
+          li.style.display = 'none';
+          li.style.visibility = 'hidden';
+          li.style.opacity = '0';
+          li.style.height = '0';
+          li.style.margin = '0';
+          li.style.padding = '0';
+          li.style.overflow = 'hidden';
+          li.style.width = '0';
+          try { li.remove(); } catch(e) {}
+        } else if (liText === 'GD' || liText === 'G D' || (liText.length === 2 && liText.match(/^[A-Z]{2}$/))) {
+          li.style.display = 'none';
+          li.style.visibility = 'hidden';
+          li.style.opacity = '0';
+          li.style.height = '0';
+          li.style.margin = '0';
+          li.style.padding = '0';
+          li.style.overflow = 'hidden';
+          li.style.width = '0';
+          try { li.remove(); } catch(e) {}
+        }
+      }
+    });
+    
     // Buscar en todo el documento elementos con texto "GD" que sean botones circulares azules
-    const allElements = document.querySelectorAll('*');
+    const allElements = document.querySelectorAll('.dropdown-user *');
     allElements.forEach(function(el) {
       const text = (el.textContent || el.innerText || '').trim();
       const classes = (el.className || '').toString();
       
       // Si el texto es exactamente "GD" y está en un elemento circular azul
-      if (text === 'GD') {
+      if (text === 'GD' || text === 'G D' || (text.length === 2 && text.match(/^[A-Z]{2}$/))) {
         const parent = el.parentElement;
         if (parent && (parent.classList.contains('rounded-circle') || parent.classList.contains('bg-primary') || parent.classList.contains('btn-primary'))) {
           // Si el padre no está en el user-box, eliminarlo
@@ -666,7 +940,7 @@ if (!empty($usuarioNombre)) {
         }
       }
     });
-  }, 1000); // Ejecutar cada segundo
+  }, 100); // Ejecutar cada 100ms para eliminar GD más rápido
 })();
 </script>
 

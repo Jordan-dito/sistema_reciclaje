@@ -131,7 +131,6 @@ function isRouteActive($config, $currentRoute) {
     </li>
   <?php else: ?>
     <?php 
-      $mostrarSeccionReporte = false;
       foreach ($modulosAsignados as $modulo): 
         $moduloNombre = $modulo['nombre'];
         $moduloIcono = $modulo['icono'] ?? 'fas fa-circle';
@@ -141,11 +140,6 @@ function isRouteActive($config, $currentRoute) {
         
         if ($config) {
           $isActive = isRouteActive($config, $currentRoute);
-        }
-        
-        // Verificar si es el módulo de Reporte para mostrar la sección
-        if ($moduloNombre === 'Reporte') {
-          $mostrarSeccionReporte = true;
         }
     ?>
       
@@ -191,15 +185,5 @@ function isRouteActive($config, $currentRoute) {
         </li>
       <?php endif; ?>
     <?php endforeach; ?>
-    
-    <!-- Sección de Reporte (si existe el módulo Reporte) -->
-    <?php if ($mostrarSeccionReporte): ?>
-      <li class="nav-section">
-        <span class="sidebar-mini-icon">
-          <i class="fa fa-ellipsis-h"></i>
-        </span>
-        <h4 class="text-section">Reporte</h4>
-      </li>
-    <?php endif; ?>
   <?php endif; ?>
 </ul>

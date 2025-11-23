@@ -135,12 +135,17 @@ if (!$auth->isAuthenticated()) {
           <div class="modal-body">
             <form id="formAgregarInventario">
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-12">
                   <div class="form-group">
-                    <label>Sucursal *</label>
-                    <select id="sucursal_id" name="sucursal_id" class="form-control" required>
-                      <option value="">Seleccione una sucursal</option>
-                    </select>
+                    <label>Sucursales * <small class="text-muted">(Puede seleccionar múltiples)</small></label>
+                    <div id="sucursalesContainer" class="border rounded p-3" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">
+                      <div class="text-center text-muted">
+                        <i class="fa fa-spinner fa-spin"></i> Cargando sucursales...
+                      </div>
+                    </div>
+                    <small class="form-text text-muted">
+                      <i class="fa fa-info-circle"></i> Seleccione una o más sucursales donde desea crear el inventario.
+                    </small>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -149,24 +154,17 @@ if (!$auth->isAuthenticated()) {
                     <button type="button" class="btn btn-primary btn-block mb-2" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
                       <i class="fa fa-search"></i> Buscar y Seleccionar Producto
                     </button>
-                    <div id="productoSeleccionado" class="alert alert-info" style="display: none;">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                          <strong>Producto seleccionado:</strong>
-                          <span id="productoNombreSeleccionado" class="ml-2"></span>
-                          <small class="d-block text-muted mt-1">
-                            <span id="productoMaterialSeleccionado"></span>
-                            <span id="productoCategoriaSeleccionado" class="ml-2"></span>
-                            <span id="productoUnidadSeleccionado" class="ml-2"></span>
-                          </small>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarProducto()">
-                          <i class="fa fa-times"></i> Quitar
+                    <div id="productosSeleccionados" class="border rounded p-3" style="display: none; max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Productos seleccionados: <span id="contadorProductos">0</span></strong>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarProductos()">
+                          <i class="fa fa-times"></i> Limpiar todo
                         </button>
                       </div>
+                      <div id="listaProductosSeleccionados"></div>
                     </div>
-                    <input type="hidden" id="producto_id" name="producto_id" required>
-                    <small class="form-text text-muted"><i class="fa fa-info-circle"></i> Haga clic en el botón para buscar y seleccionar un producto.</small>
+                    <input type="hidden" id="productos_ids" name="productos_ids">
+                    <small class="form-text text-muted"><i class="fa fa-info-circle"></i> Haga clic en el botón para buscar y seleccionar uno o más productos.</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -232,7 +230,9 @@ if (!$auth->isAuthenticated()) {
               <table class="table table-hover table-striped" id="tablaProductos">
                 <thead class="thead-dark" style="position: sticky; top: 0; background: white; z-index: 10;">
                   <tr>
-                    <th style="width: 50px;">Seleccionar</th>
+                    <th style="width: 50px;">
+                      <input type="checkbox" id="seleccionarTodos" title="Seleccionar todos">
+                    </th>
                     <th>Nombre</th>
                     <th>Material</th>
                     <th>Categoría</th>
@@ -256,6 +256,9 @@ if (!$auth->isAuthenticated()) {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btnConfirmarProductos">
+              <i class="fa fa-check"></i> Confirmar Selección (<span id="contadorSeleccionados">0</span>)
+            </button>
           </div>
         </div>
       </div>
@@ -284,20 +287,47 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 var filtro = $('#filtroSucursal');
-                var select = $('#sucursal_id');
+                var container = $('#sucursalesContainer');
+                
                 filtro.empty().append('<option value="">Todas las Sucursales</option>');
-                select.empty().append('<option value="">Seleccione una sucursal</option>');
+                container.empty();
+                
                 response.data.forEach(function(sucursal) {
                   filtro.append('<option value="' + sucursal.id + '">' + sucursal.nombre + '</option>');
-                  select.append('<option value="' + sucursal.id + '">' + sucursal.nombre + '</option>');
+                  
+                  var checkbox = $('<div class="form-check mb-2">')
+                    .append($('<input>')
+                      .attr('type', 'checkbox')
+                      .attr('class', 'form-check-input sucursal-checkbox')
+                      .attr('id', 'sucursal_' + sucursal.id)
+                      .attr('value', sucursal.id)
+                      .on('change', function() {
+                        actualizarSucursalesSeleccionadas();
+                      })
+                    )
+                    .append($('<label>')
+                      .attr('class', 'form-check-label')
+                      .attr('for', 'sucursal_' + sucursal.id)
+                      .text(sucursal.nombre)
+                    );
+                  
+                  container.append(checkbox);
                 });
               }
             }
           });
         }
         
+        function actualizarSucursalesSeleccionadas() {
+          sucursalesSeleccionadas = [];
+          $('.sucursal-checkbox:checked').each(function() {
+            sucursalesSeleccionadas.push($(this).val());
+          });
+        }
+        
         var todosLosProductos = [];
-        var productoSeleccionado = null;
+        var productosSeleccionados = []; // Array para múltiples productos
+        var sucursalesSeleccionadas = []; // Array para múltiples sucursales
         
         function cargarProductos() {
           $.ajax({
@@ -381,22 +411,22 @@ if (!$auth->isAuthenticated()) {
           productosFiltrados.forEach(function(producto) {
             var categoria = producto.categoria_nombre || '-';
             var nombreEscapado = $('<div>').text(producto.nombre).html();
+            var productoId = producto.id;
+            var estaSeleccionado = productosSeleccionados.some(p => p.id === productoId);
             
             var fila = $('<tr>');
-            var btnCell = $('<td>');
-            var btn = $('<button>')
-              .attr('type', 'button')
-              .addClass('btn btn-sm btn-primary')
-              .html('<i class="fa fa-check"></i>')
-              .on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                seleccionarProducto(producto);
-                return false;
+            var checkboxCell = $('<td>');
+            var checkbox = $('<input>')
+              .attr('type', 'checkbox')
+              .attr('class', 'producto-checkbox')
+              .attr('data-producto-id', productoId)
+              .prop('checked', estaSeleccionado)
+              .on('change', function() {
+                actualizarContadorSeleccionados();
               });
-            btnCell.append(btn);
+            checkboxCell.append(checkbox);
             
-            fila.append(btnCell);
+            fila.append(checkboxCell);
             fila.append($('<td>').html('<strong>' + nombreEscapado + '</strong>'));
             fila.append($('<td>').text(producto.material_nombre));
             fila.append($('<td>').text(categoria));
@@ -404,22 +434,43 @@ if (!$auth->isAuthenticated()) {
             
             tbody.append(fila);
           });
+          
+          actualizarContadorSeleccionados();
         }
         
-        // Aplicar filtros cuando cambian
-        $('#filtroNombre, #filtroMaterial, #filtroCategoria').on('input change', function() {
-          filtrarYMostrarProductos();
+        // Seleccionar/deseleccionar todos
+        $(document).on('change', '#seleccionarTodos', function() {
+          var isChecked = $(this).prop('checked');
+          $('.producto-checkbox').prop('checked', isChecked);
+          actualizarContadorSeleccionados();
         });
         
-        // Función para seleccionar producto
-        function seleccionarProducto(producto) {
-          productoSeleccionado = producto;
-          $('#producto_id').val(producto.id);
-          $('#productoNombreSeleccionado').text(producto.nombre);
-          $('#productoMaterialSeleccionado').text('Material: ' + (producto.material_nombre || '-'));
-          $('#productoCategoriaSeleccionado').text('Categoría: ' + (producto.categoria_nombre || '-'));
-          $('#productoUnidadSeleccionado').text('Unidad: ' + (producto.unidad || '-'));
-          $('#productoSeleccionado').slideDown();
+        function actualizarContadorSeleccionados() {
+          var seleccionados = $('.producto-checkbox:checked').length;
+          $('#contadorSeleccionados').text(seleccionados);
+          
+          // Actualizar estado del checkbox "seleccionar todos"
+          var total = $('.producto-checkbox').length;
+          $('#seleccionarTodos').prop('checked', total > 0 && seleccionados === total);
+        }
+        
+        // Confirmar selección de productos
+        $('#btnConfirmarProductos').click(function() {
+          productosSeleccionados = [];
+          $('.producto-checkbox:checked').each(function() {
+            var productoId = $(this).data('producto-id');
+            var producto = todosLosProductos.find(p => p.id === productoId);
+            if (producto) {
+              productosSeleccionados.push(producto);
+            }
+          });
+          
+          if (productosSeleccionados.length === 0) {
+            swal("Advertencia", "Debe seleccionar al menos un producto", "warning");
+            return;
+          }
+          
+          actualizarListaProductosSeleccionados();
           
           // Cerrar el modal
           var modal = bootstrap.Modal.getInstance(document.getElementById('modalBuscarProducto'));
@@ -428,20 +479,73 @@ if (!$auth->isAuthenticated()) {
           }
           
           swal({
-            title: "¡Producto seleccionado!",
-            text: producto.nombre + " ha sido seleccionado",
+            title: "¡Productos seleccionados!",
+            text: productosSeleccionados.length + " producto(s) seleccionado(s)",
             icon: "success",
             timer: 1500,
             buttons: false
           });
+        });
+        
+        function actualizarListaProductosSeleccionados() {
+          var lista = $('#listaProductosSeleccionados');
+          var contador = $('#contadorProductos');
+          var container = $('#productosSeleccionados');
+          
+          lista.empty();
+          contador.text(productosSeleccionados.length);
+          
+          if (productosSeleccionados.length === 0) {
+            container.slideUp();
+            return;
+          }
+          
+          productosSeleccionados.forEach(function(producto) {
+            var item = $('<div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">')
+              .append($('<div>')
+                .append($('<strong>').text(producto.nombre))
+                .append($('<small class="d-block text-muted">')
+                  .text('Material: ' + (producto.material_nombre || '-') + 
+                        ' | Categoría: ' + (producto.categoria_nombre || '-') + 
+                        ' | Unidad: ' + (producto.unidad || '-')))
+              )
+              .append($('<button>')
+                .attr('type', 'button')
+                .addClass('btn btn-sm btn-outline-danger')
+                .html('<i class="fa fa-times"></i>')
+                .on('click', function() {
+                  productosSeleccionados = productosSeleccionados.filter(p => p.id !== producto.id);
+                  actualizarListaProductosSeleccionados();
+                  // Actualizar checkboxes en el modal
+                  $('.producto-checkbox[data-producto-id="' + producto.id + '"]').prop('checked', false);
+                  actualizarContadorSeleccionados();
+                })
+              );
+            lista.append(item);
+          });
+          
+          container.slideDown();
+          
+          // Actualizar input hidden
+          var productosIds = productosSeleccionados.map(p => p.id).join(',');
+          $('#productos_ids').val(productosIds);
         }
         
-        // Función para limpiar producto seleccionado
-        window.limpiarProducto = function() {
-          productoSeleccionado = null;
-          $('#producto_id').val('');
-          $('#productoSeleccionado').slideUp();
+        // Limpiar productos seleccionados
+        window.limpiarProductos = function() {
+          productosSeleccionados = [];
+          $('#productos_ids').val('');
+          $('#productosSeleccionados').slideUp();
+          $('.producto-checkbox').prop('checked', false);
+          actualizarContadorSeleccionados();
         };
+        }
+        
+        // Aplicar filtros cuando cambian
+        $('#filtroNombre, #filtroMaterial, #filtroCategoria').on('input change', function() {
+          filtrarYMostrarProductos();
+        });
+        
         
         window.cargarInventarios = function(sucursal_id = null) {
           var url = 'api.php?action=listar';
@@ -485,53 +589,130 @@ if (!$auth->isAuthenticated()) {
         });
         
         $('#btnGuardarInventario').click(function() {
-          var form = $('#formAgregarInventario')[0];
-          if (!form.checkValidity()) {
-            form.reportValidity();
+          actualizarSucursalesSeleccionadas();
+          
+          if (sucursalesSeleccionadas.length === 0) {
+            swal("Error", "Debe seleccionar al menos una sucursal", "error");
             return;
           }
           
-          var productoId = $('#producto_id').val();
-          if (!productoId) {
-            swal("Error", "Debe seleccionar un producto", "error");
+          if (productosSeleccionados.length === 0) {
+            swal("Error", "Debe seleccionar al menos un producto", "error");
             return;
           }
           
-          var formData = {
-            sucursal_id: $('#sucursal_id').val(),
-            producto_id: productoId,
-            cantidad: null, // El campo peso no se captura en el formulario
-            stock_minimo: $('#stock_minimo').val() || 0,
-            stock_maximo: $('#stock_maximo').val() || 0,
-            estado: 'disponible',
-            action: 'crear'
-          };
+          var stockMinimo = parseFloat($('#stock_minimo').val()) || 0;
+          var stockMaximo = parseFloat($('#stock_maximo').val()) || 0;
           
-          $.ajax({
-            url: 'api.php',
-            method: 'POST',
-            data: formData,
-            dataType: 'json',
-            success: function(response) {
-              if (response.success) {
-                swal("¡Éxito!", response.message, "success");
-                $('#modalAgregarInventario').modal('hide');
-                $('#formAgregarInventario')[0].reset();
-                cargarInventarios($('#filtroSucursal').val() || null);
-              } else {
-                swal("Error", response.message, "error");
+          // Crear todas las combinaciones de productos x sucursales
+          var combinaciones = [];
+          productosSeleccionados.forEach(function(producto) {
+            sucursalesSeleccionadas.forEach(function(sucursalId) {
+              combinaciones.push({
+                sucursal_id: sucursalId,
+                producto_id: producto.id,
+                stock_minimo: stockMinimo,
+                stock_maximo: stockMaximo
+              });
+            });
+          });
+          
+          // Mostrar confirmación
+          var mensaje = 'Se crearán ' + combinaciones.length + ' registro(s) de inventario:\n\n';
+          mensaje += '- ' + productosSeleccionados.length + ' producto(s)\n';
+          mensaje += '- ' + sucursalesSeleccionadas.length + ' sucursal(es)\n\n';
+          mensaje += '¿Desea continuar?';
+          
+          swal({
+            title: "Confirmar creación",
+            text: mensaje,
+            icon: "info",
+            buttons: {
+              cancel: "Cancelar",
+              confirm: {
+                text: "Crear registros",
+                value: true
               }
-            },
-            error: function(xhr) {
-              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar el inventario';
-              swal("Error", error, "error");
             }
+          }).then((confirmar) => {
+            if (!confirmar) return;
+            
+            // Deshabilitar botón mientras se procesa
+            var btnGuardar = $('#btnGuardarInventario');
+            btnGuardar.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
+            
+            // Crear registros uno por uno o en lote
+            var total = combinaciones.length;
+            var completados = 0;
+            var errores = [];
+            
+            function crearSiguiente() {
+              if (completados >= total) {
+                // Todos completados
+                btnGuardar.prop('disabled', false).html('Guardar Inventario');
+                
+                if (errores.length === 0) {
+                  swal("¡Éxito!", "Se crearon " + total + " registro(s) de inventario exitosamente", "success");
+                  $('#modalAgregarInventario').modal('hide');
+                  $('#formAgregarInventario')[0].reset();
+                  limpiarProductos();
+                  $('.sucursal-checkbox').prop('checked', false);
+                  actualizarSucursalesSeleccionadas();
+                  cargarInventarios($('#filtroSucursal').val() || null);
+                } else {
+                  swal({
+                    title: "Proceso completado con errores",
+                    text: "Se crearon " + (total - errores.length) + " registro(s) exitosamente.\n" +
+                          "Errores: " + errores.length,
+                    icon: "warning"
+                  });
+                  cargarInventarios($('#filtroSucursal').val() || null);
+                }
+                return;
+              }
+              
+              var combinacion = combinaciones[completados];
+              var formData = {
+                sucursal_id: combinacion.sucursal_id,
+                producto_id: combinacion.producto_id,
+                cantidad: null,
+                stock_minimo: combinacion.stock_minimo,
+                stock_maximo: combinacion.stock_maximo,
+                estado: 'disponible',
+                action: 'crear'
+              };
+              
+              $.ajax({
+                url: 'api.php',
+                method: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                  completados++;
+                  if (!response.success) {
+                    errores.push(response.message || 'Error desconocido');
+                  }
+                  crearSiguiente();
+                },
+                error: function(xhr) {
+                  completados++;
+                  var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar';
+                  errores.push(error);
+                  crearSiguiente();
+                }
+              });
+            }
+            
+            // Iniciar creación
+            crearSiguiente();
           });
         });
         
         $('#modalAgregarInventario').on('hidden.bs.modal', function() {
           $('#formAgregarInventario')[0].reset();
-          limpiarProducto();
+          limpiarProductos();
+          $('.sucursal-checkbox').prop('checked', false);
+          actualizarSucursalesSeleccionadas();
         });
         
         cargarSucursales();

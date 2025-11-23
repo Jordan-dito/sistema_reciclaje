@@ -37,14 +37,14 @@ if (isset($_SESSION['usuario_nombre'])) {
 }
 ?>
 <!-- Modal Foto de Perfil -->
-<div class="modal fade" id="modalFotoPerfil" tabindex="-1" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+<div class="modal fade" id="modalFotoPerfil" tabindex="-1" aria-hidden="false" data-bs-backdrop="static" data-bs-keyboard="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title text-white mb-0">
           <i class="fas fa-camera me-2"></i> Cambiar Foto de Perfil
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" onclick="cerrarModalFotoPerfil(); return false;" aria-label="Close" style="pointer-events: auto; z-index: 10005; cursor: pointer;"></button>
       </div>
       <div class="modal-body">
         <form id="formFotoPerfil" enctype="multipart/form-data">
@@ -93,7 +93,7 @@ if (isset($_SESSION['usuario_nombre'])) {
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <button type="button" class="btn btn-secondary" onclick="cerrarModalFotoPerfil(); return false;" style="pointer-events: auto; z-index: 10005; cursor: pointer;">
           <i class="fas fa-times me-2"></i> Cancelar
         </button>
         <button type="button" class="btn btn-primary" id="btnSubirFoto">
@@ -105,6 +105,94 @@ if (isset($_SESSION['usuario_nombre'])) {
 </div>
 
 <script>
+// Función global para cerrar el modal
+window.cerrarModalFotoPerfil = function() {
+  console.log('[Foto Perfil] Función cerrarModalFotoPerfil llamada');
+  
+  if (typeof jQuery === 'undefined') {
+    console.error('[Foto Perfil] jQuery no disponible para cerrar modal');
+    // Intentar cerrar sin jQuery
+    var modalElement = document.getElementById('modalFotoPerfil');
+    if (modalElement) {
+      var bsModal = bootstrap.Modal.getInstance(modalElement);
+      if (bsModal) {
+        bsModal.hide();
+      }
+      modalElement.classList.remove('show');
+      modalElement.style.display = 'none';
+      modalElement.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      var backdrops = document.querySelectorAll('.modal-backdrop');
+      backdrops.forEach(function(backdrop) {
+        backdrop.remove();
+      });
+    }
+    return;
+  }
+  
+  var $ = jQuery;
+  var modal = $('#modalFotoPerfil');
+  
+  if (modal.length === 0) {
+    console.warn('[Foto Perfil] Modal no encontrado');
+    return;
+  }
+  
+  // Método 1: Bootstrap 5 nativo
+  var modalElement = document.getElementById('modalFotoPerfil');
+  if (modalElement) {
+    var bsModal = bootstrap.Modal.getInstance(modalElement);
+    if (bsModal) {
+      console.log('[Foto Perfil] Cerrando con Bootstrap Modal instance');
+      bsModal.hide();
+    } else {
+      var newModal = new bootstrap.Modal(modalElement);
+      newModal.hide();
+    }
+  }
+  
+  // Método 2: jQuery (respaldo)
+  modal.modal('hide');
+  
+  // Método 3: Forzar cierre manual
+  setTimeout(function() {
+    // Remover backdrop
+    $('.modal-backdrop').remove();
+    // Remover clases del body
+    $('body').removeClass('modal-open');
+    $('body').css({
+      'overflow': '',
+      'padding-right': ''
+    });
+    // Ocultar modal manualmente
+    modal.removeClass('show').css({
+      'display': 'none',
+      'z-index': '',
+      'pointer-events': ''
+    });
+    modal.attr('aria-hidden', 'true');
+    modal.removeAttr('aria-modal');
+    
+    // Limpiar formulario
+    var form = $('#formFotoPerfil')[0];
+    if (form) {
+      form.reset();
+    }
+    $('#foto_perfil_display').val('');
+    $('#foto_perfil_display').css('color', '');
+    $('#fileStatus').html('');
+    
+    // Restaurar preview
+    <?php if ($fotoActual): ?>
+      $('#previewFoto').html('<img src="<?php echo htmlspecialchars($basePath . $fotoActual); ?>" class="avatar-img rounded-circle" style="width: 120px; height: 120px; object-fit: cover;" onerror="this.parentElement.innerHTML=\'<i class=\\\'fas fa-user\\\'></i>\';">');
+    <?php else: ?>
+      $('#previewFoto').html('<i class="fas fa-user"></i>');
+    <?php endif; ?>
+    
+    console.log('[Foto Perfil] Modal cerrado completamente');
+  }, 100);
+};
+
 // Función global para abrir el modal
 window.abrirModalFotoPerfil = function() {
   console.log('[Foto Perfil] Función abrirModalFotoPerfil llamada');
@@ -576,6 +664,25 @@ console.log('[Foto Perfil] Script iniciado');
     // Limpiar cuando se cierra el modal
     $('#modalFotoPerfil').on('hidden.bs.modal', function() {
       console.log('[Foto Perfil] Modal cerrado');
+    });
+    
+    // AGREGAR EVENTOS PARA LOS BOTONES DE CERRAR Y CANCELAR
+    // Botón de cerrar (X) en el header
+    $(document).on('click', '#modalFotoPerfil .btn-close', function(e) {
+      console.log('[Foto Perfil] Botón cerrar (X) clickeado');
+      e.preventDefault();
+      e.stopPropagation();
+      cerrarModalFotoPerfil();
+      return false;
+    });
+    
+    // Botón Cancelar en el footer
+    $(document).on('click', '#modalFotoPerfil .btn-secondary[data-bs-dismiss="modal"]', function(e) {
+      console.log('[Foto Perfil] Botón Cancelar clickeado');
+      e.preventDefault();
+      e.stopPropagation();
+      cerrarModalFotoPerfil();
+      return false;
     });
     
     console.log('[Foto Perfil] Inicialización completa');
