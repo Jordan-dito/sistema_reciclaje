@@ -213,11 +213,7 @@ if (!$compra_id) {
         </div>
 
         <footer class="footer no-print">
-          <div class="container-fluid d-flex justify-content-between">
-            <div class="copyright">
-              2024, Sistema de Gestión de Reciclaje
-            </div>
-          </div>
+          <?php include __DIR__ . '/../includes/footer.php'; ?>
         </footer>
       </div>
     </div>

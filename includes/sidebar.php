@@ -80,11 +80,11 @@ $gerenteRelacionesComercialesOpen = in_array($currentRoute, $gerenteRelacionesCo
       </div>
     </li>
 
-    <!-- Gestión de Parámetros o Configuración de Material -->
+    <!-- Módulo de Parámetros o Configuración de Material -->
     <li class="nav-item submenu <?php echo $gerenteParametrosOpen ? 'active' : ''; ?>">
       <a data-bs-toggle="collapse" href="#menuParametros" class="<?php echo $gerenteParametrosOpen ? '' : 'collapsed'; ?>" aria-expanded="<?php echo $gerenteParametrosOpen ? 'true' : 'false'; ?>">
         <i class="fas fa-cog"></i>
-        <p>Gestión de Parámetros</p>
+        <p>Módulo de Parámetros</p>
         <span class="caret"></span>
       </a>
       <div class="collapse <?php echo $gerenteParametrosOpen ? 'show' : ''; ?>" id="menuParametros">

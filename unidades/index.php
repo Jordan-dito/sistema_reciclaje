@@ -114,11 +114,7 @@ if (!$auth->isAuthenticated()) {
           </div>
         </div>
 
-        <footer class="footer">
-          <div class="container-fluid d-flex justify-content-between">
-            <div class="copyright">2024, Sistema de Gestión de Reciclaje</div>
-          </div>
-        </footer>
+        <?php include __DIR__ . '/../includes/footer.php'; ?>
       </div>
     </div>
 
