@@ -200,7 +200,6 @@ $usuario = $auth->getCurrentUser();
                           <table id="rolesTable" class="display table table-striped table-hover">
                             <thead>
                               <tr>
-                                <th>ID</th>
                                 <th>Nombre</th>
                                 <th>Descripción</th>
                                 <th>Estado</th>
@@ -371,7 +370,6 @@ $usuario = $auth->getCurrentUser();
                   }
                   
                   table.row.add([
-                    rol.id,
                     '<strong>' + rol.nombre + '</strong>',
                     rol.descripcion || '-',
                     badgeEstado,

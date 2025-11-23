@@ -145,7 +145,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="clientesTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Nombre/Razón Social</th>
                             <th>Cédula/RUC</th>
                             <th>Email</th>
@@ -382,7 +381,6 @@ if (!$auth->isAuthenticated()) {
                     : '<span class="badge badge-danger">Inactivo</span>';
                   
                   table.row.add([
-                    cliente.id,
                     '<strong>' + cliente.nombre + '</strong>',
                     cliente.cedula_ruc || '-',
                     cliente.email || '-',

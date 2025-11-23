@@ -115,7 +115,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="categoriasTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Descripción</th>
                             <th>Estado</th>
@@ -246,7 +245,6 @@ if (!$auth->isAuthenticated()) {
                     : '<span class="badge badge-danger">Inactivo</span>';
                   
                   table.row.add([
-                    categoria.id,
                     '<strong>' + categoria.nombre + '</strong>',
                     categoria.descripcion || '-',
                     badgeEstado,

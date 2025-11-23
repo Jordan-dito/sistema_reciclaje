@@ -148,7 +148,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="ventasTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Fecha</th>
                             <th>Sucursal</th>
                             <th>Producto</th>
@@ -487,7 +486,6 @@ if (!$auth->isAuthenticated()) {
                     var precio = detalle.precio_unitario ? parseFloat(detalle.precio_unitario).toFixed(2) : '0.00';
                     
                     table.row.add([
-                      venta.id,
                       venta.fecha_venta,
                       venta.sucursal_nombre,
                       '<strong>' + productoNombre + '</strong>',
@@ -512,7 +510,6 @@ if (!$auth->isAuthenticated()) {
                     }
                     
                     table.row.add([
-                      venta.id,
                       venta.fecha_venta,
                       venta.sucursal_nombre,
                       '-',

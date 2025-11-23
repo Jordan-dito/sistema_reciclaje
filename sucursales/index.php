@@ -145,7 +145,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="sucursalesTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Dirección</th>
                             <th>Teléfono</th>
@@ -369,7 +368,6 @@ if (!$auth->isAuthenticated()) {
                   }
                   
                   table.row.add([
-                    sucursal.id,
                     '<strong>' + sucursal.nombre + '</strong>',
                     sucursal.direccion || '-',
                     sucursal.telefono || '-',

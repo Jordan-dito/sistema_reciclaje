@@ -115,7 +115,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="unidadesTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Símbolo</th>
                             <th>Tipo</th>
@@ -273,7 +272,6 @@ if (!$auth->isAuthenticated()) {
                   };
                   
                   table.row.add([
-                    unidad.id,
                     '<strong>' + unidad.nombre + '</strong>',
                     unidad.simbolo || '-',
                     tipoLabels[unidad.tipo] || unidad.tipo,

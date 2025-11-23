@@ -115,7 +115,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="productosTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Material</th>
                             <th>Categoría</th>
@@ -366,7 +365,6 @@ if (!$auth->isAuthenticated()) {
                   var unidad = producto.unidad_simbolo || producto.unidad_nombre || '-';
                   
                   table.row.add([
-                    producto.id,
                     '<strong>' + producto.nombre + '</strong>',
                     producto.material_nombre || '-',
                     producto.categoria_nombre || '-',

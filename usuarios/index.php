@@ -145,7 +145,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="usuariosTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Cédula</th>
                             <th>Email</th>
@@ -373,7 +372,6 @@ if (!$auth->isAuthenticated()) {
                   }
                   
                   table.row.add([
-                    usuario.id,
                     '<strong>' + usuario.nombre + '</strong>',
                     usuario.cedula,
                     usuario.email,

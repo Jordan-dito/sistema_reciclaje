@@ -145,7 +145,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="proveedoresTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Razón Social</th>
                             <th>RUC</th>
                             <th>Email</th>
@@ -397,7 +396,6 @@ if (!$auth->isAuthenticated()) {
                     : '<span class="badge badge-danger">Inactivo</span>';
                   
                   table.row.add([
-                    proveedor.id,
                     '<strong>' + proveedor.nombre + '</strong>',
                     proveedor.cedula_ruc || '-',
                     proveedor.email || '-',

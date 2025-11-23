@@ -148,7 +148,6 @@ if (!$auth->isAuthenticated()) {
                       <table id="comprasTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>ID</th>
                             <th>Fecha</th>
                             <th>Sucursal</th>
                             <th>Producto</th>
@@ -390,7 +389,6 @@ if (!$auth->isAuthenticated()) {
                   }
                   
                   table.row.add([
-                    compra.id,
                     compra.fecha_compra,
                     compra.sucursal_nombre,
                     productosInfo,
