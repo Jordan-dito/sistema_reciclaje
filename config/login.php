@@ -9,8 +9,17 @@ error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 
-// Configurar headers JSON
+// Configurar headers CORS para permitir peticiones desde Flutter/móviles
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Content-Type: application/json; charset=utf-8');
+
+// Manejar preflight OPTIONS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 // Capturar cualquier salida no deseada
 ob_start();
@@ -37,9 +46,25 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Obtener datos del formulario
-$email = $_POST['email'] ?? '';
-$password = $_POST['password'] ?? '';
+// Obtener datos - soporta tanto form-data como JSON
+$email = '';
+$password = '';
+
+// Intentar leer JSON primero (para Flutter)
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (strpos($contentType, 'application/json') !== false) {
+    // Flutter/envío JSON
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
+    if ($data) {
+        $email = $data['email'] ?? '';
+        $password = $data['password'] ?? '';
+    }
+} else {
+    // Web/envío form-data (FormData) - compatibilidad con login web existente
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+}
 
 // Validación básica
 if (empty($email) || empty($password)) {
