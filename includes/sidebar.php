@@ -91,22 +91,22 @@ $gerenteRelacionesComercialesOpen = in_array($currentRoute, $gerenteRelacionesCo
         <ul class="nav nav-collapse">
           <li class="<?php echo $currentRoute === 'categorias' ? 'active' : ''; ?>">
             <a href="<?php echo $basePath; ?>categorias/index.php">
-              <span class="sub-item">Categoría</span>
+              <span class="sub-item">Categorías de Materiales</span>
             </a>
           </li>
           <li class="<?php echo $currentRoute === 'materiales' ? 'active' : ''; ?>">
             <a href="<?php echo $basePath; ?>materiales/index.php">
-              <span class="sub-item">Material</span>
+              <span class="sub-item">Materiales Reciclables</span>
             </a>
           </li>
           <li class="<?php echo $currentRoute === 'unidades' ? 'active' : ''; ?>">
             <a href="<?php echo $basePath; ?>unidades/index.php">
-              <span class="sub-item">Unidad de Medición</span>
+              <span class="sub-item">Unidades de Medida</span>
             </a>
           </li>
           <li class="<?php echo $currentRoute === 'productos' ? 'active' : ''; ?>">
             <a href="<?php echo $basePath; ?>productos/index.php">
-              <span class="sub-item">Producto</span>
+              <span class="sub-item">Material Comercializable</span>
             </a>
           </li>
         </ul>

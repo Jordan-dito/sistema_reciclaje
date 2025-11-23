@@ -61,24 +61,10 @@ $basePath = '';
     <div class="wrapper">
       <!-- Sidebar -->
       <div class="sidebar" data-background-color="dark">
-        <div class="sidebar-logo">
-          <div class="logo-header" data-background-color="dark">
-            <a href="../Dashboard.php" class="logo">
-              <img
-                src="../assets/img/logo.jpg"
-                alt="HNOSYÁNEZ S.A."
-                class="navbar-brand"
-                height="50"
-                style="object-fit: contain; border-radius: 8px;"
-              />
-            </a>
-            <div class="nav-toggle">
-              <button class="btn btn-toggle toggle-sidebar">
-                <i class="gg-menu-right"></i>
-              </button>
-            </div>
-          </div>
-        </div>
+        <?php
+          $basePath = '..';
+          include __DIR__ . '/../includes/sidebar-logo.php';
+        ?>
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
             <?php
@@ -96,30 +82,19 @@ $basePath = '';
             <div class="logo-header" data-background-color="dark">
               <a href="../Dashboard.php" class="logo">
                 <img
-                  src="../assets/img/kaiadmin/logo_light.svg"
-                  alt="navbar brand"
+                  src="../assets/img/logo.jpg"
+                  alt="HNOSYÁNEZ S.A."
                   class="navbar-brand"
-                  height="20"
+                  height="50"
+                  style="object-fit: contain; border-radius: 8px;"
                 />
               </a>
             </div>
           </div>
-          <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
-            <div class="container-fluid">
-              <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
-                <li class="nav-item topbar-user dropdown hidden-caret">
-                  <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#" aria-expanded="false">
-                    <div class="avatar-sm">
-                      <img src="../assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle" />
-                    </div>
-                  </a>
-                  <ul class="dropdown-menu dropdown-user animated fadeIn">
-                    <li><a class="dropdown-item" href="../config/logout.php">Cerrar Sesión</a></li>
-                  </ul>
-                </li>
-              </ul>
-            </div>
-          </nav>
+          <?php
+            $basePath = '..';
+            include __DIR__ . '/../includes/user-header.php';
+          ?>
         </div>
 
         <div class="container">

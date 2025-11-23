@@ -72,32 +72,10 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
     <div class="wrapper">
       <!-- Sidebar -->
       <div class="sidebar" data-background-color="dark">
-        <div class="sidebar-logo">
-          <!-- Logo Header -->
-          <div class="logo-header" data-background-color="dark">
-            <a href="Dashboard.php" class="logo">
-              <img
-                src="assets/img/logo.jpg"
-                alt="HNOSYÁNEZ S.A."
-                class="navbar-brand"
-                height="50"
-                style="object-fit: contain; border-radius: 8px;"
-              />
-            </a>
-            <div class="nav-toggle">
-              <button class="btn btn-toggle toggle-sidebar">
-                <i class="gg-menu-right"></i>
-              </button>
-              <button class="btn btn-toggle sidenav-toggler">
-                <i class="gg-menu-left"></i>
-              </button>
-            </div>
-            <button class="topbar-toggler more">
-              <i class="gg-more-vertical-alt"></i>
-            </button>
-          </div>
-          <!-- End Logo Header -->
-        </div>
+        <?php
+          $basePath = '';
+          include __DIR__ . '/includes/sidebar-logo.php';
+        ?>
         <div class="sidebar-wrapper scrollbar scrollbar-inner">
           <div class="sidebar-content">
             <?php
@@ -115,14 +93,15 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           <div class="main-header-logo">
             <!-- Logo Header -->
             <div class="logo-header" data-background-color="dark">
-              <a href="Dashboard.php" class="logo">
-                <img
-                  src="assets/img/kaiadmin/logo_light.svg"
-                  alt="navbar brand"
-                  class="navbar-brand"
-                  height="20"
-                />
-              </a>
+            <a href="Dashboard.php" class="logo">
+              <img
+                src="assets/img/logo.jpg"
+                alt="HNOSYÁNEZ S.A."
+                class="navbar-brand"
+                height="50"
+                style="object-fit: contain; border-radius: 8px;"
+              />
+            </a>
               <div class="nav-toggle">
                 <button class="btn btn-toggle toggle-sidebar">
                   <i class="gg-menu-right"></i>
@@ -433,50 +412,10 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                   </div>
                 </li>
 
-                <li class="nav-item topbar-user dropdown hidden-caret">
-                  <a
-                    class="dropdown-toggle profile-pic"
-                    data-bs-toggle="dropdown"
-                    href="#"
-                    aria-expanded="false"
-                  >
-                    <div class="avatar-sm">
-                      <img
-                        src="assets/img/profile.jpg"
-                        alt="..."
-                        class="avatar-img rounded-circle"
-                      />
-                    </div>
-                    <span class="profile-username">
-                      <span class="op-7">Hola,</span>
-                      <span class="fw-bold"><?php echo htmlspecialchars(explode(' ', $usuarioNombre)[0]); ?></span>
-                    </span>
-                  </a>
-                  <ul class="dropdown-menu dropdown-user animated fadeIn">
-                    <div class="dropdown-user-scroll scrollbar-outer">
-                      <li>
-                        <div class="user-box">
-                          <div class="avatar-lg">
-                            <img
-                              src="assets/img/profile.jpg"
-                              alt="image profile"
-                              class="avatar-img rounded"
-                            />
-                          </div>
-                          <div class="u-text">
-                            <h4><?php echo htmlspecialchars($usuarioNombre); ?></h4>
-                            <p class="text-muted"><?php echo htmlspecialchars($usuarioEmail); ?></p>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div class="dropdown-divider"></div>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="config/logout.php">Cerrar Sesión</a>
-                      </li>
-                    </div>
-                  </ul>
-                </li>
+                <?php
+                  $basePath = '';
+                  include __DIR__ . '/includes/user-header.php';
+                ?>
               </ul>
             </div>
           </nav>
