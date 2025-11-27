@@ -82,16 +82,8 @@ $modulosConfig = [
         'routes' => ['personal']
     ],
     'Reporte' => [
-        'ruta' => '#',
-        'subitems' => [
-            ['nombre' => 'Reporte de Inventarios', 'ruta' => 'reportes/index.php', 'route' => 'reportes'],
-            ['nombre' => 'Reporte de Compras', 'ruta' => 'reportes/index.php', 'route' => 'reportes'],
-            ['nombre' => 'Reporte de Ventas', 'ruta' => 'reportes/index.php', 'route' => 'reportes'],
-            ['nombre' => 'Reporte de Productos', 'ruta' => 'reportes/index.php', 'route' => 'reportes'],
-            ['nombre' => 'Reporte de Materiales por Categoría', 'ruta' => 'reportes/index.php', 'route' => 'reportes'],
-            ['nombre' => 'Reporte de Sucursales', 'ruta' => 'reportes/index.php', 'route' => 'reportes'],
-            ['nombre' => 'Reporte de Usuarios por Rol', 'ruta' => 'reportes/index.php', 'route' => 'reportes']
-        ],
+        'ruta' => 'reportes/index.php',
+        'subitems' => [],
         'routes' => ['reportes']
     ],
     'Gestión de Inventario' => [

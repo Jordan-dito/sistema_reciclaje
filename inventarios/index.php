@@ -325,6 +325,30 @@ if (!$auth->isAuthenticated()) {
           });
         }
         
+        // Guardar estado de sucursales antes de abrir modal de productos
+        function guardarEstadoSucursales() {
+          var estado = [];
+          $('.sucursal-checkbox').each(function() {
+            estado.push({
+              id: $(this).val(),
+              checked: $(this).prop('checked')
+            });
+          });
+          return estado;
+        }
+        
+        // Restaurar estado de sucursales después de cerrar modal de productos
+        function restaurarEstadoSucursales(estado) {
+          if (!estado || estado.length === 0) return;
+          estado.forEach(function(item) {
+            var checkbox = $('#sucursal_' + item.id);
+            if (checkbox.length) {
+              checkbox.prop('checked', item.checked);
+            }
+          });
+          actualizarSucursalesSeleccionadas();
+        }
+        
         var todosLosProductos = [];
         var productosSeleccionados = []; // Array para múltiples productos
         var sucursalesSeleccionadas = []; // Array para múltiples sucursales
@@ -360,13 +384,36 @@ if (!$auth->isAuthenticated()) {
           });
         }
         
+        // Guardar estado de sucursales antes de abrir modal de productos
+        var estadoSucursalesGuardado = null;
+        
         // Cargar productos en el modal cuando se abre
         $('#modalBuscarProducto').on('show.bs.modal', function() {
+          // Marcar que el modal de productos está abierto
+          modalProductosAbierto = true;
+          
+          // Guardar estado actual de las sucursales antes de abrir el modal
+          estadoSucursalesGuardado = guardarEstadoSucursales();
+          
           // Limpiar filtros
           $('#filtroNombre').val('');
           $('#filtroMaterial').val('');
           $('#filtroCategoria').val('');
           cargarProductosEnModal();
+        });
+        
+        // Restaurar estado de sucursales cuando se cierra el modal de productos
+        $('#modalBuscarProducto').on('hidden.bs.modal', function() {
+          // Marcar que el modal de productos ya no está abierto
+          modalProductosAbierto = false;
+          
+          // Restaurar estado de las sucursales después de cerrar el modal
+          if (estadoSucursalesGuardado) {
+            setTimeout(function() {
+              restaurarEstadoSucursales(estadoSucursalesGuardado);
+              estadoSucursalesGuardado = null;
+            }, 100); // Pequeño delay para asegurar que el DOM esté listo
+          }
         });
         
         // Función para cargar y mostrar productos en el modal
@@ -472,11 +519,21 @@ if (!$auth->isAuthenticated()) {
           
           actualizarListaProductosSeleccionados();
           
-          // Cerrar el modal
-          var modal = bootstrap.Modal.getInstance(document.getElementById('modalBuscarProducto'));
-          if (modal) {
-            modal.hide();
+          // Cerrar el modal de productos
+          var modalProductos = bootstrap.Modal.getInstance(document.getElementById('modalBuscarProducto'));
+          if (modalProductos) {
+            modalProductos.hide();
           }
+          
+          // Abrir automáticamente el modal de nuevo registro
+          setTimeout(function() {
+            var modalInventario = bootstrap.Modal.getInstance(document.getElementById('modalAgregarInventario'));
+            if (modalInventario) {
+              modalInventario.show();
+            } else {
+              $('#modalAgregarInventario').modal('show');
+            }
+          }, 300);
           
           swal({
             title: "¡Productos seleccionados!",
@@ -539,7 +596,6 @@ if (!$auth->isAuthenticated()) {
           $('.producto-checkbox').prop('checked', false);
           actualizarContadorSeleccionados();
         };
-        }
         
         // Aplicar filtros cuando cambian
         $('#filtroNombre, #filtroMaterial, #filtroCategoria').on('input change', function() {
@@ -618,9 +674,9 @@ if (!$auth->isAuthenticated()) {
           });
           
           // Mostrar confirmación
-          var mensaje = 'Se crearán ' + combinaciones.length + ' registro(s) de inventario:\n\n';
-          mensaje += '- ' + productosSeleccionados.length + ' producto(s)\n';
-          mensaje += '- ' + sucursalesSeleccionadas.length + ' sucursal(es)\n\n';
+          var mensaje = 'Se crearán ' + combinaciones.length + ' registro(s) de inventario:\\n\\n';
+          mensaje += '- ' + productosSeleccionados.length + ' producto(s)\\n';
+          mensaje += '- ' + sucursalesSeleccionadas.length + ' sucursal(es)\\n\\n';
           mensaje += '¿Desea continuar?';
           
           swal({
@@ -662,7 +718,7 @@ if (!$auth->isAuthenticated()) {
                 } else {
                   swal({
                     title: "Proceso completado con errores",
-                    text: "Se crearon " + (total - errores.length) + " registro(s) exitosamente.\n" +
+                    text: "Se crearon " + (total - errores.length) + " registro(s) exitosamente.\\n" +
                           "Errores: " + errores.length,
                     icon: "warning"
                   });
@@ -675,7 +731,7 @@ if (!$auth->isAuthenticated()) {
               var formData = {
                 sucursal_id: combinacion.sucursal_id,
                 producto_id: combinacion.producto_id,
-                cantidad: null,
+                cantidad: '', // Enviar string vacío en lugar de null para que PHP lo maneje correctamente
                 stock_minimo: combinacion.stock_minimo,
                 stock_maximo: combinacion.stock_maximo,
                 estado: 'disponible',
@@ -696,8 +752,18 @@ if (!$auth->isAuthenticated()) {
                 },
                 error: function(xhr) {
                   completados++;
-                  var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar';
-                  errores.push(error);
+                  var error = 'Error al guardar';
+                  try {
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                      error = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                      var response = JSON.parse(xhr.responseText);
+                      error = response.message || error;
+                    }
+                  } catch (e) {
+                    error = 'Error HTTP ' + xhr.status + ': ' + (xhr.responseText || 'Error desconocido');
+                  }
+                  errores.push('Producto ID ' + combinacion.producto_id + ', Sucursal ID ' + combinacion.sucursal_id + ': ' + error);
                   crearSiguiente();
                 }
               });
@@ -708,11 +774,18 @@ if (!$auth->isAuthenticated()) {
           });
         });
         
+        // Variable para rastrear si el modal de productos está abierto
+        var modalProductosAbierto = false;
+        
         $('#modalAgregarInventario').on('hidden.bs.modal', function() {
-          $('#formAgregarInventario')[0].reset();
-          limpiarProductos();
-          $('.sucursal-checkbox').prop('checked', false);
-          actualizarSucursalesSeleccionadas();
+          // Solo resetear si el modal de productos NO está abierto
+          // Esto evita que se resetee cuando se abre el modal de productos
+          if (!modalProductosAbierto) {
+            $('#formAgregarInventario')[0].reset();
+            limpiarProductos();
+            $('.sucursal-checkbox').prop('checked', false);
+            actualizarSucursalesSeleccionadas();
+          }
         });
         
         cargarSucursales();

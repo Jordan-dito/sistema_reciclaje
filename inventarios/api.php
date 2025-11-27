@@ -131,10 +131,12 @@ try {
             if ($action === 'crear') {
                 $sucursal_id = intval($_POST['sucursal_id'] ?? 0);
                 $producto_id = intval($_POST['producto_id'] ?? 0);
-                // Permitir NULL en cantidad
-                $cantidad = isset($_POST['cantidad']) && $_POST['cantidad'] !== '' && $_POST['cantidad'] !== null 
-                    ? floatval($_POST['cantidad']) 
-                    : null;
+                // Permitir NULL en cantidad (si viene vacío o como string 'null', tratarlo como NULL)
+                $cantidadInput = $_POST['cantidad'] ?? null;
+                $cantidad = null;
+                if ($cantidadInput !== null && $cantidadInput !== '' && $cantidadInput !== 'null' && $cantidadInput !== 'NULL') {
+                    $cantidad = floatval($cantidadInput);
+                }
                 $stock_minimo = floatval($_POST['stock_minimo'] ?? 0);
                 $stock_maximo = floatval($_POST['stock_maximo'] ?? 0);
                 $estado = $_POST['estado'] ?? 'disponible';
@@ -158,48 +160,87 @@ try {
                 }
                 
                 // Verificar si ya existe inventario para este producto en esta sucursal
-                $stmt = $db->prepare("SELECT id, cantidad FROM inventarios WHERE producto_id = ? AND sucursal_id = ? AND estado <> 'inactivo'");
+                // Buscar sin importar el estado (porque hay UNIQUE KEY en producto_id, sucursal_id)
+                $stmt = $db->prepare("SELECT id, cantidad, estado FROM inventarios WHERE producto_id = ? AND sucursal_id = ?");
                 $stmt->execute([$producto_id, $sucursal_id]);
                 $inventarioExistente = $stmt->fetch();
                 
                 if ($inventarioExistente) {
-                    // Actualizar cantidad existente
+                    // Actualizar inventario existente
                     // Si cantidad es NULL, mantener la cantidad existente
                     if ($cantidad !== null) {
-                        $cantidadExistente = $inventarioExistente['cantidad'] ?? 0;
+                        $cantidadExistente = floatval($inventarioExistente['cantidad'] ?? 0);
                         $nuevaCantidad = $cantidadExistente + $cantidad;
                     } else {
-                        $nuevaCantidad = $inventarioExistente['cantidad'];
+                        $nuevaCantidad = floatval($inventarioExistente['cantidad'] ?? 0);
                     }
+                    
+                    // Si estaba inactivo, reactivarlo
+                    $nuevoEstado = $inventarioExistente['estado'] === 'inactivo' ? 'disponible' : $estado;
+                    
                     $stmt = $db->prepare("
                         UPDATE inventarios 
-                        SET cantidad = ?, stock_minimo = ?, stock_maximo = ?, estado = ?
+                        SET cantidad = ?, stock_minimo = ?, stock_maximo = ?, estado = ?, fecha_actualizacion = NOW()
                         WHERE id = ?
                     ");
                     $stmt->execute([
                         $nuevaCantidad,
                         $stock_minimo,
                         $stock_maximo,
-                        $estado,
+                        $nuevoEstado,
                         $inventarioExistente['id']
                     ]);
                     $inventario_id = $inventarioExistente['id'];
                 } else {
                     // Crear nuevo inventario
-                    $stmt = $db->prepare("
-                        INSERT INTO inventarios 
-                        (sucursal_id, producto_id, cantidad, stock_minimo, stock_maximo, estado) 
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ");
-                    $stmt->execute([
-                        $sucursal_id,
-                        $producto_id,
-                        $cantidad,
-                        $stock_minimo,
-                        $stock_maximo,
-                        $estado
-                    ]);
-                    $inventario_id = $db->lastInsertId();
+                    // Asegurar que cantidad no sea NULL (la tabla requiere NOT NULL)
+                    $cantidadFinal = $cantidad !== null ? floatval($cantidad) : 0.00;
+                    
+                    try {
+                        $stmt = $db->prepare("
+                            INSERT INTO inventarios 
+                            (sucursal_id, producto_id, cantidad, stock_minimo, stock_maximo, estado) 
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        ");
+                        $stmt->execute([
+                            $sucursal_id,
+                            $producto_id,
+                            $cantidadFinal,
+                            $stock_minimo,
+                            $stock_maximo,
+                            $estado
+                        ]);
+                        $inventario_id = $db->lastInsertId();
+                    } catch (PDOException $e) {
+                        // Si es error de clave duplicada, intentar actualizar
+                        if ($e->getCode() == 23000 || strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                            // Reintentar búsqueda y actualización
+                            $stmt = $db->prepare("SELECT id, cantidad FROM inventarios WHERE producto_id = ? AND sucursal_id = ?");
+                            $stmt->execute([$producto_id, $sucursal_id]);
+                            $inventarioExistente = $stmt->fetch();
+                            
+                            if ($inventarioExistente) {
+                                $nuevaCantidad = floatval($inventarioExistente['cantidad'] ?? 0);
+                                $stmt = $db->prepare("
+                                    UPDATE inventarios 
+                                    SET cantidad = ?, stock_minimo = ?, stock_maximo = ?, estado = ?, fecha_actualizacion = NOW()
+                                    WHERE id = ?
+                                ");
+                                $stmt->execute([
+                                    $nuevaCantidad,
+                                    $stock_minimo,
+                                    $stock_maximo,
+                                    $estado,
+                                    $inventarioExistente['id']
+                                ]);
+                                $inventario_id = $inventarioExistente['id'];
+                            } else {
+                                throw new Exception('Error al crear inventario: ' . $e->getMessage());
+                            }
+                        } else {
+                            throw $e;
+                        }
+                    }
                 }
                 
                 ob_end_clean();

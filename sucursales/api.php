@@ -16,18 +16,22 @@ try {
     require_once __DIR__ . '/../config/validaciones.php';
 
     $auth = new Auth();
-    if (!$auth->isAuthenticated()) {
-        ob_end_clean();
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No autorizado']);
-        exit;
-    }
-
     $method = $_SERVER['REQUEST_METHOD'];
     $action = $_GET['action'] ?? $_POST['action'] ?? '';
     
     if (empty($action)) {
         throw new Exception('Acción no especificada');
+    }
+
+    // Acciones públicas (no requieren autenticación)
+    $accionesPublicas = ['disponibles'];
+    
+    // Verificar autenticación solo para acciones que no son públicas
+    if (!in_array($action, $accionesPublicas) && !$auth->isAuthenticated()) {
+        ob_end_clean();
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'No autorizado']);
+        exit;
     }
 
     $db = getDB();
@@ -74,6 +78,31 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'data' => $sucursales]);
+            } elseif ($action === 'disponibles') {
+                // Endpoint para Flutter - obtener sucursales disponibles
+                header('Access-Control-Allow-Origin: *');
+                header('Access-Control-Allow-Methods: GET, OPTIONS');
+                header('Access-Control-Allow-Headers: Content-Type, Authorization');
+                
+                if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+                    http_response_code(200);
+                    exit;
+                }
+                
+                $stmt = $db->query("
+                    SELECT id, nombre, direccion, telefono, email, estado
+                    FROM sucursales 
+                    WHERE estado = 'activa' 
+                    ORDER BY nombre ASC
+                ");
+                $sucursales = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Sucursales disponibles obtenidas exitosamente',
+                    'data' => $sucursales
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
             break;
             

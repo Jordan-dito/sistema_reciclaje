@@ -591,7 +591,7 @@
         // Forgot password handler
         document.querySelector('.forgot-password').addEventListener('click', function(e) {
             e.preventDefault();
-            showAlert('Funcionalidad de recuperación de contraseña próximamente', 'success');
+            window.location.href = 'forgot-password.php';
         });
 
         // Signup link handler - Removido para permitir navegación a register.php

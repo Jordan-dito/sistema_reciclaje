@@ -181,23 +181,114 @@ class Auth {
      */
     public function solicitarRecuperacion($email) {
         try {
-            $stmt = $this->db->prepare("SELECT id FROM usuarios WHERE email = ? AND estado = 'activo'");
+            // Verificar que el usuario existe y está activo
+            $stmt = $this->db->prepare("SELECT id, nombre FROM usuarios WHERE email = ? AND estado = 'activo'");
             $stmt->execute([$email]);
             $usuario = $stmt->fetch();
 
             if (!$usuario) {
+                // Por seguridad, no revelar si el email existe o no
                 return [
-                    'success' => false,
-                    'message' => 'No se encontró una cuenta con ese correo'
+                    'success' => true,
+                    'message' => 'Si el correo existe, recibirás un enlace para restablecer tu contraseña'
                 ];
             }
 
-            // Aquí se implementaría la lógica de recuperación de contraseña
-            // Por ahora solo retornamos éxito
-
+            // Generar token único
+            $token = bin2hex(random_bytes(32));
+            
+            // Token expira en 1 hora
+            $expiraEn = date('Y-m-d H:i:s', strtotime('+1 hour'));
+            
+            // Invalidar tokens anteriores del usuario
+            $stmt = $this->db->prepare("UPDATE password_reset_tokens SET usado = 1 WHERE usuario_id = ? AND usado = 0");
+            $stmt->execute([$usuario['id']]);
+            
+            // Guardar nuevo token
+            $stmt = $this->db->prepare("
+                INSERT INTO password_reset_tokens (usuario_id, token, email, expira_en, usado) 
+                VALUES (?, ?, ?, ?, 0)
+            ");
+            $stmt->execute([$usuario['id'], $token, $email, $expiraEn]);
+            
+            // Cargar funciones de email
+            require_once __DIR__ . '/email.php';
+            
+            // Generar URL de restablecimiento
+            $resetUrl = generarUrlResetPassword($token);
+            
+            // Preparar email
+            $subject = 'Restablecer tu contraseña - Sistema de Gestión de Reciclaje';
+            $body = '
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: #2c9f5f; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+                    .button { display: inline-block; padding: 12px 30px; background: #2c9f5f; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                    .button:hover { background: #1e7e4a; }
+                    .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+                    .warning { color: #d32f2f; font-size: 14px; margin-top: 20px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h2>Sistema de Gestión de Reciclaje</h2>
+                    </div>
+                    <div class="content">
+                        <h3>Hola ' . htmlspecialchars($usuario['nombre']) . ',</h3>
+                        <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta.</p>
+                        <p>Haz clic en el siguiente botón para restablecer tu contraseña:</p>
+                        <div style="text-align: center;">
+                            <a href="' . htmlspecialchars($resetUrl) . '" class="button">Restablecer Contraseña</a>
+                        </div>
+                        <p>O copia y pega este enlace en tu navegador:</p>
+                        <p style="word-break: break-all; color: #2c9f5f;">' . htmlspecialchars($resetUrl) . '</p>
+                        <div class="warning">
+                            <p><strong>⚠️ Importante:</strong></p>
+                            <ul>
+                                <li>Este enlace expirará en 1 hora</li>
+                                <li>Si no solicitaste este cambio, ignora este email</li>
+                                <li>Por seguridad, no compartas este enlace con nadie</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <p>Este es un email automático, por favor no respondas.</p>
+                        <p>&copy; ' . date('Y') . ' Sistema de Gestión de Reciclaje</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            ';
+            
+            $altBody = "Hola {$usuario['nombre']},\n\n";
+            $altBody .= "Recibimos una solicitud para restablecer la contraseña de tu cuenta.\n\n";
+            $altBody .= "Haz clic en el siguiente enlace para restablecer tu contraseña:\n";
+            $altBody .= $resetUrl . "\n\n";
+            $altBody .= "Este enlace expirará en 1 hora.\n\n";
+            $altBody .= "Si no solicitaste este cambio, ignora este email.\n\n";
+            $altBody .= "Este es un email automático, por favor no respondas.";
+            
+            // Enviar email
+            $resultadoEmail = enviarEmail($email, $subject, $body, $altBody);
+            
+            if (!$resultadoEmail['success']) {
+                error_log("Error al enviar email de recuperación: " . $resultadoEmail['message']);
+                return [
+                    'success' => false,
+                    'message' => 'Error al enviar el email. Por favor, intenta más tarde.'
+                ];
+            }
+            
             return [
                 'success' => true,
-                'message' => 'Funcionalidad de recuperación próximamente'
+                'message' => 'Si el correo existe, recibirás un enlace para restablecer tu contraseña'
             ];
 
         } catch (PDOException $e) {
@@ -205,6 +296,90 @@ class Auth {
             return [
                 'success' => false,
                 'message' => 'Error al procesar la solicitud'
+            ];
+        }
+    }
+    
+    /**
+     * Verificar token de recuperación
+     */
+    public function verificarToken($token) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT prt.*, u.id as usuario_id, u.email as usuario_email 
+                FROM password_reset_tokens prt
+                INNER JOIN usuarios u ON prt.usuario_id = u.id
+                WHERE prt.token = ? 
+                AND prt.usado = 0 
+                AND prt.expira_en > NOW()
+                AND u.estado = 'activo'
+            ");
+            $stmt->execute([$token]);
+            $tokenData = $stmt->fetch();
+            
+            if (!$tokenData) {
+                return [
+                    'success' => false,
+                    'message' => 'Token inválido o expirado'
+                ];
+            }
+            
+            return [
+                'success' => true,
+                'message' => 'Token válido',
+                'usuario_id' => $tokenData['usuario_id'],
+                'email' => $tokenData['usuario_email']
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Error al verificar token: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error al verificar el token'
+            ];
+        }
+    }
+    
+    /**
+     * Restablecer contraseña con token
+     */
+    public function restablecerPassword($token, $nuevaPassword) {
+        try {
+            // Verificar token
+            $verificacion = $this->verificarToken($token);
+            if (!$verificacion['success']) {
+                return $verificacion;
+            }
+            
+            // Validar contraseña
+            if (strlen($nuevaPassword) < 8) {
+                return [
+                    'success' => false,
+                    'message' => 'La contraseña debe tener al menos 8 caracteres'
+                ];
+            }
+            
+            // Hash de la nueva contraseña
+            $passwordHash = password_hash($nuevaPassword, PASSWORD_DEFAULT);
+            
+            // Actualizar contraseña del usuario
+            $stmt = $this->db->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
+            $stmt->execute([$passwordHash, $verificacion['usuario_id']]);
+            
+            // Marcar token como usado
+            $stmt = $this->db->prepare("UPDATE password_reset_tokens SET usado = 1 WHERE token = ?");
+            $stmt->execute([$token]);
+            
+            return [
+                'success' => true,
+                'message' => 'Contraseña restablecida correctamente'
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Error al restablecer contraseña: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error al restablecer la contraseña'
             ];
         }
     }
