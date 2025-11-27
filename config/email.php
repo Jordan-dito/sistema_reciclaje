@@ -95,11 +95,29 @@ function enviarEmail($to, $subject, $body, $altBody = '') {
  * @return string URL completa
  */
 function generarUrlResetPassword($token) {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || 
+                 (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) 
+                 ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $basePath = dirname($_SERVER['PHP_SELF']);
-    if ($basePath === '/') {
+    
+    // Obtener el directorio base del proyecto (raíz)
+    // Si estamos en /config/auth.php, necesitamos subir un nivel
+    $scriptPath = $_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '';
+    $scriptDir = dirname($scriptPath);
+    
+    // Si estamos en /config, subir un nivel para llegar a la raíz
+    if (basename($scriptDir) === 'config' || strpos($scriptDir, '/config') !== false) {
+        $basePath = dirname($scriptDir);
+    } else {
+        $basePath = $scriptDir;
+    }
+    
+    // Normalizar la ruta base
+    if ($basePath === '/' || $basePath === '\\' || $basePath === '.' || empty($basePath)) {
         $basePath = '';
+    } else {
+        // Asegurar que comience con /
+        $basePath = '/' . trim($basePath, '/');
     }
     
     return $protocol . '://' . $host . $basePath . '/reset-password.php?token=' . urlencode($token);

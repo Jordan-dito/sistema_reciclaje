@@ -9,26 +9,38 @@
 $token = $_GET['token'] ?? '';
 
 // Construir la URL de redirección hacia la raíz
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || 
+             (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) 
+             ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
-// Obtener el directorio base (subir un nivel desde /config)
-$scriptDir = dirname($_SERVER['PHP_SELF']);
-$basePath = dirname($scriptDir);
+// Obtener el directorio base del proyecto
+// Si estamos en /config/reset-password.php, necesitamos subir un nivel
+$scriptPath = $_SERVER['SCRIPT_NAME'] ?? $_SERVER['PHP_SELF'] ?? '';
+$scriptDir = dirname($scriptPath);
 
-// Normalizar la ruta base
-if ($basePath === '/' || $basePath === '\\' || $basePath === '.') {
-    $basePath = '';
+// Si estamos en /config, subir un nivel
+if (basename($scriptDir) === 'config' || strpos($scriptDir, '/config') !== false) {
+    $basePath = dirname($scriptDir);
 } else {
-    $basePath = '/' . ltrim($basePath, '/');
+    $basePath = $scriptDir;
 }
 
-// Redirigir al archivo correcto en la raíz
+// Normalizar la ruta base
+if ($basePath === '/' || $basePath === '\\' || $basePath === '.' || empty($basePath)) {
+    $basePath = '';
+} else {
+    // Asegurar que comience con / y no termine con /
+    $basePath = '/' . trim($basePath, '/');
+}
+
+// Construir la URL completa
 $redirectUrl = $protocol . '://' . $host . $basePath . '/reset-password.php';
 if ($token) {
     $redirectUrl .= '?token=' . urlencode($token);
 }
 
-header('Location: ' . $redirectUrl);
+// Redirigir con código 301 (permanente) para mejor SEO
+header('Location: ' . $redirectUrl, true, 301);
 exit;
 
