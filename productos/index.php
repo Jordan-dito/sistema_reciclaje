@@ -124,7 +124,7 @@ if (!$auth->isAuthenticated()) {
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Nuevo Producto</h5>
+            <h5 class="modal-title">Material Comercializable</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -132,8 +132,8 @@ if (!$auth->isAuthenticated()) {
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre <span class="text-danger">*</span></label>
-                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Botellas PET" required>
+                    <label>Código <span class="text-danger">*</span></label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: 0001" required>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -170,15 +170,7 @@ if (!$auth->isAuthenticated()) {
                     <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del producto"></textarea>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
-                </div>
+                <input type="hidden" id="estado" name="estado" value="activo">
               </div>
             </form>
           </div>
@@ -204,22 +196,22 @@ if (!$auth->isAuthenticated()) {
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre <span class="text-danger">*</span></label>
-                    <input type="text" id="edit_nombre" name="nombre" class="form-control" required>
+                    <label>Código</label>
+                    <input type="text" id="edit_nombre" name="nombre" class="form-control" disabled readonly>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Material <span class="text-danger">*</span></label>
-                    <select id="edit_material_id" name="material_id" class="form-control" required>
+                    <label>Material</label>
+                    <select id="edit_material_id" name="material_id" class="form-control" disabled>
                       <option value="">Seleccione un material</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Unidad <span class="text-danger">*</span></label>
-                    <select id="edit_unidad_id" name="unidad_id" class="form-control" required>
+                    <label>Unidad</label>
+                    <select id="edit_unidad_id" name="unidad_id" class="form-control" disabled>
                       <option value="">Seleccione una unidad</option>
                     </select>
                   </div>
@@ -242,15 +234,7 @@ if (!$auth->isAuthenticated()) {
                     <textarea id="edit_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="edit_estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
-                </div>
+                <input type="hidden" id="edit_estado" name="estado" value="activo">
               </div>
             </form>
           </div>
@@ -267,6 +251,7 @@ if (!$auth->isAuthenticated()) {
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
     <script src="../assets/js/plugin/datatables/datatables.min.js"></script>
+    <script src="../assets/js/plugin/select2/select2.full.min.js"></script>
     <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
     <script src="../assets/js/kaiadmin.min.js"></script>
     <script src="../assets/js/setting-demo.js"></script>
@@ -290,6 +275,27 @@ if (!$auth->isAuthenticated()) {
                 selectAdd.append('<option value="' + mat.id + '">' + mat.nombre + '</option>');
                 selectEdit.append('<option value="' + mat.id + '">' + mat.nombre + '</option>');
               });
+              
+              // Inicializar Select2 con búsqueda si no está ya inicializado
+              if (!selectAdd.hasClass('select2-hidden-accessible')) {
+                selectAdd.select2({
+                  placeholder: 'Buscar o seleccionar material',
+                  allowClear: true,
+                  dropdownParent: $('#modalAgregarProducto')
+                });
+              } else {
+                selectAdd.trigger('change');
+              }
+              
+              if (!selectEdit.hasClass('select2-hidden-accessible')) {
+                selectEdit.select2({
+                  placeholder: 'Buscar o seleccionar material',
+                  allowClear: true,
+                  dropdownParent: $('#modalEditarProducto')
+                });
+              } else {
+                selectEdit.trigger('change');
+              }
             }
           }
         });
@@ -316,13 +322,50 @@ if (!$auth->isAuthenticated()) {
         });
       }
 
-      $(document).ready(function() {
+        $(document).ready(function() {
         var table = $('#productosTable').DataTable({
           "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
         });
+        
+        var productosList = [];
 
         cargarMateriales();
         cargarUnidades();
+        
+        // Inicializar Select2 cuando se abre el modal de agregar
+        $('#modalAgregarProducto').on('shown.bs.modal', function() {
+          // Asegurar que Select2 esté inicializado para Material
+          if (!$('#material_id').hasClass('select2-hidden-accessible')) {
+            $('#material_id').select2({
+              placeholder: 'Buscar o seleccionar material',
+              allowClear: true,
+              dropdownParent: $('#modalAgregarProducto')
+            });
+          }
+        });
+        
+        // Limpiar Select2 y validación cuando se cierra el modal de agregar
+        $('#modalAgregarProducto').on('hidden.bs.modal', function() {
+          $('#material_id').val(null).trigger('change');
+          $('#nombre').removeClass('is-valid is-invalid');
+          $('#nombre').next('.invalid-feedback').remove();
+        });
+        
+        // Inicializar Select2 cuando se abre el modal de editar
+        $('#modalEditarProducto').on('shown.bs.modal', function() {
+          // Asegurar que Select2 esté inicializado para Material (aunque esté deshabilitado)
+          if (!$('#edit_material_id').hasClass('select2-hidden-accessible')) {
+            $('#edit_material_id').select2({
+              placeholder: 'Buscar o seleccionar material',
+              allowClear: true,
+              dropdownParent: $('#modalEditarProducto'),
+              disabled: true // Select2 también debe estar deshabilitado
+            });
+          } else {
+            // Si ya está inicializado, asegurar que esté deshabilitado
+            $('#edit_material_id').prop('disabled', true);
+          }
+        });
 
         function cargarProductos() {
           $.ajax({
@@ -331,6 +374,7 @@ if (!$auth->isAuthenticated()) {
             dataType: 'json',
             success: function(response) {
               if (response.success) {
+                productosList = response.data; // Guardar lista para validación
                 table.clear();
                 response.data.forEach(function(producto) {
                   var badgeEstado = producto.estado === 'activo' 
@@ -361,6 +405,29 @@ if (!$auth->isAuthenticated()) {
           });
         }
 
+        // Validar código en tiempo real
+        $('#nombre').on('blur', function() {
+          var nombre = $(this).val().trim();
+          if (nombre.length > 0) {
+            var codigoExiste = productosList.some(function(prod) {
+              return prod.estado === 'activo' && prod.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+            });
+            
+            if (codigoExiste) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">Ya existe un producto activo con este código</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          }
+        });
+
         $('#btnGuardarProducto').click(function() {
           var form = $('#formAgregarProducto')[0];
           if (!form.checkValidity()) {
@@ -368,8 +435,21 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var nombre = $('#nombre').val().trim();
+          
+          // Validar que el código no exista
+          var codigoExiste = productosList.some(function(prod) {
+            return prod.estado === 'activo' && prod.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+          });
+          
+          if (codigoExiste) {
+            swal("Error", "Ya existe un producto activo con el código \"" + nombre + "\"", "error");
+            $('#nombre').focus();
+            return;
+          }
+          
           var formData = {
-            nombre: $('#nombre').val(),
+            nombre: nombre,
             material_id: $('#material_id').val(),
             unidad_id: $('#unidad_id').val(),
             descripcion: $('#descripcion').val(),
@@ -408,15 +488,16 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          // Obtener valores de campos deshabilitados antes de enviar
           var formData = {
             id: $('#edit_id').val(),
-            nombre: $('#edit_nombre').val(),
-            material_id: $('#edit_material_id').val(),
-            unidad_id: $('#edit_unidad_id').val(),
+            nombre: $('#edit_nombre').val(), // Campo deshabilitado pero necesario
+            material_id: $('#edit_material_id').val(), // Campo deshabilitado pero necesario
+            unidad_id: $('#edit_unidad_id').val(), // Campo deshabilitado pero necesario
             descripcion: $('#edit_descripcion').val(),
             precio_venta: $('#edit_precio_venta').val() || 0,
             precio_compra: $('#edit_precio_compra').val() || 0,
-            estado: $('#edit_estado').val(),
+            estado: $('#edit_estado').val() || 'activo',
             action: 'actualizar'
           };
           
@@ -458,10 +539,12 @@ if (!$auth->isAuthenticated()) {
                 setTimeout(function() {
                   $('#edit_id').val(prod.id);
                   $('#edit_nombre').val(prod.nombre);
-                  $('#edit_material_id').val(prod.material_id);
+                  $('#edit_material_id').val(prod.material_id).trigger('change'); // Actualizar Select2
                   $('#edit_unidad_id').val(prod.unidad_id);
                   $('#edit_descripcion').val(prod.descripcion || '');
-                  $('#edit_estado').val(prod.estado);
+                  
+                  // Deshabilitar campos que no se pueden editar (ya están deshabilitados en HTML)
+                  // Los valores se mantienen para enviarlos en el formulario
                   
                   // Cargar precios
                   var precioVenta = 0;

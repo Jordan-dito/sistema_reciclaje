@@ -13,6 +13,7 @@ ob_start();
 
 try {
     require_once __DIR__ . '/../config/auth.php';
+    require_once __DIR__ . '/../config/ErrorHandler.php';
 
     $auth = new Auth();
     if (!$auth->isAuthenticated()) {
@@ -37,13 +38,55 @@ try {
             if ($action === 'listar') {
                 $sucursal_id = $_GET['sucursal_id'] ?? null;
                 
-                $sql = "
-                    SELECT v.*, c.nombre as cliente_nombre, s.nombre as sucursal_nombre 
-                    FROM ventas v 
-                    INNER JOIN clientes c ON v.cliente_id = c.id 
-                    INNER JOIN sucursales s ON v.sucursal_id = s.id 
-                    WHERE v.estado <> 'cancelada'
-                ";
+                // Verificar que la tabla ventas existe
+                try {
+                    $db->query("SELECT 1 FROM ventas LIMIT 1");
+                } catch (PDOException $e) {
+                    if ($e->getCode() == '42S02') { // Table doesn't exist
+                        ob_end_clean();
+                        echo json_encode([
+                            'success' => true,
+                            'data' => [],
+                            'message' => 'La tabla de ventas no existe aún. No hay ventas registradas.'
+                        ], JSON_UNESCAPED_UNICODE);
+                        exit;
+                    }
+                    throw $e;
+                }
+                
+                // Verificar si la tabla sucursales existe para hacer JOIN
+                $tablaSucursalesExiste = false;
+                try {
+                    $db->query("SELECT 1 FROM sucursales LIMIT 1");
+                    $tablaSucursalesExiste = true;
+                } catch (PDOException $e) {
+                    if ($e->getCode() != '42S02') {
+                        throw $e;
+                    }
+                }
+                
+                // Construir la consulta según la estructura real de la tabla
+                // La tabla ventas tiene cliente_nombre directamente, no cliente_id
+                if ($tablaSucursalesExiste) {
+                    $sql = "
+                        SELECT v.*, 
+                               COALESCE(v.cliente_nombre, 'Sin cliente') as cliente_nombre,
+                               COALESCE(s.nombre, 'Sucursal eliminada') as sucursal_nombre 
+                        FROM ventas v 
+                        LEFT JOIN sucursales s ON v.sucursal_id = s.id 
+                        WHERE v.estado <> 'cancelada'
+                    ";
+                } else {
+                    // Si la tabla sucursales no existe, solo obtener ventas sin JOIN
+                    $sql = "
+                        SELECT v.*, 
+                               COALESCE(v.cliente_nombre, 'Sin cliente') as cliente_nombre,
+                               CAST(v.sucursal_id AS CHAR) as sucursal_nombre 
+                        FROM ventas v 
+                        WHERE v.estado <> 'cancelada'
+                    ";
+                }
+                
                 $params = [];
                 
                 if ($sucursal_id) {
@@ -57,8 +100,29 @@ try {
                 $stmt->execute($params);
                 $ventas = $stmt->fetchAll();
                 
+                // Cargar detalles para cada venta
+                foreach ($ventas as &$venta) {
+                    try {
+                        $stmtDetalles = $db->prepare("
+                            SELECT vd.*, 
+                                   p.nombre as producto_nombre,
+                                   u.simbolo as unidad_simbolo
+                            FROM ventas_detalle vd
+                            LEFT JOIN productos p ON vd.producto_id = p.id
+                            LEFT JOIN unidades u ON p.unidad_id = u.id
+                            WHERE vd.venta_id = ?
+                        ");
+                        $stmtDetalles->execute([$venta['id']]);
+                        $venta['detalles'] = $stmtDetalles->fetchAll();
+                    } catch (PDOException $e) {
+                        // Si la tabla de detalles no existe, asignar array vacío
+                        $venta['detalles'] = [];
+                    }
+                }
+                unset($venta);
+                
                 ob_end_clean();
-                echo json_encode(['success' => true, 'data' => $ventas]);
+                echo json_encode(['success' => true, 'data' => $ventas], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'inventarios') {
                 // Obtener inventarios disponibles por sucursal
                 $sucursal_id = $_GET['sucursal_id'] ?? null;
@@ -148,7 +212,29 @@ try {
                 $db->beginTransaction();
                 
                 try {
+                    // Obtener nombre del cliente desde el select
+                    $cliente_nombre = trim($_POST['cliente_nombre'] ?? '');
+                    // Si viene cliente_id, obtener el nombre del cliente
                     $cliente_id = intval($_POST['cliente_id'] ?? 0);
+                    if ($cliente_id > 0 && empty($cliente_nombre)) {
+                        // Intentar obtener el nombre del cliente si existe la tabla clientes
+                        try {
+                            $stmtCliente = $db->prepare("SELECT nombre FROM clientes WHERE id = ?");
+                            $stmtCliente->execute([$cliente_id]);
+                            $cliente = $stmtCliente->fetch();
+                            if ($cliente) {
+                                $cliente_nombre = $cliente['nombre'];
+                            }
+                        } catch (PDOException $e) {
+                            // Si la tabla clientes no existe, usar el ID como nombre
+                            if ($e->getCode() == '42S02') {
+                                $cliente_nombre = 'Cliente #' . $cliente_id;
+                            } else {
+                                throw $e;
+                            }
+                        }
+                    }
+                    
                     $sucursal_id = intval($_POST['sucursal_id'] ?? 0);
                     $fecha_venta = $_POST['fecha_venta'] ?? date('Y-m-d');
                     $numero_factura = trim($_POST['numero_factura'] ?? '');
@@ -161,20 +247,20 @@ try {
                     $estado = $_POST['estado'] ?? 'pendiente';
                     $notas = trim($_POST['notas'] ?? '');
                     
-                    if ($cliente_id <= 0 || $sucursal_id <= 0) {
+                    if (empty($cliente_nombre) || $sucursal_id <= 0) {
                         throw new Exception('Cliente y sucursal son obligatorios');
                     }
                     
-                    // Insertar venta
+                    // Insertar venta según la estructura real de la tabla
                     $stmt = $db->prepare("
                         INSERT INTO ventas 
-                        (numero_factura, cliente_id, sucursal_id, fecha_venta, tipo_comprobante, subtotal, iva, descuento, total, metodo_pago, estado, notas, creado_por) 
+                        (numero_factura, cliente_nombre, sucursal_id, fecha_venta, tipo_comprobante, subtotal, iva, descuento, total, metodo_pago, estado, notas, creado_por) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
                     
                     $stmt->execute([
                         $numero_factura ?: null,
-                        $cliente_id,
+                        $cliente_nombre,
                         $sucursal_id,
                         $fecha_venta,
                         $tipo_comprobante,

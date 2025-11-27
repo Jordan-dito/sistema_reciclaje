@@ -127,26 +127,20 @@ if (!$auth->isAuthenticated()) {
           <div class="modal-body">
             <form id="formAgregarMaterial">
               <div class="form-group">
-                <label>Nombre <span class="text-danger">*</span></label>
-                <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: PET" required>
-              </div>
-              <div class="form-group">
                 <label>Categoría</label>
                 <select id="categoria_id" name="categoria_id" class="form-control">
                   <option value="">Seleccione una categoría</option>
                 </select>
               </div>
               <div class="form-group">
+                <label>Nombre <span class="text-danger">*</span></label>
+                <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: PET" required>
+              </div>
+              <div class="form-group">
                 <label>Descripción</label>
                 <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del material"></textarea>
               </div>
-              <div class="form-group">
-                <label>Estado</label>
-                <select id="estado" name="estado" class="form-control">
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
-              </div>
+              <input type="hidden" id="estado" name="estado" value="activo">
             </form>
           </div>
           <div class="modal-footer">
@@ -169,26 +163,20 @@ if (!$auth->isAuthenticated()) {
             <form id="formEditarMaterial">
               <input type="hidden" id="edit_id" name="id">
               <div class="form-group">
-                <label>Nombre <span class="text-danger">*</span></label>
-                <input type="text" id="edit_nombre" name="nombre" class="form-control" required>
-              </div>
-              <div class="form-group">
                 <label>Categoría</label>
                 <select id="edit_categoria_id" name="categoria_id" class="form-control">
                   <option value="">Seleccione una categoría</option>
                 </select>
               </div>
               <div class="form-group">
+                <label>Nombre Categoría <span class="text-danger">*</span></label>
+                <input type="text" id="edit_nombre" name="nombre" class="form-control" required>
+              </div>
+              <div class="form-group">
                 <label>Descripción</label>
                 <textarea id="edit_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
               </div>
-              <div class="form-group">
-                <label>Estado</label>
-                <select id="edit_estado" name="estado" class="form-control">
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
-              </div>
+              <input type="hidden" id="edit_estado" name="estado" value="activo">
             </form>
           </div>
           <div class="modal-footer">
@@ -204,6 +192,7 @@ if (!$auth->isAuthenticated()) {
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
     <script src="../assets/js/plugin/datatables/datatables.min.js"></script>
+    <script src="../assets/js/plugin/select2/select2.full.min.js"></script>
     <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
     <script src="../assets/js/kaiadmin.min.js"></script>
     <script src="../assets/js/setting-demo.js"></script>
@@ -230,6 +219,29 @@ if (!$auth->isAuthenticated()) {
                 selectAdd.append('<option value="' + cat.id + '">' + cat.nombre + '</option>');
                 selectEdit.append('<option value="' + cat.id + '">' + cat.nombre + '</option>');
               });
+              
+              // Inicializar Select2 con búsqueda si no está ya inicializado
+              if (!selectAdd.hasClass('select2-hidden-accessible')) {
+                selectAdd.select2({
+                  placeholder: 'Buscar o seleccionar categoría',
+                  allowClear: true,
+                  dropdownParent: $('#modalAgregarMaterial')
+                });
+              } else {
+                // Si ya está inicializado, solo actualizar las opciones
+                selectAdd.trigger('change');
+              }
+              
+              if (!selectEdit.hasClass('select2-hidden-accessible')) {
+                selectEdit.select2({
+                  placeholder: 'Buscar o seleccionar categoría',
+                  allowClear: true,
+                  dropdownParent: $('#modalEditarMaterial')
+                });
+              } else {
+                // Si ya está inicializado, solo actualizar las opciones
+                selectEdit.trigger('change');
+              }
             }
           }
         });
@@ -243,6 +255,35 @@ if (!$auth->isAuthenticated()) {
         var materialesList = [];
 
         cargarCategorias();
+        
+        // Inicializar Select2 cuando se abre el modal de agregar
+        $('#modalAgregarMaterial').on('shown.bs.modal', function() {
+          // Asegurar que Select2 esté inicializado
+          if (!$('#categoria_id').hasClass('select2-hidden-accessible')) {
+            $('#categoria_id').select2({
+              placeholder: 'Buscar o seleccionar categoría',
+              allowClear: true,
+              dropdownParent: $('#modalAgregarMaterial')
+            });
+          }
+        });
+        
+        // Limpiar Select2 cuando se cierra el modal de agregar
+        $('#modalAgregarMaterial').on('hidden.bs.modal', function() {
+          $('#categoria_id').val(null).trigger('change');
+        });
+        
+        // Inicializar Select2 cuando se abre el modal de editar
+        $('#modalEditarMaterial').on('shown.bs.modal', function() {
+          // Asegurar que Select2 esté inicializado
+          if (!$('#edit_categoria_id').hasClass('select2-hidden-accessible')) {
+            $('#edit_categoria_id').select2({
+              placeholder: 'Buscar o seleccionar categoría',
+              allowClear: true,
+              dropdownParent: $('#modalEditarMaterial')
+            });
+          }
+        });
 
         function cargarMateriales() {
           $.ajax({
@@ -362,6 +403,7 @@ if (!$auth->isAuthenticated()) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalAgregarMaterial').modal('hide');
                 $('#formAgregarMaterial')[0].reset();
+                $('#categoria_id').val(null).trigger('change'); // Resetear Select2
                 $('#nombre').removeClass('is-valid is-invalid');
                 $('#nombre').next('.invalid-feedback').remove();
                 cargarMateriales();
@@ -404,7 +446,7 @@ if (!$auth->isAuthenticated()) {
             nombre: nombre,
             categoria_id: $('#edit_categoria_id').val() || null,
             descripcion: $('#edit_descripcion').val(),
-            estado: $('#edit_estado').val(),
+            estado: $('#edit_estado').val() || 'activo', // Mantener estado actual o activo por defecto
             action: 'actualizar'
           };
           
@@ -447,11 +489,11 @@ if (!$auth->isAuthenticated()) {
                 setTimeout(function() {
                   $('#edit_id').val(mat.id);
                   $('#edit_nombre').val(mat.nombre);
-                  $('#edit_categoria_id').val(mat.categoria_id || '');
+                  $('#edit_categoria_id').val(mat.categoria_id || '').trigger('change'); // Actualizar Select2
                   $('#edit_descripcion').val(mat.descripcion || '');
-                  $('#edit_estado').val(mat.estado);
+                  $('#edit_estado').val(mat.estado || 'activo'); // Mantener estado actual del material
                   $('#modalEditarMaterial').modal('show');
-                }, 200); // Pequeño delay para asegurar que el dropdown se cargó
+                }, 300); // Pequeño delay para asegurar que Select2 se inicializó
               }
             }
           });

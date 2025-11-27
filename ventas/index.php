@@ -325,6 +325,10 @@ if (!$auth->isAuthenticated()) {
     <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
     <script src="../assets/js/kaiadmin.min.js"></script>
     <script src="../assets/js/setting-demo.js"></script>
+    <?php
+      $basePath = '..';
+      include __DIR__ . '/../includes/footer-scripts.php';
+    ?>
     <script>
       $(document).ready(function() {
         var table = $('#ventasTable').DataTable({
@@ -379,14 +383,20 @@ if (!$auth->isAuthenticated()) {
         // Cargar inventarios cuando se selecciona una sucursal
         $('#sucursal_id').change(function() {
           var sucursal_id = $(this).val();
+          var select = $('#inventario_id');
+          
           if (sucursal_id) {
+            // Mostrar indicador de carga
+            select.prop('disabled', true).html('<option value="">Cargando inventarios...</option>');
+            
             $.ajax({
               url: 'api.php?action=inventarios&sucursal_id=' + sucursal_id,
               method: 'GET',
               dataType: 'json',
               success: function(response) {
-                if (response.success) {
-                  var select = $('#inventario_id');
+                select.prop('disabled', false);
+                
+                if (response.success && response.data && response.data.length > 0) {
                   select.empty().append('<option value="">Seleccione un producto del inventario</option>');
                   response.data.forEach(function(inventario) {
                     var texto = inventario.producto_nombre + ' (' + inventario.cantidad + ' ' + inventario.unidad + ' disponible)';
@@ -397,12 +407,40 @@ if (!$auth->isAuthenticated()) {
                       'data-cantidad="' + inventario.cantidad + '" ' +
                       'data-unidad="' + inventario.unidad + '">' + texto + '</option>');
                   });
+                } else {
+                  select.empty().append('<option value="">No hay productos disponibles en esta sucursal</option>');
+                }
+              },
+              error: function(xhr, status, error) {
+                select.prop('disabled', false);
+                select.empty().append('<option value="">Error al cargar inventarios</option>');
+                console.error('Error al cargar inventarios:', error);
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                  console.error('Mensaje:', xhr.responseJSON.message);
                 }
               }
             });
           } else {
+            select.prop('disabled', false);
+            select.empty().append('<option value="">Primero seleccione una sucursal</option>');
+          }
+        });
+        
+        // Cargar inventarios cuando se abre el modal si ya hay una sucursal seleccionada
+        $('#modalNuevaVenta').on('shown.bs.modal', function() {
+          var sucursal_id = $('#sucursal_id').val();
+          if (sucursal_id) {
+            // Disparar el evento change para cargar inventarios
+            $('#sucursal_id').trigger('change');
+          } else {
+            // Limpiar el campo de inventario
             $('#inventario_id').empty().append('<option value="">Primero seleccione una sucursal</option>');
           }
+        });
+        
+        // Limpiar campos cuando se cierra el modal
+        $('#modalNuevaVenta').on('hidden.bs.modal', function() {
+          $('#inventario_id').empty().append('<option value="">Primero seleccione una sucursal</option>');
         });
         
         // Auto-completar campos cuando se selecciona inventario
@@ -429,6 +467,25 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 table.clear();
+                
+                if (!response.data || response.data.length === 0) {
+                  // Mostrar mensaje si no hay ventas
+                  table.row.add([
+                    '',
+                    '',
+                    '<em>No hay ventas registradas</em>',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    ''
+                  ]);
+                  table.draw();
+                  return;
+                }
+                
                 response.data.forEach(function(venta) {
                   // Obtener el primer detalle para mostrar en la tabla
                   var detalle = venta.detalles && venta.detalles.length > 0 ? venta.detalles[0] : null;
@@ -489,8 +546,55 @@ if (!$auth->isAuthenticated()) {
                 table.draw();
               }
             },
-            error: function() {
-              swal("Error", "No se pudieron cargar las ventas", "error");
+            error: function(xhr, status, error) {
+              console.error('Error al cargar ventas:', error);
+              console.error('Status:', xhr.status);
+              console.error('Respuesta:', xhr.responseText);
+              
+              var mensaje = "No se pudieron cargar las ventas";
+              var responseData = null;
+              
+              try {
+                responseData = xhr.responseJSON || JSON.parse(xhr.responseText);
+              } catch (e) {
+                // Si no es JSON, usar el texto de respuesta
+                responseData = { message: xhr.responseText || error };
+              }
+              
+              if (responseData) {
+                if (responseData.message) {
+                  mensaje = responseData.message;
+                } else if (responseData.error && responseData.error.message) {
+                  mensaje = responseData.error.message;
+                } else if (responseData.type === 'Database Error' && responseData.message) {
+                  mensaje = responseData.message;
+                }
+              }
+              
+              if (xhr.status === 500) {
+                mensaje = "Error del servidor: " + mensaje + ". Verifica que las tablas existan en la base de datos.";
+              } else if (xhr.status === 401) {
+                mensaje = "No autorizado. Por favor, inicia sesión nuevamente.";
+              } else if (xhr.status === 0) {
+                mensaje = "Error de conexión. Verifica tu conexión a internet o que el servidor esté funcionando.";
+              }
+              
+              swal("Error", mensaje, "error");
+              
+              // Limpiar la tabla y mostrar mensaje
+              table.clear();
+              table.row.add([
+                '',
+                '',
+                '<em style="color: #ff6b6b;">' + mensaje + '</em>',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                ''
+              ]).draw();
             }
           });
         }
@@ -544,6 +648,7 @@ if (!$auth->isAuthenticated()) {
           
           var formData = {
             cliente_id: $('#cliente_id').val(),
+            cliente_nombre: $('#cliente_id option:selected').text(),
             sucursal_id: $('#sucursal_id').val(),
             fecha_venta: $('#fecha_venta').val(),
             numero_factura: $('#numero_factura').val(),
