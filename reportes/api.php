@@ -9,8 +9,7 @@ ob_start();
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/auth.php';
-
-use ErrorHandler;
+require_once __DIR__ . '/../config/ErrorHandler.php';
 
 try {
     $auth = new Auth();
@@ -104,22 +103,74 @@ try {
  * Genera vista previa HTML para reporte de sucursales
  */
 function generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta) {
-    $stmt = $db->prepare("
-        SELECT 
-            s.*,
-            COUNT(DISTINCT i.id) as total_productos,
-            COUNT(DISTINCT v.id) as total_ventas,
-            COUNT(DISTINCT c.id) as total_compras
-        FROM sucursales s
-        LEFT JOIN inventarios i ON s.id = i.sucursal_id
-        LEFT JOIN ventas v ON s.id = v.sucursal_id AND DATE(v.fecha_venta) BETWEEN ? AND ?
-        LEFT JOIN compras c ON s.id = c.sucursal_id AND DATE(c.fecha_compra) BETWEEN ? AND ?
-        WHERE DATE(s.fecha_creacion) BETWEEN ? AND ?
-        GROUP BY s.id
-        ORDER BY s.nombre
-    ");
+    // Verificar existencia de tablas
+    $tablaSucursalesExiste = false;
+    $tablaInventariosExiste = false;
+    $tablaVentasExiste = false;
+    $tablaComprasExiste = false;
     
-    $stmt->execute([$fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta]);
+    try {
+        $db->query("SELECT 1 FROM sucursales LIMIT 1");
+        $tablaSucursalesExiste = true;
+    } catch (Exception $e) {
+        $tablaSucursalesExiste = false;
+    }
+    
+    try {
+        $db->query("SELECT 1 FROM inventarios LIMIT 1");
+        $tablaInventariosExiste = true;
+    } catch (Exception $e) {
+        $tablaInventariosExiste = false;
+    }
+    
+    try {
+        $db->query("SELECT 1 FROM ventas LIMIT 1");
+        $tablaVentasExiste = true;
+    } catch (Exception $e) {
+        $tablaVentasExiste = false;
+    }
+    
+    try {
+        $db->query("SELECT 1 FROM compras LIMIT 1");
+        $tablaComprasExiste = true;
+    } catch (Exception $e) {
+        $tablaComprasExiste = false;
+    }
+    
+    if (!$tablaSucursalesExiste) {
+        return ['html' => '<div class="alert alert-warning">La tabla de sucursales no existe.</div>', 'tieneDatos' => false, 'datos' => []];
+    }
+    
+    if ($tablaInventariosExiste && $tablaVentasExiste && $tablaComprasExiste) {
+        $stmt = $db->prepare("
+            SELECT 
+                s.*,
+                COUNT(DISTINCT i.id) as total_productos,
+                COUNT(DISTINCT v.id) as total_ventas,
+                COUNT(DISTINCT c.id) as total_compras
+            FROM sucursales s
+            LEFT JOIN inventarios i ON s.id = i.sucursal_id
+            LEFT JOIN ventas v ON s.id = v.sucursal_id AND DATE(v.fecha_venta) BETWEEN ? AND ?
+            LEFT JOIN compras c ON s.id = c.sucursal_id AND DATE(c.fecha_compra) BETWEEN ? AND ?
+            WHERE DATE(s.fecha_creacion) BETWEEN ? AND ?
+            GROUP BY s.id
+            ORDER BY s.nombre
+        ");
+        $stmt->execute([$fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta]);
+    } else {
+        $stmt = $db->prepare("
+            SELECT 
+                s.*,
+                0 as total_productos,
+                0 as total_ventas,
+                0 as total_compras
+            FROM sucursales s
+            WHERE DATE(s.fecha_creacion) BETWEEN ? AND ?
+            ORDER BY s.nombre
+        ");
+        $stmt->execute([$fechaDesde, $fechaHasta]);
+    }
+    
     $sucursales = $stmt->fetchAll();
     
     $tieneDatos = count($sucursales) > 0;
@@ -171,19 +222,70 @@ function generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta) {
  * Genera vista previa HTML para reporte de usuarios por rol
  */
 function generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '') {
-    $sql = "
-        SELECT 
-            u.*,
-            r.nombre as rol_nombre,
-            r.descripcion as rol_descripcion,
-            COUNT(DISTINCT v.id) as total_ventas,
-            COUNT(DISTINCT c.id) as total_compras
-        FROM usuarios u
-        INNER JOIN roles r ON u.rol_id = r.id
-        LEFT JOIN ventas v ON u.id = v.creado_por AND DATE(v.fecha_venta) BETWEEN ? AND ?
-        LEFT JOIN compras c ON u.id = c.creado_por AND DATE(c.fecha_compra) BETWEEN ? AND ?
-        WHERE DATE(u.fecha_creacion) BETWEEN ? AND ?
-    ";
+    // Verificar existencia de tablas
+    $tablaUsuariosExiste = false;
+    $tablaRolesExiste = false;
+    $tablaVentasExiste = false;
+    $tablaComprasExiste = false;
+    
+    try {
+        $db->query("SELECT 1 FROM usuarios LIMIT 1");
+        $tablaUsuariosExiste = true;
+    } catch (Exception $e) {
+        $tablaUsuariosExiste = false;
+    }
+    
+    try {
+        $db->query("SELECT 1 FROM roles LIMIT 1");
+        $tablaRolesExiste = true;
+    } catch (Exception $e) {
+        $tablaRolesExiste = false;
+    }
+    
+    try {
+        $db->query("SELECT 1 FROM ventas LIMIT 1");
+        $tablaVentasExiste = true;
+    } catch (Exception $e) {
+        $tablaVentasExiste = false;
+    }
+    
+    try {
+        $db->query("SELECT 1 FROM compras LIMIT 1");
+        $tablaComprasExiste = true;
+    } catch (Exception $e) {
+        $tablaComprasExiste = false;
+    }
+    
+    if (!$tablaUsuariosExiste) {
+        return ['html' => '<div class="alert alert-warning">La tabla de usuarios no existe.</div>', 'tieneDatos' => false, 'datos' => []];
+    }
+    
+    if ($tablaRolesExiste && $tablaVentasExiste && $tablaComprasExiste) {
+        $sql = "
+            SELECT 
+                u.*,
+                COALESCE(r.nombre, 'Sin rol') as rol_nombre,
+                r.descripcion as rol_descripcion,
+                COUNT(DISTINCT v.id) as total_ventas,
+                COUNT(DISTINCT c.id) as total_compras
+            FROM usuarios u
+            LEFT JOIN roles r ON u.rol_id = r.id
+            LEFT JOIN ventas v ON u.id = v.creado_por AND DATE(v.fecha_venta) BETWEEN ? AND ?
+            LEFT JOIN compras c ON u.id = c.creado_por AND DATE(c.fecha_compra) BETWEEN ? AND ?
+            WHERE DATE(u.fecha_creacion) BETWEEN ? AND ?
+        ";
+    } else {
+        $sql = "
+            SELECT 
+                u.*,
+                'Sin rol' as rol_nombre,
+                NULL as rol_descripcion,
+                0 as total_ventas,
+                0 as total_compras
+            FROM usuarios u
+            WHERE DATE(u.fecha_creacion) BETWEEN ? AND ?
+        ";
+    }
     
     $params = [$fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta];
     
@@ -192,7 +294,7 @@ function generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '') 
         $params[] = $rolId;
     }
     
-    $sql .= " GROUP BY u.id ORDER BY r.nombre, u.nombre";
+    $sql .= " GROUP BY u.id ORDER BY rol_nombre, u.nombre";
     
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -258,22 +360,29 @@ function generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '') 
  * Genera vista previa HTML para reporte de inventarios
  */
 function generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta) {
+    // Verificar existencia de tablas principales
+    try {
+        $db->query("SELECT 1 FROM inventarios LIMIT 1");
+    } catch (Exception $e) {
+        return ['html' => '<div class="alert alert-warning">La tabla de inventarios no existe.</div>', 'tieneDatos' => false, 'datos' => []];
+    }
+    
     $stmt = $db->prepare("
         SELECT 
             i.*,
-            p.nombre as producto_nombre,
-            m.nombre as material_nombre,
+            COALESCE(p.nombre, 'Producto eliminado') as producto_nombre,
+            COALESCE(m.nombre, 'Material eliminado') as material_nombre,
             c.nombre as categoria_nombre,
-            u.nombre as unidad_nombre,
+            COALESCE(u.nombre, 'Unidad eliminada') as unidad_nombre,
             u.simbolo as unidad_simbolo,
-            s.nombre as sucursal_nombre,
+            COALESCE(s.nombre, 'Sucursal eliminada') as sucursal_nombre,
             pr.precio_unitario as precio_venta
         FROM inventarios i
-        INNER JOIN productos p ON i.producto_id = p.id
-        INNER JOIN materiales m ON p.material_id = m.id
+        LEFT JOIN productos p ON i.producto_id = p.id
+        LEFT JOIN materiales m ON p.material_id = m.id
         LEFT JOIN categorias c ON m.categoria_id = c.id
-        INNER JOIN unidades u ON p.unidad_id = u.id
-        INNER JOIN sucursales s ON i.sucursal_id = s.id
+        LEFT JOIN unidades u ON p.unidad_id = u.id
+        LEFT JOIN sucursales s ON i.sucursal_id = s.id
         LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.tipo_precio = 'venta' AND pr.estado = 'activo'
         WHERE DATE(i.fecha_creacion) BETWEEN ? AND ?
         ORDER BY s.nombre, p.nombre
@@ -338,23 +447,65 @@ function generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta) {
  * Genera vista previa HTML para reporte de compras
  */
 function generarVistaPreviaCompras($db, $fechaDesde, $fechaHasta) {
-    $stmt = $db->prepare("
-        SELECT 
-            c.*,
-            s.nombre as sucursal_nombre,
-            pr.nombre as proveedor_nombre,
-            u.nombre as creado_por_nombre,
-            COUNT(cd.id) as total_items,
-            COALESCE(SUM(cd.subtotal), 0) as total_compra
-        FROM compras c
-        INNER JOIN sucursales s ON c.sucursal_id = s.id
-        INNER JOIN proveedores pr ON c.proveedor_id = pr.id
-        LEFT JOIN usuarios u ON c.creado_por = u.id
-        LEFT JOIN compras_detalle cd ON c.id = cd.compra_id
-        WHERE DATE(c.fecha_compra) BETWEEN ? AND ?
-        GROUP BY c.id
-        ORDER BY c.fecha_compra DESC
-    ");
+    // Verificar existencia de tablas
+    $tablaDetalleExiste = false;
+    $tablaSucursalesExiste = false;
+    $tablaProveedoresExiste = false;
+    
+    try {
+        $db->query("SELECT 1 FROM compras_detalle LIMIT 1");
+        $tablaDetalleExiste = true;
+    } catch (Exception $e) {
+        $tablaDetalleExiste = false;
+    }
+    
+    try {
+        $db->query("SELECT 1 FROM sucursales LIMIT 1");
+        $tablaSucursalesExiste = true;
+    } catch (Exception $e) {
+        $tablaSucursalesExiste = false;
+    }
+    
+    try {
+        $db->query("SELECT 1 FROM proveedores LIMIT 1");
+        $tablaProveedoresExiste = true;
+    } catch (Exception $e) {
+        $tablaProveedoresExiste = false;
+    }
+    
+    if ($tablaDetalleExiste && $tablaSucursalesExiste && $tablaProveedoresExiste) {
+        $stmt = $db->prepare("
+            SELECT 
+                c.*,
+                COALESCE(s.nombre, 'Sucursal eliminada') as sucursal_nombre,
+                COALESCE(pr.nombre, 'Proveedor eliminado') as proveedor_nombre,
+                u.nombre as creado_por_nombre,
+                COUNT(cd.id) as total_items,
+                COALESCE(SUM(cd.subtotal), 0) as total_compra
+            FROM compras c
+            LEFT JOIN sucursales s ON c.sucursal_id = s.id
+            LEFT JOIN proveedores pr ON c.proveedor_id = pr.id
+            LEFT JOIN usuarios u ON c.creado_por = u.id
+            LEFT JOIN compras_detalle cd ON c.id = cd.compra_id
+            WHERE DATE(c.fecha_compra) BETWEEN ? AND ?
+            GROUP BY c.id
+            ORDER BY c.fecha_compra DESC
+        ");
+    } else {
+        // Consulta simplificada
+        $stmt = $db->prepare("
+            SELECT 
+                c.*,
+                CAST(c.sucursal_id AS CHAR) as sucursal_nombre,
+                CAST(c.proveedor_id AS CHAR) as proveedor_nombre,
+                NULL as creado_por_nombre,
+                0 as total_items,
+                COALESCE(c.total, 0) as total_compra
+            FROM compras c
+            WHERE DATE(c.fecha_compra) BETWEEN ? AND ?
+            ORDER BY c.fecha_compra DESC
+        ");
+    }
     
     $stmt->execute([$fechaDesde, $fechaHasta]);
     $compras = $stmt->fetchAll();
@@ -411,21 +562,54 @@ function generarVistaPreviaCompras($db, $fechaDesde, $fechaHasta) {
  * Genera vista previa HTML para reporte de ventas
  */
 function generarVistaPreviaVentas($db, $fechaDesde, $fechaHasta) {
-    $stmt = $db->prepare("
-        SELECT 
-            v.*,
-            s.nombre as sucursal_nombre,
-            u.nombre as creado_por_nombre,
-            COUNT(vd.id) as total_items,
-            COALESCE(SUM(vd.subtotal), 0) as total_venta
-        FROM ventas v
-        INNER JOIN sucursales s ON v.sucursal_id = s.id
-        LEFT JOIN usuarios u ON v.creado_por = u.id
-        LEFT JOIN ventas_detalle vd ON v.id = vd.venta_id
-        WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
-        GROUP BY v.id
-        ORDER BY v.fecha_venta DESC
-    ");
+    // Verificar si la tabla ventas_detalle existe
+    $tablaDetalleExiste = false;
+    try {
+        $db->query("SELECT 1 FROM ventas_detalle LIMIT 1");
+        $tablaDetalleExiste = true;
+    } catch (Exception $e) {
+        $tablaDetalleExiste = false;
+    }
+    
+    // Verificar si la tabla sucursales existe
+    $tablaSucursalesExiste = false;
+    try {
+        $db->query("SELECT 1 FROM sucursales LIMIT 1");
+        $tablaSucursalesExiste = true;
+    } catch (Exception $e) {
+        $tablaSucursalesExiste = false;
+    }
+    
+    if ($tablaDetalleExiste && $tablaSucursalesExiste) {
+        $stmt = $db->prepare("
+            SELECT 
+                v.*,
+                COALESCE(s.nombre, 'Sucursal eliminada') as sucursal_nombre,
+                u.nombre as creado_por_nombre,
+                COUNT(vd.id) as total_items,
+                COALESCE(SUM(vd.subtotal), 0) as total_venta
+            FROM ventas v
+            LEFT JOIN sucursales s ON v.sucursal_id = s.id
+            LEFT JOIN usuarios u ON v.creado_por = u.id
+            LEFT JOIN ventas_detalle vd ON v.id = vd.venta_id
+            WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
+            GROUP BY v.id
+            ORDER BY v.fecha_venta DESC
+        ");
+    } else {
+        // Consulta simplificada sin JOINs problemáticos
+        $stmt = $db->prepare("
+            SELECT 
+                v.*,
+                CAST(v.sucursal_id AS CHAR) as sucursal_nombre,
+                NULL as creado_por_nombre,
+                0 as total_items,
+                COALESCE(v.total, 0) as total_venta
+            FROM ventas v
+            WHERE DATE(v.fecha_venta) BETWEEN ? AND ?
+            ORDER BY v.fecha_venta DESC
+        ");
+    }
     
     $stmt->execute([$fechaDesde, $fechaHasta]);
     $ventas = $stmt->fetchAll();
