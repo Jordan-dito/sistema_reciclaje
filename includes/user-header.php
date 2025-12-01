@@ -384,6 +384,15 @@ if (!empty($usuarioNombre)) {
                 <span style="color: #212529; z-index: 10; position: relative; flex: 1;">Cambiar Foto de Perfil</span>
               </a>
             </li>
+            <li style="position: relative;" class="cambiar-password-item">
+              <a class="dropdown-item d-flex align-items-center py-2 px-3 cambiar-password-link" 
+                 href="#" 
+                 onclick="abrirModalCambiarPassword(); event.stopPropagation(); return false;" 
+                 style="transition: background-color 0.2s; text-decoration: none; position: relative; overflow: visible;">
+                <i class="fas fa-key me-3" style="width: 18px; text-align: center; color: #f39c12; z-index: 10; position: relative; flex-shrink: 0;"></i> 
+                <span style="color: #212529; z-index: 10; position: relative; flex: 1;">Cambiar Contraseña</span>
+              </a>
+            </li>
             <li>
               <div class="dropdown-divider my-1"></div>
             </li>

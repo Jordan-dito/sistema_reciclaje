@@ -86,6 +86,7 @@ $basePath = '';
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
             include __DIR__ . '/../includes/modal-foto-perfil.php';
+            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
