@@ -134,10 +134,9 @@ if (!$auth->isAuthenticated()) {
                             <label>Tipo de Comprobante</label>
                             <select id="tipo_comprobante" name="tipo_comprobante" class="form-control">
                               <option value="factura">Factura</option>
-                              <option value="boleta">Boleta</option>
-                              <option value="recibo">Recibo</option>
-                              <option value="nota_credito">Nota de Crédito</option>
-                              <option value="otro">Otro</option>
+                             
+                              <option value="nota_credito">Nota de Compra</option>
+                          
                             </select>
                           </div>
                         </div>
@@ -709,21 +708,9 @@ if (!$auth->isAuthenticated()) {
           fila.find('td:eq(5)').html('<strong>$' + producto.subtotal.toFixed(2) + '</strong>');
         }
         
-        // Función para eliminar un producto
+        // Función para eliminar un producto (simplificada para depuración)
         function eliminarProducto(index) {
-          swal({
-            title: "¿Eliminar producto?",
-            text: "Este producto será removido de la lista",
-            icon: "warning",
-            buttons: true,
-            dangerMode: true,
-          }).then((willDelete) => {
-            if (willDelete) {
-              productosSeleccionados.splice(index, 1);
-              renderizarProductosAgregados();
-              swal("Producto eliminado", "", "success");
-            }
-          });
+          console.log("Eliminar producto llamado para el índice:", index);
         }
         
         // Función para limpiar todos los productos
