@@ -139,11 +139,17 @@ try {
                 }
                 $nombre = limpiarEspacios($nombre);
                 
-                // Validar cédula ecuatoriana
+                // Validar cédula o RUC
                 $cedula = preg_replace('/[^0-9]/', '', $cedula); // Solo números
-                $validacionCedula = validarCedulaEcuatoriana($cedula);
-                if (!$validacionCedula['valid']) {
-                    throw new Exception($validacionCedula['message']);
+                
+                if (strlen($cedula) === 13) {
+                    $validacionDocumento = validarRucEcuatoriano($cedula);
+                } else {
+                    $validacionDocumento = validarCedulaEcuatoriana($cedula);
+                }
+                
+                if (!$validacionDocumento['valid']) {
+                    throw new Exception($validacionDocumento['message']);
                 }
                 
                 // Validar email
@@ -239,11 +245,17 @@ try {
                 }
                 $nombre = limpiarEspacios($nombre);
                 
-                // Validar cédula ecuatoriana
+                // Validar cédula o RUC
                 $cedula = preg_replace('/[^0-9]/', '', $cedula); // Solo números
-                $validacionCedula = validarCedulaEcuatoriana($cedula);
-                if (!$validacionCedula['valid']) {
-                    throw new Exception($validacionCedula['message']);
+                
+                if (strlen($cedula) === 13) {
+                    $validacionDocumento = validarRucEcuatoriano($cedula);
+                } else {
+                    $validacionDocumento = validarCedulaEcuatoriana($cedula);
+                }
+                
+                if (!$validacionDocumento['valid']) {
+                    throw new Exception($validacionDocumento['message']);
                 }
                 
                 // Validar email

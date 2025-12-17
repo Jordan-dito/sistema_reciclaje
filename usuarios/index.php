@@ -158,8 +158,8 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Cédula *</label>
-                    <input type="text" id="cedula" name="cedula" class="form-control" placeholder="0912345678" required>
+                    <label>Cédula / RUC *</label>
+                    <input type="text" id="cedula" name="cedula" class="form-control" placeholder="Cédula (10) o RUC (13)" required>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -231,8 +231,8 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Cédula *</label>
-                    <input type="text" id="editar_cedula" name="cedula" class="form-control" required>
+                    <label>Cédula / RUC *</label>
+                    <input type="text" id="editar_cedula" name="cedula" class="form-control" required placeholder="Cédula (10) o RUC (13)">
                   </div>
                 </div>
                 <div class="col-md-6">
