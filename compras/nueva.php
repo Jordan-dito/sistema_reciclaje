@@ -12,6 +12,35 @@ if (!$auth->isAuthenticated()) {
     header('Location: ../index.php');
     exit;
 }
+
+// Obtener sucursal del usuario actual
+$usuario_id = $_SESSION['usuario_id'];
+$db = getDB();
+$sucursal_usuario_id = '';
+
+try {
+    // 1. Buscar si es responsable de una sucursal
+    $stmt = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? AND estado = 'activa' LIMIT 1");
+    $stmt->execute([$usuario_id]);
+    $res = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($res) {
+        $sucursal_usuario_id = $res['id'];
+    } else {
+        // 2. Buscar si tiene sucursal asignada en su perfil (si existe la columna sucursal_id)
+        // Usamos una consulta que no falle fatalmente si la columna no existe en algunos motores, 
+        // pero en MySQL fallará si la columna no existe. Lo envolvemos en try/catch.
+        $stmt = $db->prepare("SELECT s.id FROM sucursales s INNER JOIN usuarios u ON u.sucursal_id = s.id WHERE u.id = ? AND s.estado = 'activa' LIMIT 1");
+        $stmt->execute([$usuario_id]);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($res) {
+            $sucursal_usuario_id = $res['id'];
+        }
+    }
+} catch (Exception $e) {
+    // Si falla (por ejemplo, columna sucursal_id no existe), ignoramos silenciosamente
+    error_log("Nota: No se pudo verificar sucursal por usuario.sucursal_id: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -391,6 +420,29 @@ if (!$auth->isAuthenticated()) {
                 response.data.forEach(function(sucursal) {
                   select.append('<option value="' + sucursal.id + '">' + sucursal.nombre + '</option>');
                 });
+                
+                // Preseleccionar sucursal del usuario si existe
+                var sucursalUsuarioId = '<?php echo $sucursal_usuario_id; ?>';
+                console.log("Depuración Sucursal - ID encontrado por PHP:", sucursalUsuarioId);
+                
+                if (sucursalUsuarioId) {
+                  // Verificar si el ID existe en las opciones cargadas
+                  var existe = false;
+                  response.data.forEach(function(s) {
+                    if (s.id == sucursalUsuarioId) existe = true;
+                  });
+                  console.log("Depuración Sucursal - ¿Existe en la lista API?:", existe);
+
+                  if (existe) {
+                    select.val(sucursalUsuarioId);
+                    // Disparar evento change por si hay listeners
+                    select.trigger('change');
+                  } else {
+                    console.warn("La sucursal del usuario (ID: " + sucursalUsuarioId + ") no está en la lista de sucursales activas devuelta por la API.");
+                  }
+                } else {
+                   console.log("No se encontró ninguna sucursal asignada a este usuario (responsable_id no coincide).");
+                }
               }
             }
           });

@@ -206,20 +206,20 @@ $usuario = $auth->getCurrentUser();
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre del Rol</label>
-                    <input type="text" class="form-control" placeholder="Ej: Supervisor" required>
+                    <label>Nombre del Rol <span class="text-danger">*</span></label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Supervisor" required>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Descripción</label>
-                    <textarea class="form-control" rows="3" placeholder="Descripción del rol"></textarea>
+                    <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del rol"></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select class="form-control">
+                    <select id="estado" name="estado" class="form-control">
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
                     </select>
@@ -230,7 +230,7 @@ $usuario = $auth->getCurrentUser();
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Guardar Rol</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarRol">Guardar Rol</button>
           </div>
         </div>
       </div>
@@ -544,6 +544,46 @@ $usuario = $auth->getCurrentUser();
           });
         }
         
+        
+        // Guardar nuevo rol
+        $('#btnGuardarRol').click(function() {
+          var nombre = $('#nombre').val();
+          if (!nombre) {
+            swal("Error", "El nombre del rol es obligatorio", "error");
+            return;
+          }
+
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: {
+              action: 'crear',
+              nombre: nombre,
+              descripcion: $('#descripcion').val(),
+              estado: $('#estado').val()
+            },
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalAgregarRol').modal('hide');
+                $('#formAgregarRol')[0].reset();
+                cargarRoles();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al crear el rol';
+              swal("Error", error, "error");
+            }
+          });
+        });
+
         // Actualizar rol
         $('#btnActualizarRol').click(function() {
           var form = $('#formEditarRol')[0];

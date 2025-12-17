@@ -181,9 +181,13 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Inventario <span class="text-danger">*</span></label>
-                    <select id="inventario_id" name="inventario_id" class="form-control" required>
-                      <option value="">Primero seleccione una sucursal</option>
-                    </select>
+                    <div class="input-group">
+                      <input type="text" id="producto_seleccionado" class="form-control" placeholder="Seleccione un producto" readonly required style="background-color: #fff;">
+                      <input type="hidden" id="inventario_id" name="inventario_id">
+                      <button class="btn btn-outline-secondary" type="button" id="btnBuscarInventario">
+                        <i class="fa fa-search"></i>
+                      </button>
+                    </div>
                     <small class="form-text text-muted">Seleccione el producto del inventario que desea vender</small>
                   </div>
                 </div>
@@ -273,6 +277,54 @@ if (!$auth->isAuthenticated()) {
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-primary" id="btnGuardarVenta">Registrar Venta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Buscar Inventario -->
+    <div class="modal fade" id="modalBuscarInventario" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Buscar Producto en Inventario</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <input type="text" id="filtroInventario" class="form-control" placeholder="Buscar por nombre, material o categoría...">
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover table-striped" id="tablaInventario">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Material</th>
+                    <th>Categoría</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Los datos se cargarán dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+            <div id="mensajeSinInventario" class="alert alert-warning text-center" style="display: none;">
+              No hay productos disponibles en esta sucursal o no coinciden con la búsqueda.
+            </div>
+            <div id="mensajeCargandoInventario" class="text-center py-3" style="display: none;">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+              <p class="mt-2">Cargando inventario...</p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
           </div>
         </div>
       </div>
@@ -381,83 +433,144 @@ if (!$auth->isAuthenticated()) {
         
         window.cargarVentas = cargarVentas;
         
-        // Cargar inventarios cuando se selecciona una sucursal
-        $('#sucursal_id').change(function() {
-          var sucursal_id = $(this).val();
-          var select = $('#inventario_id');
-          
-          if (sucursal_id) {
-            // Mostrar indicador de carga
-            select.prop('disabled', true).html('<option value="">Cargando inventarios...</option>');
-            
-            $.ajax({
-              url: 'api.php?action=inventarios&sucursal_id=' + sucursal_id,
-              method: 'GET',
-              dataType: 'json',
-              success: function(response) {
-                select.prop('disabled', false);
-                
-                if (response.success && response.data && response.data.length > 0) {
-                  select.empty().append('<option value="">Seleccione un producto del inventario</option>');
-                  response.data.forEach(function(inventario) {
-                    var texto = inventario.producto_nombre + ' (' + inventario.cantidad + ' ' + inventario.unidad + ' disponible)';
-                    select.append('<option value="' + inventario.inventario_id + '" ' +
-                      'data-producto-id="' + inventario.producto_id + '" ' +
-                      'data-precio="' + (inventario.precio_unitario || 0) + '" ' +
-                      'data-precio-id="' + (inventario.precio_id || '') + '" ' +
-                      'data-cantidad="' + inventario.cantidad + '" ' +
-                      'data-unidad="' + inventario.unidad + '">' + texto + '</option>');
-                  });
-                } else {
-                  select.empty().append('<option value="">No hay productos disponibles en esta sucursal</option>');
-                }
-              },
-              error: function(xhr, status, error) {
-                select.prop('disabled', false);
-                select.empty().append('<option value="">Error al cargar inventarios</option>');
-                console.error('Error al cargar inventarios:', error);
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                  console.error('Mensaje:', xhr.responseJSON.message);
-                }
-              }
-            });
-          } else {
-            select.prop('disabled', false);
-            select.empty().append('<option value="">Primero seleccione una sucursal</option>');
-          }
-        });
         
+        var inventarioData = []; // Variable global para almacenar datos de inventario
+
+        // Manejar clic en botón de búsqueda de inventario
+        $('#btnBuscarInventario').click(function() {
+          var sucursal_id = $('#sucursal_id').val();
+          if (!sucursal_id) {
+            swal("Atención", "Primero debe seleccionar una sucursal", "warning");
+            return;
+          }
+          
+          $('#modalBuscarInventario').modal('show');
+          cargarInventarioModal(sucursal_id);
+        });
+
+        // Al cambiar de sucursal, limpiar el producto seleccionado
+        $('#sucursal_id').change(function() {
+          limpiarSeleccionProducto();
+        });
+
+        function limpiarSeleccionProducto() {
+          $('#inventario_id').val('');
+          $('#producto_seleccionado').val('');
+          $('#precio_unitario').val('');
+          $('#stockDisponible').text('Stock disponible: -');
+          calcularTotal();
+        }
+
+        // Cargar inventario en el modal
+        function cargarInventarioModal(sucursal_id) {
+          var tbody = $('#tablaInventario tbody');
+          var mensajeSin = $('#mensajeSinInventario');
+          var mensajeCargando = $('#mensajeCargandoInventario');
+          
+          tbody.empty();
+          mensajeSin.hide();
+          mensajeCargando.show();
+          
+          $.ajax({
+            url: 'api.php?action=inventarios&sucursal_id=' + sucursal_id,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              mensajeCargando.hide();
+              inventarioData = []; // Limpiar datos anteriores
+              
+              if (response.success && response.data && response.data.length > 0) {
+                inventarioData = response.data;
+                renderizarTablaInventario(inventarioData);
+              } else {
+                mensajeSin.text("No hay productos disponibles en esta sucursal").show();
+              }
+            },
+            error: function(xhr, status, error) {
+              mensajeCargando.hide();
+              mensajeSin.text("Error al cargar inventario").show();
+              console.error('Error:', error);
+            }
+          });
+        }
+
+        // Renderizar tabla de inventario
+        function renderizarTablaInventario(datos) {
+          var tbody = $('#tablaInventario tbody');
+          var mensajeSin = $('#mensajeSinInventario');
+          tbody.empty();
+          
+          if (datos.length === 0) {
+            mensajeSin.show();
+            return;
+          }
+          
+          mensajeSin.hide();
+          
+          datos.forEach(function(item) {
+            var precio = parseFloat(item.precio_unitario || 0).toFixed(2);
+            var fila = `
+              <tr>
+                <td><strong>${item.producto_nombre}</strong></td>
+                <td>${item.material_nombre || '-'}</td>
+                <td>${item.categoria_nombre || '-'}</td>
+                <td>${item.cantidad} ${item.unidad}</td>
+                <td>$${precio}</td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-primary" 
+                    onclick="seleccionarInventario(${item.inventario_id})">
+                    <i class="fa fa-check"></i> Seleccionar
+                  </button>
+                </td>
+              </tr>
+            `;
+            tbody.append(fila);
+          });
+        }
+
+        // Filtrar inventario en el modal
+        $('#filtroInventario').on('keyup', function() {
+          var valor = $(this).val().toLowerCase();
+          var datosFiltrados = inventarioData.filter(function(item) {
+            return (item.producto_nombre && item.producto_nombre.toLowerCase().includes(valor)) ||
+                   (item.material_nombre && item.material_nombre.toLowerCase().includes(valor)) ||
+                   (item.categoria_nombre && item.categoria_nombre.toLowerCase().includes(valor));
+          });
+          renderizarTablaInventario(datosFiltrados);
+        });
+
+        // Función global para seleccionar inventario desde el modal
+        window.seleccionarInventario = function(id) {
+          var item = inventarioData.find(function(i) { return i.inventario_id == id; });
+          if (item) {
+            $('#inventario_id').val(item.inventario_id);
+            $('#producto_seleccionado').val(item.producto_nombre);
+            
+            // Guardar datos adicionales en el input hidden o usarlos directamente
+            $('#inventario_id').data('producto-id', item.producto_id);
+            $('#inventario_id').data('precio-id', item.precio_id);
+            $('#inventario_id').data('cantidad', item.cantidad);
+            
+            $('#precio_unitario').val(item.precio_unitario || 0);
+            $('#stockDisponible').text('Stock disponible: ' + item.cantidad + ' ' + item.unidad);
+            
+            calcularTotal();
+            $('#modalBuscarInventario').modal('hide');
+          }
+        };
+
         // Cargar inventarios cuando se abre el modal si ya hay una sucursal seleccionada
         $('#modalNuevaVenta').on('shown.bs.modal', function() {
-          var sucursal_id = $('#sucursal_id').val();
-          if (sucursal_id) {
-            // Disparar el evento change para cargar inventarios
-            $('#sucursal_id').trigger('change');
-          } else {
-            // Limpiar el campo de inventario
-            $('#inventario_id').empty().append('<option value="">Primero seleccione una sucursal</option>');
-          }
+          // Ya no necesitamos cargar nada automáticamente aquí, se hace bajo demanda
         });
         
         // Limpiar campos cuando se cierra el modal
         $('#modalNuevaVenta').on('hidden.bs.modal', function() {
-          $('#inventario_id').empty().append('<option value="">Primero seleccione una sucursal</option>');
+           limpiarSeleccionProducto();
         });
         
-        // Auto-completar campos cuando se selecciona inventario
-        $('#inventario_id').change(function() {
-          var option = $(this).find('option:selected');
-          if (option.val()) {
-            var precio = option.data('precio') || 0;
-            var cantidad = option.data('cantidad') || 0;
-            $('#precio_unitario').val(precio);
-            $('#stockDisponible').text('Stock disponible: ' + cantidad + ' ' + option.data('unidad'));
-            calcularTotal();
-          } else {
-            $('#precio_unitario').val('');
-            $('#stockDisponible').text('Stock disponible: -');
-          }
-        });
+        // Auto-completar campos cuando se selecciona inventario - YA NO ES NECESARIO (se maneja en seleccionarInventario)
+
         
         // Cargar ventas
         function cargarVentas() {
@@ -629,9 +742,9 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
-          var inventarioOption = $('#inventario_id option:selected');
-          var producto_id = inventarioOption.data('producto-id');
-          var precio_id = inventarioOption.data('precio-id') || null;
+          var inventarioInput = $('#inventario_id');
+          var producto_id = inventarioInput.data('producto-id');
+          var precio_id = inventarioInput.data('precio-id') || null;
           
           var cantidad = parseFloat($('#cantidad').val()) || 0;
           var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
@@ -641,7 +754,7 @@ if (!$auth->isAuthenticated()) {
           var total = subtotal + iva - descuento;
           
           // Verificar stock disponible
-          var stockDisponible = parseFloat(inventarioOption.data('cantidad')) || 0;
+          var stockDisponible = parseFloat(inventarioInput.data('cantidad')) || 0;
           if (cantidad > stockDisponible) {
             swal("Error", "La cantidad solicitada (" + cantidad + ") excede el stock disponible (" + stockDisponible + ")", "error");
             return;
