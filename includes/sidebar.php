@@ -77,8 +77,7 @@ $modulosConfig = [
     'Gestión de Personal' => [
       'ruta' => '#',
       'subitems' => [
-        ['nombre' => 'Gestión de Empleados', 'ruta' => 'empleados/index.php', 'route' => 'gestion_empleados'],
-        ['nombre' => 'Listado de Personal', 'ruta' => 'personal/index.php', 'route' => 'personal_list', 'disabled' => true]
+        ['nombre' => 'Gestión de Empleados', 'ruta' => 'empleados/index.php', 'route' => 'gestion_empleados']
       ],
       'routes' => ['gestion_personal', 'personal', 'personal_list', 'gestion_empleados']
     ],
