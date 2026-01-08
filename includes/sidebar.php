@@ -74,12 +74,13 @@ $modulosConfig = [
         ],
         'routes' => ['sucursales', 'inventarios']
     ],
-    'Administración de Personal' => [
-        'ruta' => '#',
-        'subitems' => [
-            ['nombre' => 'Gestión de Personal', 'ruta' => '#', 'route' => 'personal', 'disabled' => true]
-        ],
-        'routes' => ['personal']
+    'Gestión de Personal' => [
+      'ruta' => '#',
+      'subitems' => [
+        ['nombre' => 'Gestión de Empleados', 'ruta' => 'empleados/index.php', 'route' => 'gestion_empleados'],
+        ['nombre' => 'Listado de Personal', 'ruta' => 'personal/index.php', 'route' => 'personal_list', 'disabled' => true]
+      ],
+      'routes' => ['gestion_personal', 'personal', 'personal_list', 'gestion_empleados']
     ],
     'Reporte' => [
         'ruta' => 'reportes/index.php',
@@ -112,6 +113,21 @@ function isRouteActive($config, $currentRoute) {
     return false;
 }
 ?>
+<style>
+/* Mantener visibles los iconos de los items del sidebar incluso cuando otros menús estén abiertos */
+.nav-secondary .nav-item i[class*="fa-"] {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Asegurar que los iconos de los items colapsables no se oculten por reglas de colapso */
+.nav-secondary .nav-item.submenu > a i,
+.nav-secondary .nav-item > a i {
+  width: 22px; /* espacio consistente */
+  text-align: center;
+}
+</style>
 <ul class="nav nav-secondary">
   <?php if (empty($modulosAsignados)): ?>
     <!-- Si no hay módulos asignados, mostrar Dashboard por defecto -->
@@ -178,4 +194,5 @@ function isRouteActive($config, $currentRoute) {
       <?php endif; ?>
     <?php endforeach; ?>
   <?php endif; ?>
+  <!-- Enlace estático removido: Gestión de Personal ahora se muestra solo si está asignado en la BD -->
 </ul>
