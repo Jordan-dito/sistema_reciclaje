@@ -105,8 +105,16 @@ if (!$auth->isAuthenticated()) {
               <div class="col-md-12">
                 <div class="card card-round">
                   <div class="card-header">
-                    <div class="card-head-row">
+                    <div class="d-flex align-items-center justify-content-between">
                       <div class="card-title">Lista de Usuarios</div>
+                      <ul class="nav nav-pills nav-secondary" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active" id="pills-activos-tab" data-bs-toggle="pill" href="#pills-activos" role="tab" aria-selected="true">Activos</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="pills-inactivos-tab" data-bs-toggle="pill" href="#pills-inactivos" role="tab" aria-selected="false">Inactivos</a>
+                        </li>
+                      </ul>
                     </div>
                   </div>
                   <div class="card-body">
@@ -291,16 +299,39 @@ if (!$auth->isAuthenticated()) {
     <script src="../assets/js/kaiadmin.min.js"></script>
     <script src="../assets/js/setting-demo.js"></script>
     <script>
+      var table;
+      var cargarUsuarios;
+
       $(document).ready(function() {
         // Inicializar DataTable
-        var table = $('#usuariosTable').DataTable({
+        table = $('#usuariosTable').DataTable({
           "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
           }
         });
+
+        // Filtrar por defecto los activos
+        $.fn.dataTable.ext.search.push(
+          function(settings, data, dataIndex) {
+            var activeTab = $('.nav-link.active').attr('id');
+            var status = (data[5] || '').toLowerCase().trim(); // Columna Estado (índice 5), texto plano
+            
+            if (activeTab === 'pills-activos-tab') {
+              return status === 'activo';
+            } else if (activeTab === 'pills-inactivos-tab') {
+              return status === 'inactivo';
+            }
+            return true;
+          }
+        );
+
+        // Eventos de tabs
+        $('.nav-link').on('shown.bs.tab', function(e) {
+          table.draw();
+        });
         
         // Cargar usuarios desde la base de datos
-        function cargarUsuarios() {
+        cargarUsuarios = function() {
           $.ajax({
             url: 'api.php?action=listar',
             method: 'GET',
@@ -322,6 +353,7 @@ if (!$auth->isAuthenticated()) {
                     badgeRol = '<span class="badge badge-secondary">Usuario</span>';
                   }
                   
+                  // Botón de estado: Activar si está inactivo, Desactivar si está activo
                   var badgeEstado = usuario.estado === 'activo' 
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
@@ -352,7 +384,7 @@ if (!$auth->isAuthenticated()) {
               swal("Error", "No se pudieron cargar los usuarios", "error");
             }
           });
-        }
+        };
         
         // Cargar usuarios al iniciar
         cargarUsuarios();
