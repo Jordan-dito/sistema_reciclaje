@@ -65,7 +65,6 @@ try {
                         SELECT u.*, r.nombre as rol_nombre 
                         FROM usuarios u 
                         INNER JOIN roles r ON u.rol_id = r.id 
-                        WHERE u.estado <> 'inactivo'
                         ORDER BY u.id ASC
                     ");
                     $stmt->execute();

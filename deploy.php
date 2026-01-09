@@ -15,7 +15,7 @@
  */
 
 // Configuración
-$webhook_secret = 'TU_SECRETO_AQUI'; // Cambia esto por un secreto seguro
+$webhook_secret = 'Barcelona1925'; // Cambia esto por un secreto seguro
 $repo_path = __DIR__; // Ruta donde está el proyecto
 $log_file = __DIR__ . '/deploy.log';
 
@@ -50,7 +50,7 @@ $payload = file_get_contents('php://input');
 $headers = getallheaders();
 
 // Verificar la firma del webhook (opcional pero recomendado)
-if (!empty($webhook_secret) && $webhook_secret !== 'TU_SECRETO_AQUI') {
+if (!empty($webhook_secret)) {
     $signature = $headers['X-Hub-Signature-256'] ?? '';
     $expected_signature = 'sha256=' . hash_hmac('sha256', $payload, $webhook_secret);
     
