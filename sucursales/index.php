@@ -119,6 +119,7 @@ if (!$auth->isAuthenticated()) {
                             <th>Teléfono</th>
                             <th>Email</th>
                             <th>Responsable</th>
+                            <th>Saldo Caja</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                           </tr>
@@ -192,6 +193,12 @@ if (!$auth->isAuthenticated()) {
                     </select>
                   </div>
                 </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Saldo Inicial ($)</label>
+                    <input type="number" id="saldo" name="saldo" class="form-control" placeholder="0.00" step="0.01">
+                  </div>
+                </div>
               </div>
             </form>
           </div>
@@ -255,6 +262,13 @@ if (!$auth->isAuthenticated()) {
                       <option value="activa">Activa</option>
                       <option value="inactiva">Inactiva</option>
                     </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Saldo en Caja ($)</label>
+                    <input type="number" id="editar_saldo" name="saldo" class="form-control" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                    <small class="text-muted">Actualizado automáticamente</small>
                   </div>
                 </div>
               </div>
@@ -329,6 +343,10 @@ if (!$auth->isAuthenticated()) {
                   } else {
                     botonEstado = '<button class="btn btn-link btn-success btn-sm" onclick="activarSucursal(' + sucursal.id + ')" title="Activar"><i class="fa fa-check"></i></button>';
                   }
+
+                  var saldoVal = parseFloat(sucursal.saldo || 0);
+                  var colorSaldo = saldoVal < 0 ? 'text-danger' : 'text-success';
+                  var badgeSaldo = '<span class="' + colorSaldo + ' fw-bold">$' + saldoVal.toFixed(2) + '</span>';
                   
                   table.row.add([
                     '<strong>' + sucursal.nombre + '</strong>',
@@ -336,6 +354,7 @@ if (!$auth->isAuthenticated()) {
                     sucursal.telefono || '-',
                     sucursal.email || '-',
                     sucursal.responsable_nombre || '-',
+                    badgeSaldo,
                     badgeEstado,
                     '<button class="btn btn-link btn-primary btn-sm" onclick="editarSucursal(' + sucursal.id + ')" title="Editar"><i class="fa fa-edit"></i></button> ' +
                     botonEstado
@@ -444,6 +463,7 @@ if (!$auth->isAuthenticated()) {
             email: $('#email').val(),
             responsable_id: $('#responsable_id').val(),
             estado: $('#estado').val(),
+            saldo: $('#saldo').val(),
             action: 'crear'
           };
           
@@ -562,6 +582,7 @@ if (!$auth->isAuthenticated()) {
               $('#editar_email').val(s.email || '');
               $('#editar_responsable_id').val(s.responsable_id || '');
               $('#editar_estado').val(s.estado);
+              $('#editar_saldo').val(s.saldo || 0);
               $('#modalEditarSucursal').modal('show');
             }
           }

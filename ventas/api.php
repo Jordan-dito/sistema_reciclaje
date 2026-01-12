@@ -355,6 +355,12 @@ try {
                             }
                         }
                     }
+
+                    // NUEVO: Actualizar saldo de la sucursal si la venta está completada
+                    if ($estado === 'completada') {
+                        $stmtSaldo = $db->prepare("UPDATE sucursales SET saldo = saldo + ? WHERE id = ?");
+                        $stmtSaldo->execute([$total, $sucursal_id]);
+                    }
                     
                     $db->commit();
                     
@@ -417,7 +423,7 @@ try {
                 
                 $db->beginTransaction();
                 try {
-                    $stmt = $db->prepare("SELECT estado FROM ventas WHERE id = ?");
+                    $stmt = $db->prepare("SELECT total, sucursal_id, estado FROM ventas WHERE id = ?");
                     $stmt->execute([$id]);
                     $venta = $stmt->fetch();
                     
@@ -427,6 +433,12 @@ try {
                     
                     if ($venta['estado'] === 'cancelada') {
                         throw new Exception('La venta ya está cancelada');
+                    }
+
+                    // NUEVO: Si la venta estaba completada, restar el dinero de la caja
+                    if ($venta['estado'] === 'completada') {
+                        $stmtSaldo = $db->prepare("UPDATE sucursales SET saldo = saldo - ? WHERE id = ?");
+                        $stmtSaldo->execute([$venta['total'], $venta['sucursal_id']]);
                     }
                     
                     if (in_array($venta['estado'], ['pendiente', 'completada', 'devuelta'])) {

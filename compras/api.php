@@ -313,6 +313,12 @@ try {
                             }
                         }
                     }
+
+                    // NUEVO: Actualizar saldo de la sucursal si la compra está completada (Resta dinero)
+                    if ($estado === 'completada') {
+                        $stmtSaldo = $db->prepare("UPDATE sucursales SET saldo = saldo - ? WHERE id = ?");
+                        $stmtSaldo->execute([$total, $sucursal_id]);
+                    }
                     
                     $db->commit();
                     
@@ -373,7 +379,7 @@ try {
                 
                 $db->beginTransaction();
                 try {
-                    $stmt = $db->prepare("SELECT estado FROM compras WHERE id = ?");
+                    $stmt = $db->prepare("SELECT total, sucursal_id, estado FROM compras WHERE id = ?");
                     $stmt->execute([$id]);
                     $compra = $stmt->fetch();
                     
@@ -383,6 +389,12 @@ try {
                     
                     if ($compra['estado'] === 'cancelada') {
                         throw new Exception('La compra ya está cancelada');
+                    }
+
+                    // NUEVO: Si la compra estaba completada, devolver el dinero a la caja
+                    if ($compra['estado'] === 'completada') {
+                        $stmtSaldo = $db->prepare("UPDATE sucursales SET saldo = saldo + ? WHERE id = ?");
+                        $stmtSaldo->execute([$compra['total'], $compra['sucursal_id']]);
                     }
                     
                     if ($compra['estado'] === 'completada') {
