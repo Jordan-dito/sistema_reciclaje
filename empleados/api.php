@@ -1,12 +1,15 @@
 <?php
 /**
  * API Backend para Gestión de Asistencia y Pagos Diarios
- * CON CONTROL DE CAJA (Resta automática de saldo)
+ * CON CONTROL DE CAJA Y FILTRADO POR SUCURSAL
  */
 require_once __DIR__ . '/../config/auth.php';
 require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
+
+// Configurar zona horaria
+date_default_timezone_set('America/Guayaquil');
 
 $auth = new Auth();
 if (!$auth->isAuthenticated()) {
@@ -19,10 +22,17 @@ $db = getDB();
 $action = $_REQUEST['action'] ?? '';
 $currentUser = $auth->getCurrentUser();
 
+// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO
+// Buscamos si el usuario es responsable de alguna sucursal
+$stmtSuc = $db->prepare("SELECT id, nombre FROM sucursales WHERE responsable_id = ?");
+$stmtSuc->execute([$currentUser['id']]);
+$miSucursal = $stmtSuc->fetch();
+$sucursalId = $miSucursal ? $miSucursal['id'] : null;
+
 try {
     switch ($action) {
         case 'get_semana':
-            obtenerDatosSemana($db);
+            obtenerDatosSemana($db, $sucursalId);
             break;
             
         case 'toggle_asistencia':
@@ -30,7 +40,7 @@ try {
             break;
             
         case 'save_config_dias':
-            guardarConfigDias($db);
+            guardarConfigDias($db, $sucursalId);
             break;
             
         case 'pagar_dia':
@@ -49,34 +59,67 @@ try {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 
-function obtenerDatosSemana($db) {
+function obtenerDatosSemana($db, $filtroSucursalId) {
     $fechaRef = $_GET['fecha'] ?? date('Y-m-d');
     $timestamp = strtotime($fechaRef);
     
-    if (date('w', $timestamp) == 0) {
+    // Calcular Lunes
+    $diaSemana = date('w', $timestamp);
+    if ($diaSemana == 0) {
         $lunes = date('Y-m-d', strtotime('monday last week', $timestamp));
     } else {
         $lunes = date('Y-m-d', strtotime('monday this week', $timestamp));
     }
     $domingo = date('Y-m-d', strtotime($lunes . ' +6 days'));
     
-    // Configuración Días
-    $stmtConfig = $db->prepare("SELECT dias_laborables FROM configuracion_jornada WHERE semana_inicio = ?");
-    $stmtConfig->execute([$lunes]);
+    // 1. Configuración de Días (Prioridad: Configuración de Sucursal > Configuración Global)
+    $diasLaborables = ['lun','mar','mie','jue','vie','sab']; // Default
+    
+    $sqlConfig = "SELECT dias_laborables FROM configuracion_jornada WHERE semana_inicio = ?";
+    $paramsConfig = [$lunes];
+    
+    if ($filtroSucursalId) {
+        // Si hay sucursal, buscar configuración específica
+        $sqlConfig .= " AND sucursal_id = ?";
+        $paramsConfig[] = $filtroSucursalId;
+    } else {
+        // Si es admin global, buscar la global (NULL)
+        $sqlConfig .= " AND sucursal_id IS NULL";
+    }
+    
+    $stmtConfig = $db->prepare($sqlConfig);
+    $stmtConfig->execute($paramsConfig);
     $configRow = $stmtConfig->fetch();
-    $diasLaborables = $configRow ? json_decode($configRow['dias_laborables'], true) : ['lun','mar','mie','jue','vie','sab'];
+    
+    if ($configRow) {
+        $diasLaborables = json_decode($configRow['dias_laborables'], true);
+    } else if ($filtroSucursalId) {
+        // Fallback: Si la sucursal no tiene config propia, intentar buscar la global
+        $stmtGlobal = $db->prepare("SELECT dias_laborables FROM configuracion_jornada WHERE semana_inicio = ? AND sucursal_id IS NULL");
+        $stmtGlobal->execute([$lunes]);
+        if ($rowGlobal = $stmtGlobal->fetch()) {
+            $diasLaborables = json_decode($rowGlobal['dias_laborables'], true);
+        }
+    }
 
-    // Empleados
-    $stmtEmp = $db->query("
+    // 2. Obtener Empleados (Filtrado por sucursal si corresponde)
+    $sqlEmp = "
         SELECT e.id, e.nombres, e.apellidos, e.tarifa_diaria as tarifa, s.nombre as sucursal, s.saldo as saldo_sucursal
         FROM empleados e 
         LEFT JOIN sucursales s ON e.sucursal_id = s.id 
         WHERE e.estado = 'ACTIVO'
-        ORDER BY s.nombre, e.apellidos
-    ");
+    ";
+    
+    if ($filtroSucursalId) {
+        $sqlEmp .= " AND e.sucursal_id = " . intval($filtroSucursalId);
+    }
+    
+    $sqlEmp .= " ORDER BY s.nombre, e.apellidos";
+    
+    $stmtEmp = $db->query($sqlEmp);
     $empleados = $stmtEmp->fetchAll();
 
-    // Asistencias
+    // 3. Obtener Asistencias
     $stmtAsist = $db->prepare("SELECT empleado_id, fecha FROM asistencias WHERE fecha BETWEEN ? AND ? AND estado='asistio'");
     $stmtAsist->execute([$lunes, $domingo]);
     $asistenciasMap = [];
@@ -84,7 +127,7 @@ function obtenerDatosSemana($db) {
         $asistenciasMap[$row['empleado_id']][$row['fecha']] = true;
     }
 
-    // Pagos
+    // 4. Obtener Pagos
     $pagosMap = [];
     try {
         $stmtPagos = $db->prepare("SELECT empleado_id, fecha_laborada, monto FROM pagos_diarios WHERE fecha_laborada BETWEEN ? AND ?");
@@ -94,7 +137,7 @@ function obtenerDatosSemana($db) {
         }
     } catch (Exception $e) { }
 
-    // Estructurar
+    // Estructurar respuesta
     $dataEmpleados = [];
     $fechasCalculadas = [];
     for($i=0; $i<7; $i++) {
@@ -120,7 +163,7 @@ function obtenerDatosSemana($db) {
             'id' => $emp['id'],
             'n' => $emp['nombres'] . ' ' . $emp['apellidos'],
             's' => $emp['sucursal'] ?? 'Sin Sucursal',
-            'saldo_sucursal' => $emp['saldo_sucursal'], // Dato extra para mostrar si hay fondos
+            'saldo_sucursal' => $emp['saldo_sucursal'],
             'tarifa' => $emp['tarifa'] ?? 18.00,
             'dias' => $diasData,
             'total_pagado' => $totalPagadoSemana
@@ -131,7 +174,8 @@ function obtenerDatosSemana($db) {
         'success' => true,
         'lunes' => $lunes,
         'dias_laborables' => $diasLaborables,
-        'empleados' => $dataEmpleados
+        'empleados' => $dataEmpleados,
+        'sucursal_id' => $filtroSucursalId // Para debug
     ]);
 }
 
@@ -155,17 +199,37 @@ function guardarAsistencia($db, $userId) {
     echo json_encode(['success' => true]);
 }
 
-function guardarConfigDias($db) {
+function guardarConfigDias($db, $sucursalId) {
     $lunes = $_POST['semana_inicio'];
     $dias = $_POST['dias'] ?? [];
-    $stmt = $db->prepare("INSERT INTO configuracion_jornada (semana_inicio, dias_laborables) VALUES (?, ?) ON DUPLICATE KEY UPDATE dias_laborables = VALUES(dias_laborables)");
-    $stmt->execute([$lunes, json_encode($dias)]);
+    
+    // Si no hay sucursalId (es Admin global), guardamos como NULL (global)
+    // OJO: La tabla tiene Unique Key (semana_inicio, sucursal_id). 
+    // Si sucursal_id es NULL, MySQL permite multiples NULL en UNIQUE KEY a menos que sea MySQL 5.7+ configurado estricto.
+    // Para evitar líos, usamos la consulta con ON DUPLICATE KEY UPDATE.
+    
+    if ($sucursalId) {
+        $stmt = $db->prepare("INSERT INTO configuracion_jornada (semana_inicio, dias_laborables, sucursal_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE dias_laborables = VALUES(dias_laborables)");
+        $stmt->execute([$lunes, json_encode($dias), $sucursalId]);
+    } else {
+        // Configuración Global (Solo Admin sin sucursal)
+        // Revisar si ya existe para NULL (el ON DUPLICATE no siempre funciona bien con NULL en UNIQUE indexes dependiendo del motor)
+        $stmtCheck = $db->prepare("SELECT id FROM configuracion_jornada WHERE semana_inicio = ? AND sucursal_id IS NULL");
+        $stmtCheck->execute([$lunes]);
+        $exist = $stmtCheck->fetch();
+        
+        if ($exist) {
+            $stmt = $db->prepare("UPDATE configuracion_jornada SET dias_laborables = ? WHERE id = ?");
+            $stmt->execute([json_encode($dias), $exist['id']]);
+        } else {
+            $stmt = $db->prepare("INSERT INTO configuracion_jornada (semana_inicio, dias_laborables, sucursal_id) VALUES (?, ?, NULL)");
+            $stmt->execute([$lunes, json_encode($dias)]);
+        }
+    }
+    
     echo json_encode(['success' => true]);
 }
 
-/**
- * PAGA EL DÍA Y RESTA DE LA CAJA DE LA SUCURSAL
- */
 function pagarDia($db, $userId) {
     $empleadoId = $_POST['empleado_id'];
     $fecha = $_POST['fecha'];
@@ -173,11 +237,9 @@ function pagarDia($db, $userId) {
 
     if (!is_numeric($monto) || $monto < 0) throw new Exception("Monto inválido");
 
-    // Iniciar Transacción (Todo o nada)
     $db->beginTransaction();
 
     try {
-        // 1. Verificar si ya estaba pagado (para ajustar la resta si es una edición de monto)
         $stmtCheck = $db->prepare("SELECT monto FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada = ?");
         $stmtCheck->execute([$empleadoId, $fecha]);
         $pagoExistente = $stmtCheck->fetch();
@@ -187,7 +249,6 @@ function pagarDia($db, $userId) {
             $montoAnterior = $pagoExistente['monto'];
         }
 
-        // 2. Obtener Sucursal del Empleado
         $stmtSuc = $db->prepare("SELECT sucursal_id FROM empleados WHERE id = ?");
         $stmtSuc->execute([$empleadoId]);
         $emp = $stmtSuc->fetch();
@@ -196,8 +257,6 @@ function pagarDia($db, $userId) {
         }
         $sucursalId = $emp['sucursal_id'];
 
-        // 3. Insertar/Actualizar Pago
-        // Asegurar asistencia
         $stmtAsist = $db->prepare("SELECT id FROM asistencias WHERE empleado_id = ? AND fecha = ?");
         $stmtAsist->execute([$empleadoId, $fecha]);
         if (!$stmtAsist->fetch()) {
@@ -211,23 +270,7 @@ function pagarDia($db, $userId) {
         $stmtPago = $db->prepare($sqlPago);
         $stmtPago->execute([$empleadoId, $fecha, $monto, $userId]);
 
-        // 4. Actualizar Saldo Sucursal
-        // La diferencia es: NuevoMonto - MontoAnterior
-        // Si es pago nuevo: Monto - 0 = Restamos Monto
-        // Si edito de 18 a 20: 20 - 18 = 2. Restamos 2 adicionales.
-        // Si edito de 20 a 15: 15 - 20 = -5. Restamos -5 (Sumamos 5).
         $diferencia = $monto - $montoAnterior;
-        
-        // Verificar saldo suficiente (Opcional: permitir negativo si es caja chica flexible)
-        /*
-        $stmtSaldo = $db->prepare("SELECT saldo FROM sucursales WHERE id = ?");
-        $stmtSaldo->execute([$sucursalId]);
-        $saldoActual = $stmtSaldo->fetchColumn();
-        if ($saldoActual < $diferencia) {
-             throw new Exception("Saldo insuficiente en la sucursal.");
-        }
-        */
-
         $stmtUpdSuc = $db->prepare("UPDATE sucursales SET saldo = saldo - ? WHERE id = ?");
         $stmtUpdSuc->execute([$diferencia, $sucursalId]);
 
@@ -240,16 +283,12 @@ function pagarDia($db, $userId) {
     }
 }
 
-/**
- * ELIMINA PAGO Y DEVUELVE DINERO A LA SUCURSAL
- */
 function eliminarPagoDia($db) {
     $empleadoId = $_POST['empleado_id'];
     $fecha = $_POST['fecha'];
 
     $db->beginTransaction();
     try {
-        // 1. Obtener datos del pago antes de borrar
         $stmtGet = $db->prepare("SELECT monto FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada = ?");
         $stmtGet->execute([$empleadoId, $fecha]);
         $pago = $stmtGet->fetch();
@@ -257,16 +296,13 @@ function eliminarPagoDia($db) {
         if (!$pago) throw new Exception("El pago no existe");
         $monto = $pago['monto'];
 
-        // 2. Obtener Sucursal
         $stmtSuc = $db->prepare("SELECT sucursal_id FROM empleados WHERE id = ?");
         $stmtSuc->execute([$empleadoId]);
         $sucursalId = $stmtSuc->fetchColumn();
 
-        // 3. Borrar Pago
         $stmtDel = $db->prepare("DELETE FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada = ?");
         $stmtDel->execute([$empleadoId, $fecha]);
 
-        // 4. Devolver dinero a Sucursal (UPDATE saldo = saldo + monto)
         if ($sucursalId) {
             $stmtUpd = $db->prepare("UPDATE sucursales SET saldo = saldo + ? WHERE id = ?");
             $stmtUpd->execute([$monto, $sucursalId]);

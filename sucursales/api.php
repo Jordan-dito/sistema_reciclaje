@@ -114,6 +114,7 @@ try {
                 $email = trim($_POST['email'] ?? '');
                 $responsable_id = !empty($_POST['responsable_id']) ? intval($_POST['responsable_id']) : null;
                 $estado = $_POST['estado'] ?? 'activa';
+                $saldo = floatval($_POST['saldo'] ?? 0);
                 
                 if (empty($nombre)) {
                     throw new Exception('El nombre es obligatorio');
@@ -141,8 +142,8 @@ try {
                 }
                 
                 $stmt = $db->prepare("
-                    INSERT INTO sucursales (nombre, direccion, telefono, email, responsable_id, estado) 
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO sucursales (nombre, direccion, telefono, email, responsable_id, estado, saldo) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 ");
                 
                 $stmt->execute([
@@ -151,7 +152,8 @@ try {
                     $telefono ?: null,
                     $email ?: null,
                     $responsable_id,
-                    $estado
+                    $estado,
+                    $saldo
                 ]);
                 
                 ob_end_clean();
