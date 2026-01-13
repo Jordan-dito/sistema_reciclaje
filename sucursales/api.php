@@ -67,13 +67,49 @@ try {
                     echo json_encode(['success' => false, 'message' => 'Sucursal no encontrada']);
                 }
             } elseif ($action === 'activas') {
-                // Obtener solo sucursales activas (para filtros)
-                $stmt = $db->query("
-                    SELECT id, nombre 
-                    FROM sucursales 
-                    WHERE estado = 'activa' 
-                    ORDER BY nombre
-                ");
+                // Obtener solo sucursales activas
+                // Filtrar por la sucursal del usuario logueado si tiene una asignada
+                $usuario_id = $_SESSION['usuario_id'] ?? null;
+                $sucursal_usuario = null;
+                
+                if ($usuario_id) {
+                    // Buscar si es responsable de una sucursal
+                    $stmt = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? AND estado = 'activa' LIMIT 1");
+                    $stmt->execute([$usuario_id]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($result) {
+                        $sucursal_usuario = $result['id'];
+                    } else {
+                        // Buscar en perfil de usuario
+                        $stmt = $db->prepare("SELECT sucursal_id FROM usuarios WHERE id = ?");
+                        $stmt->execute([$usuario_id]);
+                        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                        if ($result && $result['sucursal_id']) {
+                            $sucursal_usuario = $result['sucursal_id'];
+                        }
+                    }
+                }
+                
+                // Si el usuario tiene sucursal asignada, solo mostrar esa
+                if ($sucursal_usuario) {
+                    $stmt = $db->prepare("
+                        SELECT id, nombre 
+                        FROM sucursales 
+                        WHERE estado = 'activa' AND id = ?
+                        ORDER BY nombre
+                    ");
+                    $stmt->execute([$sucursal_usuario]);
+                } else {
+                    // Si no tiene sucursal, mostrar todas las activas
+                    $stmt = $db->query("
+                        SELECT id, nombre 
+                        FROM sucursales 
+                        WHERE estado = 'activa' 
+                        ORDER BY nombre
+                    ");
+                }
+                
                 $sucursales = $stmt->fetchAll();
                 
                 ob_end_clean();

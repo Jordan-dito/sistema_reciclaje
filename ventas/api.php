@@ -36,7 +36,27 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $sucursal_id = $_GET['sucursal_id'] ?? null;
+                // Obtener sucursal del usuario logueado
+                $sucursal_usuario = null;
+                
+                // Buscar si es responsable de una sucursal
+                $stmt = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? AND estado = 'activa' LIMIT 1");
+                $stmt->execute([$usuario_id]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($result) {
+                    $sucursal_usuario = $result['id'];
+                } else {
+                    // Buscar en perfil de usuario
+                    $stmt = $db->prepare("SELECT sucursal_id FROM usuarios WHERE id = ?");
+                    $stmt->execute([$usuario_id]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($result && $result['sucursal_id']) {
+                        $sucursal_usuario = $result['sucursal_id'];
+                    }
+                }
+                
+                $sucursal_id = $_GET['sucursal_id'] ?? $sucursal_usuario;
                 
                 // Verificar que la tabla ventas existe
                 try {
@@ -129,14 +149,14 @@ try {
                 
                 $sql = "
                     SELECT i.id as inventario_id,
-                           i.cantidad,
+                           SUM(i.cantidad) as cantidad,
                            p.id as producto_id,
                            p.nombre as producto_nombre,
                            m.nombre as material_nombre,
                            c.nombre as categoria_nombre,
                            u.simbolo as unidad,
-                           pr.id as precio_id,
-                           pr.precio_unitario
+                           MAX(pr.id) as precio_id,
+                           MAX(pr.precio_unitario) as precio_unitario
                     FROM inventarios i
                     INNER JOIN productos p ON i.producto_id = p.id
                     INNER JOIN materiales m ON p.material_id = m.id
@@ -152,7 +172,7 @@ try {
                     $params[] = $sucursal_id;
                 }
                 
-                $sql .= " ORDER BY p.nombre ASC";
+                $sql .= " GROUP BY p.id, p.nombre, m.nombre, c.nombre, u.simbolo ORDER BY p.nombre ASC";
                 
                 $stmt = $db->prepare($sql);
                 $stmt->execute($params);
