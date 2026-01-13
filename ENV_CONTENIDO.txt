@@ -1,0 +1,30 @@
+# ============================================
+# CONTENIDO DEL ARCHIVO .env
+# ============================================
+# Copia este contenido y crea un archivo llamado .env
+# en la raíz del proyecto (mismo nivel que index.php)
+# ============================================
+
+# Configuración de Base de Datos - Sistema de Reciclaje
+DB_HOST=mysql-hermanosyanez.alwaysdata.net
+DB_PORT=3306
+DB_NAME=hermanosyanez_base
+DB_USER=438328
+DB_PASS=belen.jayron.tesis
+
+# Configuración de la Aplicación
+APP_NAME=Sistema de Gestión de Reciclaje
+APP_ENV=production
+APP_DEBUG=false
+
+# Configuración de Sesión
+SESSION_LIFETIME=120
+
+# ============================================
+# NOTAS:
+# - El archivo .env debe estar en la raíz del proyecto
+# - No debe tener espacios alrededor del signo =
+# - No uses comillas en los valores
+# - Este archivo está en .gitignore para no subirlo al repositorio
+# ============================================
+

@@ -1,0 +1,268 @@
+<?php
+/**
+ * API para gestión de roles
+ * Sistema de Gestión de Reciclaje
+ */
+
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
+header('Content-Type: application/json; charset=utf-8');
+ob_start();
+
+try {
+    require_once __DIR__ . '/../config/auth.php';
+    require_once __DIR__ . '/../config/modulos_por_rol.php';
+
+    $auth = new Auth();
+    if (!$auth->isAuthenticated()) {
+        ob_end_clean();
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'No autorizado']);
+        exit;
+    }
+
+    $method = $_SERVER['REQUEST_METHOD'];
+    $action = $_GET['action'] ?? $_POST['action'] ?? '';
+    
+    if (empty($action)) {
+        throw new Exception('Acción no especificada');
+    }
+
+    $db = getDB();
+    
+    switch ($method) {
+        case 'GET':
+            if ($action === 'listar') {
+                $stmt = $db->query("SELECT * FROM roles ORDER BY id ASC");
+                $roles = $stmt->fetchAll();
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $roles], JSON_UNESCAPED_UNICODE);
+            } elseif ($action === 'obtener') {
+                $id = $_GET['id'] ?? 0;
+                $stmt = $db->prepare("SELECT * FROM roles WHERE id = ?");
+                $stmt->execute([$id]);
+                $rol = $stmt->fetch();
+                
+                ob_end_clean();
+                if ($rol) {
+                    echo json_encode(['success' => true, 'data' => $rol]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Rol no encontrado']);
+                }
+            } elseif ($action === 'listar_modulos') {
+                // Listar todos los módulos disponibles desde la base de datos
+                $modulos = getModulosDisponibles();
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $modulos], JSON_UNESCAPED_UNICODE);
+            } elseif ($action === 'modulos_por_rol') {
+                // Obtener módulos asignados a un rol específico desde la base de datos
+                $rol_id = intval($_GET['rol_id'] ?? 0);
+                
+                if ($rol_id <= 0) {
+                    throw new Exception('ID de rol inválido');
+                }
+                
+                $modulos = getModulosConAsignacion($rol_id);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'data' => $modulos], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+            
+        case 'POST':
+            if ($action === 'crear') {
+                $nombre = trim($_POST['nombre'] ?? '');
+                $descripcion = trim($_POST['descripcion'] ?? '');
+                $permisos = $_POST['permisos'] ?? '{}';
+                $estado = $_POST['estado'] ?? 'activo';
+                
+                if (empty($nombre)) {
+                    throw new Exception('El nombre es obligatorio');
+                }
+                
+                // Validar que el nombre no exista
+                $stmt = $db->prepare("SELECT id FROM roles WHERE nombre = ?");
+                $stmt->execute([$nombre]);
+                if ($stmt->fetch()) {
+                    throw new Exception('El nombre del rol ya existe');
+                }
+                
+                // Validar JSON de permisos
+                if (is_string($permisos)) {
+                    $permisos_array = json_decode($permisos, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new Exception('Formato de permisos inválido');
+                    }
+                    $permisos = json_encode($permisos_array);
+                } else {
+                    $permisos = json_encode($permisos);
+                }
+                
+                $stmt = $db->prepare("
+                    INSERT INTO roles (nombre, descripcion, permisos, estado) 
+                    VALUES (?, ?, ?, ?)
+                ");
+                
+                $stmt->execute([
+                    $nombre,
+                    $descripcion ?: null,
+                    $permisos,
+                    $estado
+                ]);
+                
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Rol creado exitosamente',
+                    'id' => $db->lastInsertId()
+                ]);
+            } elseif ($action === 'actualizar') {
+                $id = intval($_POST['id'] ?? 0);
+                $nombre = trim($_POST['nombre'] ?? '');
+                $descripcion = trim($_POST['descripcion'] ?? '');
+                $permisos = $_POST['permisos'] ?? '{}';
+                $estado = $_POST['estado'] ?? 'activo';
+                
+                if (empty($nombre)) {
+                    throw new Exception('El nombre es obligatorio');
+                }
+                
+                // Validar que el nombre no exista en otro rol
+                $stmt = $db->prepare("SELECT id FROM roles WHERE nombre = ? AND id != ?");
+                $stmt->execute([$nombre, $id]);
+                if ($stmt->fetch()) {
+                    throw new Exception('El nombre del rol ya existe');
+                }
+                
+                // Validar JSON de permisos
+                if (is_string($permisos)) {
+                    $permisos_array = json_decode($permisos, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new Exception('Formato de permisos inválido');
+                    }
+                    $permisos = json_encode($permisos_array);
+                } else {
+                    $permisos = json_encode($permisos);
+                }
+                
+                $stmt = $db->prepare("
+                    UPDATE roles 
+                    SET nombre = ?, descripcion = ?, permisos = ?, estado = ?
+                    WHERE id = ?
+                ");
+                
+                $stmt->execute([
+                    $nombre,
+                    $descripcion ?: null,
+                    $permisos,
+                    $estado,
+                    $id
+                ]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Rol actualizado exitosamente']);
+            } elseif ($action === 'eliminar' || $action === 'desactivar') {
+                $id = intval($_POST['id'] ?? 0);
+                
+                // Verificar si tiene usuarios asociados
+                $stmt = $db->prepare("SELECT COUNT(*) as total FROM usuarios WHERE rol_id = ? AND estado = 'activo'");
+                $stmt->execute([$id]);
+                $usuarios = $stmt->fetch()['total'];
+                
+                if ($usuarios > 0) {
+                    throw new Exception('No se puede desactivar el rol porque tiene usuarios activos asociados');
+                }
+                
+                $stmt = $db->prepare("SELECT estado FROM roles WHERE id = ?");
+                $stmt->execute([$id]);
+                $rol = $stmt->fetch();
+                
+                if (!$rol) {
+                    throw new Exception('Rol no encontrado');
+                }
+                
+                if ($rol['estado'] === 'inactivo') {
+                    throw new Exception('El rol ya está inactivo');
+                }
+                
+                $stmt = $db->prepare("UPDATE roles SET estado = 'inactivo', fecha_actualizacion = NOW() WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Rol desactivado exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    throw new Exception('ID de rol inválido');
+                }
+                
+                $stmt = $db->prepare("SELECT estado FROM roles WHERE id = ?");
+                $stmt->execute([$id]);
+                $rol = $stmt->fetch();
+                
+                if (!$rol) {
+                    throw new Exception('Rol no encontrado');
+                }
+                
+                if ($rol['estado'] === 'activo') {
+                    throw new Exception('El rol ya está activo');
+                }
+                
+                $stmt = $db->prepare("UPDATE roles SET estado = 'activo', fecha_actualizacion = NOW() WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Rol activado exitosamente']);
+            } elseif ($action === 'asignar_modulo') {
+                $rol_id = intval($_POST['rol_id'] ?? 0);
+                $modulo_id = intval($_POST['modulo_id'] ?? 0);
+                
+                if ($rol_id <= 0 || $modulo_id <= 0) {
+                    throw new Exception('ID de rol o módulo inválido');
+                }
+                
+                $resultado = asignarModuloARol($rol_id, $modulo_id);
+                
+                ob_end_clean();
+                echo json_encode($resultado);
+            } elseif ($action === 'quitar_modulo') {
+                $rol_id = intval($_POST['rol_id'] ?? 0);
+                $modulo_id = intval($_POST['modulo_id'] ?? 0);
+                
+                if ($rol_id <= 0 || $modulo_id <= 0) {
+                    throw new Exception('ID de rol o módulo inválido');
+                }
+                
+                $resultado = quitarModuloDeRol($rol_id, $modulo_id);
+                
+                ob_end_clean();
+                echo json_encode($resultado);
+            }
+            break;
+            
+        default:
+            ob_end_clean();
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+    }
+    
+} catch (PDOException $e) {
+    ob_end_clean();
+    $errorInfo = ErrorHandler::handleDatabaseError($e, 'roles/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage(), 'code' => $e->getCode()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 500, $debug);
+} catch (Exception $e) {
+    ob_end_clean();
+    $errorInfo = ErrorHandler::handleException($e, 'roles/api.php');
+    ErrorHandler::logError($e->getMessage(), ['exception' => $e->getMessage()]);
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    echo ErrorHandler::jsonResponse($errorInfo, 400, $debug);
+}
+?>
+

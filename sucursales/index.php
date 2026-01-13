@@ -1,0 +1,665 @@
+<?php
+/**
+ * Gestión de Sucursales
+ * Sistema de Gestión de Reciclaje
+ */
+
+// Verificar autenticación
+require_once __DIR__ . '/../config/auth.php';
+
+$auth = new Auth();
+if (!$auth->isAuthenticated()) {
+    header('Location: ../index.php');
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Sucursales - Sistema de Reciclaje</title>
+    <meta
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+      name="viewport"
+    />
+    <link
+      rel="icon"
+      href="../assets/img/kaiadmin/favicon.ico"
+      type="image/x-icon"
+    />
+
+    <!-- Fonts and icons -->
+    <script src="../assets/js/plugin/webfont/webfont.min.js"></script>
+    <script>
+      WebFont.load({
+        google: { families: ["Public Sans:300,400,500,600,700"] },
+        custom: {
+          families: [
+            "Font Awesome 5 Solid",
+            "Font Awesome 5 Regular",
+            "Font Awesome 5 Brands",
+            "simple-line-icons",
+          ],
+          urls: ["../assets/css/fonts.min.css"],
+        },
+        active: function () {
+          sessionStorage.fonts = true;
+        },
+      });
+    </script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="../assets/css/kaiadmin.min.css" />
+    <link rel="stylesheet" href="../assets/css/demo.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <!-- Sidebar -->
+      <div class="sidebar" data-background-color="dark">
+        <?php
+          $basePath = '..';
+          include __DIR__ . '/../includes/sidebar-logo.php';
+        ?>
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+          <div class="sidebar-content">
+            <?php
+              $basePath = '..';
+              $currentRoute = 'sucursales';
+              include __DIR__ . '/../includes/sidebar.php';
+            ?>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-panel">
+        <div class="main-header">
+          <?php
+            $basePath = '..';
+            include __DIR__ . '/../includes/main-header-logo.php';
+          ?>
+          <?php
+            $basePath = '..';
+            include __DIR__ . '/../includes/user-header.php';
+            include __DIR__ . '/../includes/modal-foto-perfil.php';
+            include __DIR__ . '/../includes/modal-cambiar-password.php';
+          ?>
+        </div>
+
+        <div class="container">
+          <div class="page-inner">
+            <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
+              <div>
+                <h3 class="fw-bold mb-3">Sucursales</h3>
+                <h6 class="op-7 mb-2">Administra las sucursales del sistema</h6>
+              </div>
+              <div class="ms-md-auto py-2 py-md-0">
+                <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#modalAgregarSucursal">
+                  <i class="fa fa-plus"></i> Nueva Sucursal
+                </button>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card card-round">
+                  <div class="card-header">
+                    <div class="card-head-row">
+                      <div class="card-title">Lista de Sucursales</div>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table id="sucursalesTable" class="display table table-striped table-hover">
+                        <thead>
+                          <tr>
+                            <th>Nombre</th>
+                            <th>Dirección</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Responsable</th>
+                            <th>Saldo Caja</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Los datos se cargarán dinámicamente desde la base de datos -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <?php include __DIR__ . '/../includes/footer.php'; ?>
+      </div>
+    </div>
+
+    <!-- Modal Agregar Sucursal -->
+    <div class="modal fade" id="modalAgregarSucursal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Nueva Sucursal</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="formAgregarSucursal">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Nombre de la Sucursal *</label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Sucursal Este" required>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Dirección</label>
+                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa"></textarea>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="0987654321" maxlength="10" pattern="[0-9]{10}">
+                    <small class="form-text text-muted">Debe tener exactamente 10 dígitos</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="sucursal@email.com">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Responsable</label>
+                    <select id="responsable_id" name="responsable_id" class="form-control">
+                      <option value="">Seleccione un responsable</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Estado</label>
+                    <select id="estado" name="estado" class="form-control">
+                      <option value="activa">Activa</option>
+                      <option value="inactiva">Inactiva</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Saldo Inicial ($)</label>
+                    <input type="number" id="saldo" name="saldo" class="form-control" placeholder="0.00" step="0.01">
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarSucursal">Guardar Sucursal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Editar Sucursal -->
+    <div class="modal fade" id="modalEditarSucursal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Editar Sucursal</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="formEditarSucursal">
+              <input type="hidden" id="editar_id" name="id">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Nombre de la Sucursal *</label>
+                    <input type="text" id="editar_nombre" name="nombre" class="form-control" required>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Dirección</label>
+                    <textarea id="editar_direccion" name="direccion" class="form-control" rows="2"></textarea>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="editar_telefono" name="telefono" class="form-control" maxlength="10" pattern="[0-9]{10}">
+                    <small class="form-text text-muted">Debe tener exactamente 10 dígitos</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="editar_email" name="email" class="form-control">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Responsable</label>
+                    <select id="editar_responsable_id" name="responsable_id" class="form-control">
+                      <option value="">Seleccione un responsable</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Estado</label>
+                    <select id="editar_estado" name="estado" class="form-control">
+                      <option value="activa">Activa</option>
+                      <option value="inactiva">Inactiva</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Saldo en Caja ($)</label>
+                    <input type="number" id="editar_saldo" name="saldo" class="form-control" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                    <small class="text-muted">Actualizado automáticamente</small>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btnActualizarSucursal">Actualizar Sucursal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core JS Files -->
+    <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
+    <script src="../assets/js/core/popper.min.js"></script>
+    <script src="../assets/js/core/bootstrap.min.js"></script>
+    <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+    <script src="../assets/js/plugin/datatables/datatables.min.js"></script>
+    <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+    <script src="../assets/js/kaiadmin.min.js"></script>
+    <script src="../assets/js/setting-demo.js"></script>
+    <script>
+      $(document).ready(function() {
+        var table = $('#sucursalesTable').DataTable({
+          "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
+          }
+        });
+        
+        var usuarios = [];
+        
+        // Cargar usuarios para el select de responsables
+        function cargarUsuarios() {
+          $.ajax({
+            url: '../usuarios/api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                usuarios = response.data;
+                var select = $('#responsable_id');
+                select.empty().append('<option value="">Seleccione un responsable</option>');
+                response.data.forEach(function(usuario) {
+                  if (usuario.estado === 'activo') {
+                    select.append('<option value="' + usuario.id + '">' + usuario.nombre + '</option>');
+                  }
+                });
+              }
+            }
+          });
+        }
+        
+        // Cargar sucursales
+        function cargarSucursales() {
+          $.ajax({
+            url: 'api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                table.clear();
+                response.data.forEach(function(sucursal) {
+                  var badgeEstado = sucursal.estado === 'activa' 
+                    ? '<span class="badge badge-success">Activa</span>'
+                    : '<span class="badge badge-danger">Inactiva</span>';
+                  
+                  // Botón de estado: Activar si está inactiva, Desactivar si está activa
+                  var botonEstado = '';
+                  if (sucursal.estado === 'activa') {
+                    botonEstado = '<button class="btn btn-link btn-danger btn-sm" onclick="desactivarSucursal(' + sucursal.id + ')" title="Desactivar"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botonEstado = '<button class="btn btn-link btn-success btn-sm" onclick="activarSucursal(' + sucursal.id + ')" title="Activar"><i class="fa fa-check"></i></button>';
+                  }
+
+                  var saldoVal = parseFloat(sucursal.saldo || 0);
+                  var colorSaldo = saldoVal < 0 ? 'text-danger' : 'text-success';
+                  var badgeSaldo = '<span class="' + colorSaldo + ' fw-bold">$' + saldoVal.toFixed(2) + '</span>';
+                  
+                  table.row.add([
+                    '<strong>' + sucursal.nombre + '</strong>',
+                    sucursal.direccion || '-',
+                    sucursal.telefono || '-',
+                    sucursal.email || '-',
+                    sucursal.responsable_nombre || '-',
+                    badgeSaldo,
+                    badgeEstado,
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarSucursal(' + sucursal.id + ')" title="Editar"><i class="fa fa-edit"></i></button> ' +
+                    botonEstado
+                  ]);
+                });
+                table.draw();
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar las sucursales", "error");
+            }
+          });
+        }
+        
+        window.cargarSucursales = cargarSucursales;
+        
+        // Validar teléfono de 10 dígitos
+        function validarTelefono10Digitos(telefono) {
+          // Limpiar: solo números
+          var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+          return telefonoLimpio.length === 10;
+        }
+        
+        // Validación en tiempo real para teléfono (agregar)
+        $('#telefono').on('input blur', function() {
+          var telefono = $(this).val();
+          if (telefono.trim() !== '') {
+            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+            if (telefonoLimpio.length !== 10) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">El teléfono debe tener exactamente 10 dígitos</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          } else {
+            $(this).removeClass('is-invalid is-valid');
+            $(this).next('.invalid-feedback').remove();
+          }
+        });
+        
+        // Validación en tiempo real para teléfono (editar)
+        $('#editar_telefono').on('input blur', function() {
+          var telefono = $(this).val();
+          if (telefono.trim() !== '') {
+            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+            if (telefonoLimpio.length !== 10) {
+              $(this).addClass('is-invalid');
+              $(this).removeClass('is-valid');
+              var feedback = $(this).next('.invalid-feedback');
+              if (feedback.length === 0) {
+                $(this).after('<div class="invalid-feedback">El teléfono debe tener exactamente 10 dígitos</div>');
+              }
+            } else {
+              $(this).removeClass('is-invalid');
+              $(this).addClass('is-valid');
+              $(this).next('.invalid-feedback').remove();
+            }
+          } else {
+            $(this).removeClass('is-invalid is-valid');
+            $(this).next('.invalid-feedback').remove();
+          }
+        });
+        
+        // Limitar entrada a solo números en teléfono
+        $('#telefono, #editar_telefono').on('input', function() {
+          var valor = $(this).val().replace(/[^0-9]/g, '');
+          if (valor.length > 10) {
+            valor = valor.substring(0, 10);
+          }
+          $(this).val(valor);
+        });
+        
+        // Cargar datos al iniciar
+        cargarUsuarios();
+        cargarSucursales();
+        
+        // Guardar nueva sucursal
+        $('#btnGuardarSucursal').click(function() {
+          var form = $('#formAgregarSucursal')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          // Validar teléfono antes de enviar
+          var telefono = $('#telefono').val().trim();
+          if (telefono !== '') {
+            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+            if (telefonoLimpio.length !== 10) {
+              swal("Error", "El teléfono debe tener exactamente 10 dígitos", "error");
+              $('#telefono').focus();
+              return;
+            }
+          }
+          
+          var formData = {
+            nombre: $('#nombre').val(),
+            direccion: $('#direccion').val(),
+            telefono: $('#telefono').val(),
+            email: $('#email').val(),
+            responsable_id: $('#responsable_id').val(),
+            estado: $('#estado').val(),
+            saldo: $('#saldo').val(),
+            action: 'crear'
+          };
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalAgregarSucursal').modal('hide');
+                $('#formAgregarSucursal')[0].reset();
+                cargarSucursales();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar la sucursal';
+              swal("Error", error, "error");
+            }
+          });
+        });
+        
+        // Actualizar sucursal
+        $('#btnActualizarSucursal').click(function() {
+          var form = $('#formEditarSucursal')[0];
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          // Validar teléfono antes de enviar
+          var telefono = $('#editar_telefono').val().trim();
+          if (telefono !== '') {
+            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+            if (telefonoLimpio.length !== 10) {
+              swal("Error", "El teléfono debe tener exactamente 10 dígitos", "error");
+              $('#editar_telefono').focus();
+              return;
+            }
+          }
+          
+          var formData = {
+            id: $('#editar_id').val(),
+            nombre: $('#editar_nombre').val(),
+            direccion: $('#editar_direccion').val(),
+            telefono: $('#editar_telefono').val(),
+            email: $('#editar_email').val(),
+            responsable_id: $('#editar_responsable_id').val(),
+            estado: $('#editar_estado').val(),
+            action: 'actualizar'
+          };
+          
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            xhrFields: {
+              withCredentials: true
+            },
+            crossDomain: false,
+            success: function(response) {
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalEditarSucursal').modal('hide');
+                cargarSucursales();
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function(xhr) {
+              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al actualizar la sucursal';
+              swal("Error", error, "error");
+            }
+          });
+        });
+      });
+      
+      function editarSucursal(id) {
+        // Cargar usuarios en el select de edición
+        $.ajax({
+          url: '../usuarios/api.php?action=listar',
+          method: 'GET',
+          dataType: 'json',
+          success: function(response) {
+            if (response.success) {
+              var select = $('#editar_responsable_id');
+              select.empty().append('<option value="">Seleccione un responsable</option>');
+              response.data.forEach(function(usuario) {
+                if (usuario.estado === 'activo') {
+                  select.append('<option value="' + usuario.id + '">' + usuario.nombre + '</option>');
+                }
+              });
+            }
+          }
+        });
+        
+        $.ajax({
+          url: 'api.php?action=obtener&id=' + id,
+          method: 'GET',
+          dataType: 'json',
+          xhrFields: {
+            withCredentials: true
+          },
+          crossDomain: false,
+          success: function(response) {
+            if (response.success) {
+              var s = response.data;
+              $('#editar_id').val(s.id);
+              $('#editar_nombre').val(s.nombre);
+              $('#editar_direccion').val(s.direccion || '');
+              $('#editar_telefono').val(s.telefono || '');
+              $('#editar_email').val(s.email || '');
+              $('#editar_responsable_id').val(s.responsable_id || '');
+              $('#editar_estado').val(s.estado);
+              $('#editar_saldo').val(s.saldo || 0);
+              $('#modalEditarSucursal').modal('show');
+            }
+          }
+        });
+      }
+      
+      function desactivarSucursal(id) {
+        swal({
+          title: "¿Está seguro?",
+          text: "La sucursal será desactivada",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
+              data: { id: id, action: 'desactivar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarSucursales();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al desactivar la sucursal';
+                swal("Error", error, "error");
+              }
+            });
+          }
+        });
+      }
+      
+      function activarSucursal(id) {
+        swal({
+          title: "¿Activar sucursal?",
+          text: "La sucursal será marcada como activa",
+          icon: "info",
+          buttons: true,
+        })
+        .then((willActivate) => {
+          if (willActivate) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              xhrFields: {
+                withCredentials: true
+              },
+              crossDomain: false,
+              data: { id: id, action: 'activar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarSucursales();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al activar la sucursal';
+                swal("Error", error, "error");
+              }
+            });
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
+
