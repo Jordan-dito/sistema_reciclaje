@@ -760,9 +760,38 @@ try {
           fila.find('td:eq(5)').html('<strong>$' + producto.subtotal.toFixed(2) + '</strong>');
         }
         
-        // Función para eliminar un producto (simplificada para depuración)
+        // Función para eliminar un producto
         function eliminarProducto(index) {
           console.log("Eliminar producto llamado para el índice:", index);
+          
+          if (index < 0 || index >= productosSeleccionados.length) {
+            console.error("Índice inválido:", index);
+            return;
+          }
+          
+          var producto = productosSeleccionados[index];
+          
+          swal({
+            title: "¿Eliminar producto?",
+            text: "¿Deseas eliminar " + producto.nombre + " de la lista?",
+            icon: "warning",
+            buttons: ["Cancelar", "Eliminar"],
+            dangerMode: true,
+          }).then((willDelete) => {
+            if (willDelete) {
+              // Eliminar el producto del array
+              productosSeleccionados.splice(index, 1);
+              
+              // Re-renderizar la tabla
+              renderizarProductosAgregados();
+              
+              // Recalcular totales
+              calcularTotal();
+              
+              // Mensaje de confirmación
+              swal("Eliminado", producto.nombre + " ha sido eliminado de la lista", "success");
+            }
+          });
         }
         
         // Función para limpiar todos los productos

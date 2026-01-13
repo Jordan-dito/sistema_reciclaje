@@ -171,6 +171,13 @@ try {
                     throw new Exception('La contraseña debe tener al menos 8 caracteres');
                 }
                 
+                // Verificar si el nombre ya existe
+                $stmt = $db->prepare("SELECT id FROM usuarios WHERE nombre = ?");
+                $stmt->execute([$nombre]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Ya existe un usuario con ese nombre');
+                }
+                
                 // Verificar si el email ya existe
                 $stmt = $db->prepare("SELECT id FROM usuarios WHERE email = ?");
                 $stmt->execute([$email]);
@@ -183,6 +190,15 @@ try {
                 $stmt->execute([$cedula]);
                 if ($stmt->fetch()) {
                     throw new Exception('La cédula ya está registrada');
+                }
+                
+                // Verificar si el teléfono ya existe (solo si se proporciona)
+                if (!empty($telefono)) {
+                    $stmt = $db->prepare("SELECT id FROM usuarios WHERE telefono = ?");
+                    $stmt->execute([$telefono]);
+                    if ($stmt->fetch()) {
+                        throw new Exception('El teléfono ya está registrado');
+                    }
                 }
                 
                 // Verificar que el rol existe
@@ -273,6 +289,13 @@ try {
                     }
                 }
                 
+                // Verificar si el nombre ya existe en otro usuario
+                $stmt = $db->prepare("SELECT id FROM usuarios WHERE nombre = ? AND id != ?");
+                $stmt->execute([$nombre, $id]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Ya existe otro usuario con ese nombre');
+                }
+                
                 // Verificar si el email ya existe en otro usuario
                 $stmt = $db->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
                 $stmt->execute([$email, $id]);
@@ -285,6 +308,15 @@ try {
                 $stmt->execute([$cedula, $id]);
                 if ($stmt->fetch()) {
                     throw new Exception('La cédula ya está registrada en otro usuario');
+                }
+                
+                // Verificar si el teléfono ya existe en otro usuario (solo si se proporciona)
+                if (!empty($telefono)) {
+                    $stmt = $db->prepare("SELECT id FROM usuarios WHERE telefono = ? AND id != ?");
+                    $stmt->execute([$telefono, $id]);
+                    if ($stmt->fetch()) {
+                        throw new Exception('El teléfono ya está registrado en otro usuario');
+                    }
                 }
                 
                 // Verificar que el rol existe

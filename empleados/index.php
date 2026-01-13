@@ -256,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
                     <div class="text-muted">Usuario: <?php echo htmlspecialchars($usuarioNombre); ?></div>
                   </div>
                   <div class="card-body">
-                    <p class="mb-3">Página de ejemplo para administrar empleados. Aquí puedes listar, crear y editar registros del personal.</p>
+                    <p class="mb-3">Gestionar empleados. Aquí puedes listar, crear y editar registros del personal.</p>
 
                     <?php if (!empty($errors)): ?>
                       <div class="alert alert-danger">

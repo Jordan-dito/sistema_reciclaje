@@ -92,7 +92,7 @@ if (!$auth->isAuthenticated()) {
             <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
               <div>
                 <h3 class="fw-bold mb-3">Gestión de Proveedores</h3>
-                <h6 class="op-7 mb-2">Administra los proveedores de materiales reciclables</h6>
+                <h6 class="op-7 mb-2">Gestionar los proveedores de materiales reciclables</h6>
               </div>
               <div class="ms-md-auto py-2 py-md-0">
                 <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#modalAgregarProveedor">
@@ -144,11 +144,12 @@ if (!$auth->isAuthenticated()) {
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Nuevo Proveedor</h5>
+            <h5 class="modal-title" id="modalProveedorTitle">Nuevo Proveedor</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form id="formAgregarProveedor">
+              <input type="hidden" id="proveedor_id" name="id">
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
@@ -380,7 +381,7 @@ if (!$auth->isAuthenticated()) {
         
         window.cargarProveedores = cargarProveedores;
         
-        // Guardar nuevo proveedor
+        // Guardar proveedor (crear o editar)
         $('#btnGuardarProveedor').click(function() {
           var form = $('#formAgregarProveedor')[0];
           if (!form.checkValidity()) {
@@ -388,7 +389,11 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          var proveedorId = $('#proveedor_id').val();
+          var action = proveedorId ? 'editar' : 'crear';
+          
           var formData = {
+            id: proveedorId,
             nombre: $('#nombre').val(),
             cedula_ruc: $('#cedula_ruc').val(),
             tipo_documento: $('#tipo_documento').val(),
@@ -396,11 +401,9 @@ if (!$auth->isAuthenticated()) {
             telefono: $('#telefono').val(),
             email: $('#email').val(),
             contacto: $('#contacto').val(),
-            tipo_proveedor: $('#tipo_proveedor').val(),
-            materiales_suministra: $('#materiales_suministra').val(),
-            estado: $('#estado').val(),
-            notas: $('#notas').val(),
-            action: 'crear'
+            telefono_contacto: $('#telefono_contacto').val(),
+            observaciones: $('#observaciones').val(),
+            action: action
           };
           
           $.ajax({
@@ -412,7 +415,6 @@ if (!$auth->isAuthenticated()) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalAgregarProveedor').modal('hide');
-                $('#formAgregarProveedor')[0].reset();
                 cargarProveedores();
               } else {
                 swal("Error", response.message, "error");
@@ -425,12 +427,53 @@ if (!$auth->isAuthenticated()) {
           });
         });
         
+        // Resetear formulario al cerrar el modal
+        $('#modalAgregarProveedor').on('hidden.bs.modal', function() {
+          $('#formAgregarProveedor')[0].reset();
+          $('#proveedor_id').val('');
+          $('#modalProveedorTitle').text('Nuevo Proveedor');
+        });
+        
         // Cargar datos al iniciar
         cargarProveedores();
       });
       
       function editarProveedor(id) {
-        swal("Próximamente", "La funcionalidad de edición estará disponible pronto", "info");
+        // Obtener datos del proveedor
+        $.ajax({
+          url: 'api.php',
+          method: 'GET',
+          data: { id: id, action: 'obtener' },
+          dataType: 'json',
+          success: function(response) {
+            if (response.success && response.data) {
+              var proveedor = response.data;
+              
+              // Llenar el formulario con los datos
+              $('#proveedor_id').val(proveedor.id);
+              $('#nombre').val(proveedor.nombre);
+              $('#cedula_ruc').val(proveedor.cedula_ruc || '');
+              $('#tipo_documento').val(proveedor.tipo_documento || 'ruc');
+              $('#email').val(proveedor.email || '');
+              $('#telefono').val(proveedor.telefono || '');
+              $('#direccion').val(proveedor.direccion || '');
+              $('#contacto').val(proveedor.contacto || '');
+              $('#telefono_contacto').val(proveedor.telefono_contacto || '');
+              $('#observaciones').val(proveedor.observaciones || '');
+              
+              // Cambiar título del modal
+              $('#modalProveedorTitle').text('Editar Proveedor');
+              
+              // Abrir modal
+              $('#modalAgregarProveedor').modal('show');
+            } else {
+              swal("Error", response.message || "No se pudo cargar el proveedor", "error");
+            }
+          },
+          error: function() {
+            swal("Error", "Error al obtener los datos del proveedor", "error");
+          }
+        });
       }
       
       function eliminarProveedor(id) {

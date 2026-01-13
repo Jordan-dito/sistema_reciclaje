@@ -35,7 +35,27 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $sucursal_id = $_GET['sucursal_id'] ?? null;
+                // Obtener sucursal del usuario logueado
+                $sucursal_usuario = null;
+                
+                // Buscar si es responsable de una sucursal
+                $stmt = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? AND estado = 'activa' LIMIT 1");
+                $stmt->execute([$usuario_id]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($result) {
+                    $sucursal_usuario = $result['id'];
+                } else {
+                    // Buscar en perfil de usuario
+                    $stmt = $db->prepare("SELECT sucursal_id FROM usuarios WHERE id = ?");
+                    $stmt->execute([$usuario_id]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($result && $result['sucursal_id']) {
+                        $sucursal_usuario = $result['sucursal_id'];
+                    }
+                }
+                
+                $sucursal_id = $_GET['sucursal_id'] ?? $sucursal_usuario;
                 
                 $sql = "
                     SELECT c.*, p.nombre as proveedor_nombre, s.nombre as sucursal_nombre 
@@ -82,23 +102,67 @@ try {
                 ob_end_clean();
                 echo json_encode(['success' => true, 'data' => $compras], JSON_UNESCAPED_UNICODE);
             } elseif ($action === 'productos') {
-                // Obtener productos activos con precios de compra
-                $stmt = $db->query("
-                    SELECT p.id, 
-                           p.nombre, 
-                           m.nombre as material_nombre,
-                           c.nombre as categoria_nombre,
-                           u.simbolo as unidad,
-                           pr.id as precio_id,
-                           pr.precio_unitario
-                    FROM productos p 
-                    INNER JOIN materiales m ON p.material_id = m.id
-                    LEFT JOIN categorias c ON m.categoria_id = c.id
-                    INNER JOIN unidades u ON p.unidad_id = u.id
-                    LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.tipo_precio = 'compra' AND pr.estado = 'activo'
-                    WHERE p.estado = 'activo'
-                    ORDER BY p.nombre ASC
-                ");
+                // Obtener sucursal del usuario logueado
+                $sucursal_usuario = null;
+                
+                // Buscar si es responsable de una sucursal
+                $stmt = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? AND estado = 'activa' LIMIT 1");
+                $stmt->execute([$usuario_id]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($result) {
+                    $sucursal_usuario = $result['id'];
+                } else {
+                    // Buscar en perfil de usuario
+                    $stmt = $db->prepare("SELECT sucursal_id FROM usuarios WHERE id = ?");
+                    $stmt->execute([$usuario_id]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($result && $result['sucursal_id']) {
+                        $sucursal_usuario = $result['sucursal_id'];
+                    }
+                }
+                
+                // Obtener productos activos con precios de compra filtrados por sucursal
+                if ($sucursal_usuario) {
+                    $stmt = $db->prepare("
+                        SELECT p.id, 
+                               p.nombre, 
+                               m.nombre as material_nombre,
+                               c.nombre as categoria_nombre,
+                               u.simbolo as unidad,
+                               MAX(pr.id) as precio_id,
+                               MAX(pr.precio_unitario) as precio_unitario
+                        FROM productos p 
+                        INNER JOIN materiales m ON p.material_id = m.id
+                        LEFT JOIN categorias c ON m.categoria_id = c.id
+                        INNER JOIN unidades u ON p.unidad_id = u.id
+                        LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.tipo_precio = 'compra' AND pr.estado = 'activo'
+                        INNER JOIN inventarios i ON p.id = i.producto_id AND i.sucursal_id = ?
+                        WHERE p.estado = 'activo'
+                        GROUP BY p.id, p.nombre, m.nombre, c.nombre, u.simbolo
+                        ORDER BY p.nombre ASC
+                    ");
+                    $stmt->execute([$sucursal_usuario]);
+                } else {
+                    // Si no tiene sucursal, mostrar todos
+                    $stmt = $db->query("
+                        SELECT p.id, 
+                               p.nombre, 
+                               m.nombre as material_nombre,
+                               c.nombre as categoria_nombre,
+                               u.simbolo as unidad,
+                               pr.id as precio_id,
+                               pr.precio_unitario
+                        FROM productos p 
+                        INNER JOIN materiales m ON p.material_id = m.id
+                        LEFT JOIN categorias c ON m.categoria_id = c.id
+                        INNER JOIN unidades u ON p.unidad_id = u.id
+                        LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.tipo_precio = 'compra' AND pr.estado = 'activo'
+                        WHERE p.estado = 'activo'
+                        ORDER BY p.nombre ASC
+                    ");
+                }
+                
                 $productos = $stmt->fetchAll();
                 
                 ob_end_clean();
