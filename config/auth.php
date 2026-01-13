@@ -35,9 +35,10 @@ class Auth {
     public function login($email, $password) {
         try {
             $stmt = $this->db->prepare("
-                SELECT u.*, r.nombre as rol_nombre, r.permisos as rol_permisos 
+                SELECT u.*, r.nombre as rol_nombre, r.permisos as rol_permisos, s.nombre as sucursal_nombre 
                 FROM usuarios u 
                 INNER JOIN roles r ON u.rol_id = r.id 
+                LEFT JOIN sucursales s ON u.sucursal_id = s.id
                 WHERE u.email = ? AND u.estado = 'activo'
             ");
             $stmt->execute([$email]);
@@ -64,6 +65,7 @@ class Auth {
             $_SESSION['usuario_email'] = $usuario['email'];
             $_SESSION['usuario_cedula'] = $usuario['cedula'] ?? '';
             $_SESSION['usuario_rol'] = $usuario['rol_nombre'];
+            $_SESSION['usuario_sucursal'] = $usuario['sucursal_nombre'] ?? null;
             
             // Cargar foto de perfil si existe
             $fotoPerfil = isset($usuario['foto_perfil']) && !empty($usuario['foto_perfil']) 

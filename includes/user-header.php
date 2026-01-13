@@ -13,19 +13,26 @@ $usuarioId = isset($_SESSION['usuario_id']) ? $_SESSION['usuario_id'] : null;
 $usuarioNombre = isset($_SESSION['usuario_nombre']) ? $_SESSION['usuario_nombre'] : 'Usuario';
 $usuarioEmail = isset($_SESSION['usuario_email']) ? $_SESSION['usuario_email'] : '';
 $usuarioRol = isset($_SESSION['usuario_rol']) ? $_SESSION['usuario_rol'] : '';
+$usuarioSucursal = isset($_SESSION['usuario_sucursal']) ? $_SESSION['usuario_sucursal'] : null;
 
-// Obtener foto de perfil desde la base de datos
+// Obtener foto de perfil y sucursal desde la base de datos
 $fotoPerfil = null;
 if ($usuarioId) {
     try {
         $db = getDB();
-        $stmt = $db->prepare("SELECT foto_perfil FROM usuarios WHERE id = ?");
+        $stmt = $db->prepare("SELECT u.foto_perfil, s.nombre as sucursal_nombre FROM usuarios u LEFT JOIN sucursales s ON u.sucursal_id = s.id WHERE u.id = ?");
         $stmt->execute([$usuarioId]);
         $usuario = $stmt->fetch();
-        if ($usuario && !empty($usuario['foto_perfil']) && file_exists(__DIR__ . '/../' . $usuario['foto_perfil'])) {
-            $fotoPerfil = $usuario['foto_perfil'];
-            // Actualizar sesión
-            $_SESSION['usuario_foto_perfil'] = $fotoPerfil;
+        if ($usuario) {
+            if (!empty($usuario['foto_perfil']) && file_exists(__DIR__ . '/../' . $usuario['foto_perfil'])) {
+                $fotoPerfil = $usuario['foto_perfil'];
+                $_SESSION['usuario_foto_perfil'] = $fotoPerfil;
+            }
+            // Actualizar sucursal en sesión si no existe
+            if (!$usuarioSucursal && !empty($usuario['sucursal_nombre'])) {
+                $usuarioSucursal = $usuario['sucursal_nombre'];
+                $_SESSION['usuario_sucursal'] = $usuarioSucursal;
+            }
         }
     } catch (Exception $e) {
         error_log("Error al obtener foto de perfil: " . $e->getMessage());
@@ -369,6 +376,11 @@ if (!empty($usuarioNombre)) {
                   <p class="text-muted small mb-0" style="font-size: 12px; line-height: 1.4;">
                     <i class="fas fa-user-tag me-1"></i> <?php echo htmlspecialchars($usuarioRol); ?>
                   </p>
+                  <?php if ($usuarioSucursal): ?>
+                  <p class="text-muted small mb-0" style="font-size: 12px; line-height: 1.4;">
+                    <i class="fas fa-building me-1"></i> <?php echo htmlspecialchars($usuarioSucursal); ?>
+                  </p>
+                  <?php endif; ?>
                 </div>
               </div>
             </li>

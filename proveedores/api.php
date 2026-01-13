@@ -158,7 +158,7 @@ try {
                     'message' => 'Proveedor creado exitosamente',
                     'id' => $db->lastInsertId()
                 ]);
-            } elseif ($action === 'actualizar') {
+            } elseif ($action === 'actualizar' || $action === 'editar') {
                 $id = intval($_POST['id'] ?? 0);
                 $nombre = trim($_POST['nombre'] ?? '');
                 $cedula_ruc = trim($_POST['cedula_ruc'] ?? '');
@@ -167,10 +167,8 @@ try {
                 $telefono = trim($_POST['telefono'] ?? '');
                 $email = trim($_POST['email'] ?? '');
                 $contacto = trim($_POST['contacto'] ?? '');
-                $tipo_proveedor = $_POST['tipo_proveedor'] ?? 'recolector';
-                $materiales_suministra = trim($_POST['materiales_suministra'] ?? '');
-                $estado = $_POST['estado'] ?? 'activo';
-                $notas = trim($_POST['notas'] ?? '');
+                $telefono_contacto = trim($_POST['telefono_contacto'] ?? '');
+                $observaciones = trim($_POST['observaciones'] ?? '');
                 
                 // Validar nombre: no solo espacios
                 $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
@@ -188,13 +186,36 @@ try {
                     }
                 }
                 
-                // Validar teléfono si se proporciona
+                // Validar teléfono si se proporciona y no está vacío
                 if (!empty($telefono)) {
-                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
-                    $validacionTelefono = validarTelefonoEcuatoriano($telefono);
-                    if (!$validacionTelefono['valid']) {
-                        throw new Exception($validacionTelefono['message']);
+                    $telefonoLimpio = preg_replace('/[^0-9]/', '', $telefono);
+                    if (strlen($telefonoLimpio) > 0) {
+                        $validacionTelefono = validarTelefonoEcuatoriano($telefonoLimpio);
+                        if (!$validacionTelefono['valid']) {
+                            throw new Exception($validacionTelefono['message']);
+                        }
+                        $telefono = $telefonoLimpio;
+                    } else {
+                        $telefono = null;
                     }
+                } else {
+                    $telefono = null;
+                }
+                
+                // Validar teléfono de contacto si se proporciona
+                if (!empty($telefono_contacto)) {
+                    $telefonoContactoLimpio = preg_replace('/[^0-9]/', '', $telefono_contacto);
+                    if (strlen($telefonoContactoLimpio) > 0) {
+                        $validacionTelefonoContacto = validarTelefonoEcuatoriano($telefonoContactoLimpio);
+                        if (!$validacionTelefonoContacto['valid']) {
+                            throw new Exception('Teléfono de contacto: ' . $validacionTelefonoContacto['message']);
+                        }
+                        $telefono_contacto = $telefonoContactoLimpio;
+                    } else {
+                        $telefono_contacto = null;
+                    }
+                } else {
+                    $telefono_contacto = null;
                 }
                 
                 // Validar contacto si se proporciona (solo letras y espacios)
@@ -224,13 +245,12 @@ try {
                 
                 // Limpiar campos de texto
                 $direccion = limpiarEspacios($direccion);
-                $materiales_suministra = limpiarEspacios($materiales_suministra);
-                $notas = limpiarEspacios($notas);
+                $observaciones = limpiarEspacios($observaciones);
                 
                 $stmt = $db->prepare("
                     UPDATE proveedores 
                     SET nombre = ?, cedula_ruc = ?, tipo_documento = ?, direccion = ?, telefono = ?, email = ?, 
-                        contacto = ?, tipo_proveedor = ?, materiales_suministra = ?, estado = ?, notas = ?
+                        contacto = ?, telefono_contacto = ?, observaciones = ?
                     WHERE id = ?
                 ");
                 
@@ -242,10 +262,8 @@ try {
                     $telefono ?: null,
                     $email ?: null,
                     $contacto ?: null,
-                    $tipo_proveedor,
-                    $materiales_suministra ?: null,
-                    $estado,
-                    $notas ?: null,
+                    $telefono_contacto ?: null,
+                    $observaciones ?: null,
                     $id
                 ]);
                 

@@ -166,7 +166,7 @@ for($i = 0; $i < 7; $i++) {
                     <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
                         <div>
                             <h3 class="fw-bold mb-3">Control de Asistencia y Pagos</h3>
-                            <h6 class="op-7 mb-2">Gestión Diaria</h6>
+                            <h6 class="op-7 mb-2">Gestión de asistencia y pagos</h6>
                         </div>
                         <div class="ms-md-auto py-2 py-md-0 d-flex align-items-center">
                             <label class="me-2 fw-bold">Semana del:</label>
@@ -281,8 +281,10 @@ for($i = 0; $i < 7; $i++) {
     </div>
 
     <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
+    <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+    <script src="../assets/js/kaiadmin.min.js"></script>
     
     <script>
         const lunesSemana = '<?php echo date('Y-m-d', $lunesTimestamp); ?>';
