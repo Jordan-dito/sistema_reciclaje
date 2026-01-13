@@ -15,7 +15,7 @@
  */
 
 // Configuración
-$webhook_secret = 'Barcelona1925'; // Cambia esto por un secreto seguro
+$webhook_secret = 'reciclaje2026'; // Nuevo secreto simple para sincronizar
 $repo_path = __DIR__; // Ruta donde está el proyecto
 $log_file = __DIR__ . '/deploy.log';
 
