@@ -84,9 +84,10 @@ try {
     // Obtener datos actualizados del usuario desde la base de datos
     $db = getDB();
     $stmt = $db->prepare("
-        SELECT u.*, r.nombre as rol_nombre, r.id as rol_id
+        SELECT u.*, r.nombre as rol_nombre, r.id as rol_id, s.nombre as sucursal_nombre, s.id as sucursal_id
         FROM usuarios u 
         INNER JOIN roles r ON u.rol_id = r.id 
+        LEFT JOIN sucursales s ON u.sucursal_id = s.id
         WHERE u.id = ? AND u.estado = 'activo'
     ");
     $stmt->execute([$usuarioId]);
@@ -130,6 +131,7 @@ try {
         $_SESSION['usuario_nombre'] = $usuario['nombre'];
         $_SESSION['usuario_email'] = $usuario['email'];
         $_SESSION['usuario_rol'] = $usuario['rol_nombre'];
+        $_SESSION['usuario_sucursal'] = $usuario['sucursal_nombre'] ?? null;
     }
     
     // Preparar respuesta
@@ -144,6 +146,8 @@ try {
             'telefono' => $usuario['telefono'] ?? '',
             'rol' => $usuario['rol_nombre'],
             'rol_id' => intval($usuario['rol_id']),
+            'sucursal' => $usuario['sucursal_nombre'] ?? null,
+            'sucursal_id' => isset($usuario['sucursal_id']) ? intval($usuario['sucursal_id']) : null,
             'foto_perfil' => $fotoPerfilUrl, // URL completa
             'foto_perfil_ruta' => $fotoPerfil, // Ruta relativa
             'estado' => $usuario['estado'] ?? 'activo',

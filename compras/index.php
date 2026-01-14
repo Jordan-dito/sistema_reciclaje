@@ -345,7 +345,11 @@ if (!$auth->isAuthenticated()) {
                       var detalle = detalles[0];
                       productosInfo = '<strong>' + (detalle.producto_nombre || '-') + '</strong>';
                     } else {
-                      productosInfo = '<strong>' + numProductos + ' productos</strong><br><small class="text-muted">Ver detalles</small>';
+                      // Mostrar nombres de productos separados por comas
+                      var nombresProductos = detalles.map(function(detalle) {
+                        return detalle.producto_nombre || '-';
+                      }).join(', ');
+                      productosInfo = '<strong>' + nombresProductos + '</strong>';
                     }
                   } else {
                     productosInfo = '<span class="text-muted">Sin productos</span>';

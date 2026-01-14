@@ -56,8 +56,46 @@ if (!$compra_id) {
     <style>
       @media print {
         .no-print { display: none !important; }
-        body { background: white; }
-        .card { border: none; box-shadow: none; }
+        .sidebar { display: none !important; }
+        .main-header { display: none !important; }
+        .main-panel { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+        .wrapper { padding: 0 !important; }
+        .container-fluid { padding: 0 !important; max-width: 100% !important; }
+        body { background: white; margin: 0 !important; padding: 0 !important; }
+        .card { border: none; box-shadow: none; page-break-inside: avoid; margin: 0 !important; }
+        .card-body { padding: 5px !important; }
+        /* Habilitar colores en impresión */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        /* Ajustar tabla para que quepa en la página */
+        .table-responsive { overflow: visible !important; }
+        table { font-size: 9px !important; width: 100% !important; margin: 0 !important; }
+        th, td { padding: 2px !important; line-height: 1.2 !important; }
+        /* Ajustar anchos de columna */
+        table th:nth-child(1) { width: 20px !important; } /* # */
+        table th:nth-child(2) { width: 20% !important; } /* Producto */
+        table th:nth-child(3) { width: 12% !important; } /* Material */
+        table th:nth-child(4) { width: 15% !important; } /* Categoría */
+        table th:nth-child(5) { width: 10% !important; } /* Cantidad */
+        table th:nth-child(6) { width: 8% !important; } /* Unidad */
+        table th:nth-child(7) { width: 12% !important; } /* Precio Unitario */
+        table th:nth-child(8) { width: 13% !important; } /* Subtotal */
+        .factura-header { margin-bottom: 5px !important; padding-bottom: 5px !important; font-size: 12px !important; }
+        .factura-header h1 { font-size: 18px !important; margin: 3px 0 !important; }
+        .factura-body { padding: 5px !important; margin: 0 !important; }
+        .row { margin: 0 !important; }
+        .col-md-6 { padding: 3px !important; font-size: 10px !important; }
+        h5, h6 { margin: 3px 0 !important; font-size: 11px !important; }
+        .mb-4, .mb-3, .mb-2 { margin-bottom: 5px !important; }
+        tfoot th { font-size: 9px !important; padding: 2px !important; }
+        tfoot { line-height: 1.1 !important; }
+        /* Escalar todo para que quepa */
+        html { height: 100%; }
+        body { transform: scale(0.85); transform-origin: top left; width: 118%; height: 118%; }
+        @page { size: landscape; margin: 2mm; }
       }
       .factura-header {
         border-bottom: 3px solid #007bff;

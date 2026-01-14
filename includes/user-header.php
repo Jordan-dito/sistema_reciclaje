@@ -20,22 +20,28 @@ $fotoPerfil = null;
 if ($usuarioId) {
     try {
         $db = getDB();
-        $stmt = $db->prepare("SELECT u.foto_perfil, s.nombre as sucursal_nombre FROM usuarios u LEFT JOIN sucursales s ON u.sucursal_id = s.id WHERE u.id = ?");
+        $stmt = $db->prepare("SELECT u.foto_perfil, u.sucursal_id, s.nombre as sucursal_nombre FROM usuarios u LEFT JOIN sucursales s ON u.sucursal_id = s.id WHERE u.id = ?");
         $stmt->execute([$usuarioId]);
         $usuario = $stmt->fetch();
         if ($usuario) {
+            // Log temporal para debug
+            error_log("Usuario ID: " . $usuarioId . " - Sucursal ID: " . ($usuario['sucursal_id'] ?? 'NULL') . " - Sucursal Nombre: " . ($usuario['sucursal_nombre'] ?? 'NULL'));
+            
             if (!empty($usuario['foto_perfil']) && file_exists(__DIR__ . '/../' . $usuario['foto_perfil'])) {
                 $fotoPerfil = $usuario['foto_perfil'];
                 $_SESSION['usuario_foto_perfil'] = $fotoPerfil;
             }
-            // Actualizar sucursal en sesión si no existe
-            if (!$usuarioSucursal && !empty($usuario['sucursal_nombre'])) {
+            // Actualizar sucursal siempre desde la base de datos
+            if (!empty($usuario['sucursal_nombre'])) {
                 $usuarioSucursal = $usuario['sucursal_nombre'];
                 $_SESSION['usuario_sucursal'] = $usuarioSucursal;
+            } else {
+                $usuarioSucursal = null;
+                $_SESSION['usuario_sucursal'] = null;
             }
         }
     } catch (Exception $e) {
-        error_log("Error al obtener foto de perfil: " . $e->getMessage());
+        error_log("Error al obtener foto de perfil y sucursal: " . $e->getMessage());
     }
 }
 
@@ -373,14 +379,17 @@ if (!empty($usuarioNombre)) {
                 <div class="u-text flex-grow-1">
                   <h4 class="mb-1" style="font-size: 16px; font-weight: 600; color: #212529; line-height: 1.3;"><?php echo htmlspecialchars($usuarioNombre); ?></h4>
                   <p class="text-muted mb-1" style="font-size: 13px; line-height: 1.4; margin-bottom: 4px;"><?php echo htmlspecialchars($usuarioEmail); ?></p>
-                  <p class="text-muted small mb-0" style="font-size: 12px; line-height: 1.4;">
+                  <p class="text-muted small mb-0" style="font-size: 12px; line-height: 1.4; margin-bottom: 4px;">
                     <i class="fas fa-user-tag me-1"></i> <?php echo htmlspecialchars($usuarioRol); ?>
                   </p>
-                  <?php if ($usuarioSucursal): ?>
                   <p class="text-muted small mb-0" style="font-size: 12px; line-height: 1.4;">
-                    <i class="fas fa-building me-1"></i> <?php echo htmlspecialchars($usuarioSucursal); ?>
+                    <i class="fas fa-building me-1" style="color: #1572e8;"></i> 
+                    <?php if ($usuarioSucursal): ?>
+                      <strong><?php echo htmlspecialchars($usuarioSucursal); ?></strong>
+                    <?php else: ?>
+                      <em style="color: #999;">Sin sucursal asignada</em>
+                    <?php endif; ?>
                   </p>
-                  <?php endif; ?>
                 </div>
               </div>
             </li>
