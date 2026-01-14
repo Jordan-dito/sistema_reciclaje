@@ -11,6 +11,7 @@
     <link rel="shortcut icon" href="assets/img/logo.jpg" type="image/jpeg">
     
     <!-- Font Awesome para iconos -->
+    <!-- Deploy Check: 2026-01-12 11:58 PM -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Google Fonts -->
