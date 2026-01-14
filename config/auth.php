@@ -93,6 +93,7 @@ class Auth {
                     'telefono' => $usuario['telefono'] ?? '',
                     'rol' => $usuario['rol_nombre'],
                     'rol_id' => $usuario['rol_id'],
+                    'sucursal' => $usuario['sucursal_nombre'] ?? null,
                     'foto_perfil_ruta' => $fotoPerfil // Ruta relativa, se convertirá a URL completa en login.php
                 ]
             ];
