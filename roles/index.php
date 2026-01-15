@@ -216,15 +216,6 @@ $usuario = $auth->getCurrentUser();
                     <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del rol"></textarea>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
-                </div>
               </div>
             </form>
           </div>
@@ -258,15 +249,6 @@ $usuario = $auth->getCurrentUser();
                   <div class="form-group">
                     <label>Descripción</label>
                     <textarea id="editar_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="editar_estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -559,8 +541,7 @@ $usuario = $auth->getCurrentUser();
             data: {
               action: 'crear',
               nombre: nombre,
-              descripcion: $('#descripcion').val(),
-              estado: $('#estado').val()
+              descripcion: $('#descripcion').val()
             },
             dataType: 'json',
             xhrFields: {
@@ -596,7 +577,6 @@ $usuario = $auth->getCurrentUser();
             id: $('#editar_id').val(),
             nombre: $('#editar_nombre').val(),
             descripcion: $('#editar_descripcion').val(),
-            estado: $('#editar_estado').val(),
             action: 'actualizar'
           };
           
@@ -642,7 +622,6 @@ $usuario = $auth->getCurrentUser();
               $('#editar_id').val(r.id);
               $('#editar_nombre').val(r.nombre);
               $('#editar_descripcion').val(r.descripcion || '');
-              $('#editar_estado').val(r.estado);
               $('#modalEditarRol').modal('show');
             } else {
               swal("Error", response.message || "No se pudo cargar el rol", "error");
