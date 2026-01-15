@@ -209,7 +209,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Número de Factura</label>
-                    <input type="text" id="numero_factura" name="numero_factura" class="form-control" placeholder="Opcional">
+                    <input type="text" id="numero_factura" name="numero_factura" class="form-control" placeholder="Se generará automáticamente" readonly>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -590,9 +590,36 @@ if (!$auth->isAuthenticated()) {
           }
         };
 
+        $('#modalNuevaVenta').on('show.bs.modal', function() {
+          cargarSiguienteNumeroFactura();
+          // Resetear fecha a hoy al abrir
+          $('#fecha_venta').val(new Date().toISOString().split('T')[0]);
+        });
+
         $('#modalNuevaVenta').on('hidden.bs.modal', function() {
            limpiarSeleccionProducto();
         });
+
+        // Función para cargar el siguiente número de factura
+        function cargarSiguienteNumeroFactura() {
+          $('#numero_factura').val('Cargando...');
+          $.ajax({
+            url: 'api.php?action=siguiente_numero_factura',
+            method: 'GET',
+            dataType: 'json',
+            cache: false,
+            success: function(response) {
+              if (response.success && response.numero_factura) {
+                $('#numero_factura').val(response.numero_factura);
+              } else {
+                $('#numero_factura').val('00001');
+              }
+            },
+            error: function() {
+              $('#numero_factura').val('00001');
+            }
+          });
+        }
         
         // Cargar ventas
         function cargarVentas() {
