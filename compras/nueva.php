@@ -640,8 +640,8 @@ try {
             material: material || '',
             categoria: categoria || '',
             unidad: unidad || '',
-            cantidad: 1, // Cantidad por defecto
-            subtotal: parseFloat(precio) || 0
+            cantidad: 0, // Cantidad por defecto 0
+            subtotal: 0
           };
           
           productosSeleccionados.push(producto);
@@ -700,15 +700,11 @@ try {
             var cantidadInput = $('<input>')
               .attr('type', 'number')
               .attr('step', '0.01')
-              .attr('min', '0.01')
+              .attr('min', '0')
               .addClass('form-control form-control-sm')
               .val(producto.cantidad)
               .on('change input', function() {
                 var nuevaCantidad = parseFloat($(this).val()) || 0;
-                if (nuevaCantidad <= 0) {
-                  $(this).val(1);
-                  nuevaCantidad = 1;
-                }
                 producto.cantidad = nuevaCantidad;
                 producto.subtotal = producto.cantidad * producto.precio;
                 actualizarFilaProducto(index);
