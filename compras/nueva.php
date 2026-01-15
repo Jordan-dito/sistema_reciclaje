@@ -716,20 +716,18 @@ try {
               });
             fila.append($('<td>').append(cantidadInput));
             
-            // Precio Unitario (editable)
+            // Precio Unitario (solo lectura)
             var precioInput = $('<input>')
               .attr('type', 'number')
               .attr('step', '0.01')
               .attr('min', '0')
+              .attr('readonly', true) // Hacer solo lectura
+              .css({
+                'background-color': '#f8f9fa',
+                'cursor': 'not-allowed'
+              })
               .addClass('form-control form-control-sm')
-              .val(producto.precio.toFixed(2))
-              .on('change input', function() {
-                var nuevoPrecio = parseFloat($(this).val()) || 0;
-                producto.precio = nuevoPrecio;
-                producto.subtotal = producto.cantidad * producto.precio;
-                actualizarFilaProducto(index);
-                calcularTotal();
-              });
+              .val(producto.precio.toFixed(2));
             fila.append($('<td>').append(precioInput));
             
             // Subtotal
