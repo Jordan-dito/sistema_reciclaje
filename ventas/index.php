@@ -234,7 +234,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Precio Unitario (Venta) <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required>
+                    <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required readonly style="background-color: #e9ecef;">
                     <small class="form-text text-muted">Se cargará automáticamente desde el precio de venta del producto</small>
                   </div>
                 </div>
@@ -253,12 +253,8 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Método de Pago</label>
-                    <select id="metodo_pago" name="metodo_pago" class="form-control">
-                      <option value="efectivo">Efectivo</option>
-                      <option value="transferencia">Transferencia</option>
-                      <option value="cheque">Cheque</option>
-                      <option value="tarjeta">Tarjeta</option>
-                      <option value="credito">Crédito</option>
+                    <select id="metodo_pago" name="metodo_pago" class="form-control" style="background-color: #e9ecef; pointer-events: none;" tabindex="-1">
+                      <option value="efectivo" selected>Efectivo</option>
                     </select>
                   </div>
                 </div>

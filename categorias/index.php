@@ -90,6 +90,16 @@ if (!$auth->isAuthenticated()) {
                     <div class="card-head-row">
                       <div class="card-title">Lista de Categorías</div>
                     </div>
+                    <div class="card-category">
+                      <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active" id="pills-activos-tab" data-bs-toggle="pill" href="#pills-activos" role="tab" onclick="cambiarFiltroEstado('activos')">Activos</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="pills-inactivos-tab" data-bs-toggle="pill" href="#pills-inactivos" role="tab" onclick="cambiarFiltroEstado('inactivos')">Inactivos</a>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
@@ -134,13 +144,6 @@ if (!$auth->isAuthenticated()) {
                 <label>Descripción</label>
                 <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción de la categoría"></textarea>
               </div>
-              <div class="form-group">
-                <label>Estado</label>
-                <select id="estado" name="estado" class="form-control">
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
-              </div>
             </form>
           </div>
           <div class="modal-footer">
@@ -169,13 +172,6 @@ if (!$auth->isAuthenticated()) {
               <div class="form-group">
                 <label>Descripción</label>
                 <textarea id="edit_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Estado</label>
-                <select id="edit_estado" name="estado" class="form-control">
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
               </div>
             </form>
           </div>
@@ -206,10 +202,16 @@ if (!$auth->isAuthenticated()) {
         });
         
         var categoriasList = [];
+        var estadoActual = 'activos';
+
+        window.cambiarFiltroEstado = function(nuevoEstado) {
+          estadoActual = nuevoEstado;
+          cargarCategorias();
+        };
 
         function cargarCategorias() {
           $.ajax({
-            url: 'api.php?action=listar',
+            url: 'api.php?action=listar&estado=' + estadoActual,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -309,7 +311,7 @@ if (!$auth->isAuthenticated()) {
           var formData = {
             nombre: nombre,
             descripcion: $('#descripcion').val(),
-            estado: $('#estado').val(),
+            estado: 'activo',
             action: 'crear'
           };
           
@@ -364,7 +366,7 @@ if (!$auth->isAuthenticated()) {
             id: idActual,
             nombre: nombre,
             descripcion: $('#edit_descripcion').val(),
-            estado: $('#edit_estado').val(),
+            estado: 'activo',
             action: 'actualizar'
           };
           
@@ -402,7 +404,6 @@ if (!$auth->isAuthenticated()) {
                 $('#edit_id').val(cat.id);
                 $('#edit_nombre').val(cat.nombre);
                 $('#edit_descripcion').val(cat.descripcion || '');
-                $('#edit_estado').val(cat.estado);
                 $('#modalEditarCategoria').modal('show');
               }
             }

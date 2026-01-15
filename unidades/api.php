@@ -35,11 +35,17 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $stmt = $db->query("
-                    SELECT * FROM unidades 
-                    WHERE estado = 'activo'
-                    ORDER BY nombre ASC
-                ");
+                $estado = $_GET['estado'] ?? 'activos';
+                
+                $sql = "SELECT * FROM unidades WHERE 1=1";
+                if ($estado === 'activos') {
+                    $sql .= " AND estado = 'activo'";
+                } elseif ($estado === 'inactivos') {
+                    $sql .= " AND estado = 'inactivo'";
+                }
+                $sql .= " ORDER BY nombre ASC";
+                
+                $stmt = $db->query($sql);
                 $unidades = $stmt->fetchAll();
                 
                 ob_end_clean();
