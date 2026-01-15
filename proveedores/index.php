@@ -108,6 +108,16 @@ if (!$auth->isAuthenticated()) {
                     <div class="card-head-row">
                       <div class="card-title">Lista de Proveedores</div>
                     </div>
+                    <div class="card-category">
+                      <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active" id="pills-activos-tab" data-bs-toggle="pill" href="#pills-activos" role="tab" onclick="cambiarFiltroEstado('activos')">Activos</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="pills-inactivos-tab" data-bs-toggle="pill" href="#pills-inactivos" role="tab" onclick="cambiarFiltroEstado('inactivos')">Inactivos</a>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
@@ -214,15 +224,6 @@ if (!$auth->isAuthenticated()) {
                   <div class="form-group">
                     <label>Materiales que Suministra</label>
                     <textarea id="materiales_suministra" name="materiales_suministra" class="form-control" rows="2" placeholder="Ej: Papel, plástico, vidrio"></textarea>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -340,6 +341,13 @@ if (!$auth->isAuthenticated()) {
           }
         });
 
+        var estadoActual = 'activos';
+
+        window.cambiarFiltroEstado = function(nuevoEstado) {
+          estadoActual = nuevoEstado;
+          cargarProveedores();
+        };
+
         // Validar RUC - solo números
         $('#cedula_ruc').on('input', function() {
           this.value = this.value.replace(/[^0-9]/g, '');
@@ -348,7 +356,7 @@ if (!$auth->isAuthenticated()) {
         // Cargar proveedores
         function cargarProveedores() {
           $.ajax({
-            url: 'api.php?action=listar',
+            url: 'api.php?action=listar&estado=' + estadoActual,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -359,6 +367,14 @@ if (!$auth->isAuthenticated()) {
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
                   
+                  var botones = '<button class="btn btn-link btn-primary btn-sm" onclick="editarProveedor(' + proveedor.id + ')"><i class="fa fa-edit"></i></button> ';
+                  
+                  if (estadoActual === 'activos') {
+                    botones += '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarProveedor(' + proveedor.id + ')"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botones += '<button class="btn btn-link btn-success btn-sm" onclick="activarProveedor(' + proveedor.id + ')"><i class="fa fa-check"></i></button>';
+                  }
+
                   table.row.add([
                     '<strong>' + proveedor.nombre + '</strong>',
                     proveedor.cedula_ruc || '-',
@@ -366,8 +382,7 @@ if (!$auth->isAuthenticated()) {
                     proveedor.telefono || '-',
                     proveedor.direccion || '-',
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarProveedor(' + proveedor.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarProveedor(' + proveedor.id + ')"><i class="fa fa-times"></i></button>'
+                    botones
                   ]);
                 });
                 table.draw();
@@ -401,8 +416,10 @@ if (!$auth->isAuthenticated()) {
             telefono: $('#telefono').val(),
             email: $('#email').val(),
             contacto: $('#contacto').val(),
-            telefono_contacto: $('#telefono_contacto').val(),
-            observaciones: $('#observaciones').val(),
+            tipo_proveedor: $('#tipo_proveedor').val(),
+            materiales_suministra: $('#materiales_suministra').val(),
+            notas: $('#notas').val(),
+            estado: 'activo',
             action: action
           };
           
@@ -458,8 +475,9 @@ if (!$auth->isAuthenticated()) {
               $('#telefono').val(proveedor.telefono || '');
               $('#direccion').val(proveedor.direccion || '');
               $('#contacto').val(proveedor.contacto || '');
-              $('#telefono_contacto').val(proveedor.telefono_contacto || '');
-              $('#observaciones').val(proveedor.observaciones || '');
+              $('#tipo_proveedor').val(proveedor.tipo_proveedor || 'recolector');
+              $('#materiales_suministra').val(proveedor.materiales_suministra || '');
+              $('#notas').val(proveedor.notas || '');
               
               // Cambiar título del modal
               $('#modalProveedorTitle').text('Editar Proveedor');
@@ -490,6 +508,33 @@ if (!$auth->isAuthenticated()) {
               url: 'api.php',
               method: 'POST',
               data: { id: id, action: 'eliminar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarProveedores();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              }
+            });
+          }
+        });
+      }
+
+      function activarProveedor(id) {
+        swal({
+          title: "¿Desea activar el proveedor?",
+          text: "El proveedor volverá a estar activo en el sistema",
+          icon: "info",
+          buttons: true,
+        })
+        .then((willActivate) => {
+          if (willActivate) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: { id: id, action: 'activar' },
               dataType: 'json',
               success: function(response) {
                 if (response.success) {

@@ -36,13 +36,22 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $stmt = $db->query("
-                    SELECT p.*, u.nombre as creado_por_nombre 
-                    FROM proveedores p 
-                    LEFT JOIN usuarios u ON p.creado_por = u.id 
-                    WHERE p.estado <> 'inactivo'
-                    ORDER BY p.id ASC
-                ");
+                $estado = $_GET['estado'] ?? 'activos';
+                
+                $sql = "SELECT p.*, u.nombre as creado_por_nombre 
+                        FROM proveedores p 
+                        LEFT JOIN usuarios u ON p.creado_por = u.id 
+                        WHERE 1=1";
+                
+                if ($estado === 'activos') {
+                    $sql .= " AND p.estado = 'activo'";
+                } elseif ($estado === 'inactivos') {
+                    $sql .= " AND p.estado = 'inactivo'";
+                }
+                
+                $sql .= " ORDER BY p.id ASC";
+                
+                $stmt = $db->query($sql);
                 $proveedores = $stmt->fetchAll();
                 
                 ob_end_clean();
@@ -167,8 +176,9 @@ try {
                 $telefono = trim($_POST['telefono'] ?? '');
                 $email = trim($_POST['email'] ?? '');
                 $contacto = trim($_POST['contacto'] ?? '');
-                $telefono_contacto = trim($_POST['telefono_contacto'] ?? '');
-                $observaciones = trim($_POST['observaciones'] ?? '');
+                $tipo_proveedor = $_POST['tipo_proveedor'] ?? 'recolector';
+                $materiales_suministra = trim($_POST['materiales_suministra'] ?? '');
+                $notas = trim($_POST['notas'] ?? '');
                 
                 // Validar nombre: no solo espacios
                 $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
@@ -202,22 +212,6 @@ try {
                     $telefono = null;
                 }
                 
-                // Validar teléfono de contacto si se proporciona
-                if (!empty($telefono_contacto)) {
-                    $telefonoContactoLimpio = preg_replace('/[^0-9]/', '', $telefono_contacto);
-                    if (strlen($telefonoContactoLimpio) > 0) {
-                        $validacionTelefonoContacto = validarTelefonoEcuatoriano($telefonoContactoLimpio);
-                        if (!$validacionTelefonoContacto['valid']) {
-                            throw new Exception('Teléfono de contacto: ' . $validacionTelefonoContacto['message']);
-                        }
-                        $telefono_contacto = $telefonoContactoLimpio;
-                    } else {
-                        $telefono_contacto = null;
-                    }
-                } else {
-                    $telefono_contacto = null;
-                }
-                
                 // Validar contacto si se proporciona (solo letras y espacios)
                 if (!empty($contacto)) {
                     $validacionContacto = validarSoloLetras($contacto, 'Contacto', true, true);
@@ -245,12 +239,13 @@ try {
                 
                 // Limpiar campos de texto
                 $direccion = limpiarEspacios($direccion);
-                $observaciones = limpiarEspacios($observaciones);
+                $materiales_suministra = limpiarEspacios($materiales_suministra);
+                $notas = limpiarEspacios($notas);
                 
                 $stmt = $db->prepare("
                     UPDATE proveedores 
                     SET nombre = ?, cedula_ruc = ?, tipo_documento = ?, direccion = ?, telefono = ?, email = ?, 
-                        contacto = ?, telefono_contacto = ?, observaciones = ?
+                        contacto = ?, tipo_proveedor = ?, materiales_suministra = ?, notas = ?
                     WHERE id = ?
                 ");
                 
@@ -262,8 +257,9 @@ try {
                     $telefono ?: null,
                     $email ?: null,
                     $contacto ?: null,
-                    $telefono_contacto ?: null,
-                    $observaciones ?: null,
+                    $tipo_proveedor,
+                    $materiales_suministra ?: null,
+                    $notas ?: null,
                     $id
                 ]);
                 
@@ -293,6 +289,26 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Proveedor desactivado exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    throw new Exception('ID de proveedor inválido');
+                }
+                
+                $stmt = $db->prepare("SELECT estado FROM proveedores WHERE id = ?");
+                $stmt->execute([$id]);
+                $proveedor = $stmt->fetch();
+                
+                if (!$proveedor) {
+                    throw new Exception('Proveedor no encontrado');
+                }
+                
+                $stmt = $db->prepare("UPDATE proveedores SET estado = 'activo', fecha_actualizacion = NOW() WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Proveedor activado exitosamente']);
             }
             break;
             

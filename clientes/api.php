@@ -53,13 +53,22 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $stmt = $db->query("
-                    SELECT c.*, u.nombre as creado_por_nombre 
-                    FROM clientes c 
-                    LEFT JOIN usuarios u ON c.creado_por = u.id 
-                    WHERE c.estado <> 'inactivo'
-                    ORDER BY c.id ASC
-                ");
+                $estado = $_GET['estado'] ?? 'activos';
+                
+                $sql = "SELECT c.*, u.nombre as creado_por_nombre 
+                        FROM clientes c 
+                        LEFT JOIN usuarios u ON c.creado_por = u.id 
+                        WHERE 1=1";
+                
+                if ($estado === 'activos') {
+                    $sql .= " AND c.estado = 'activo'";
+                } elseif ($estado === 'inactivos') {
+                    $sql .= " AND c.estado = 'inactivo'";
+                }
+                
+                $sql .= " ORDER BY c.id ASC";
+                
+                $stmt = $db->query($sql);
                 $clientes = $stmt->fetchAll();
                 
                 ob_end_clean();
@@ -224,6 +233,26 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Cliente desactivado exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    throw new Exception('ID de cliente inválido');
+                }
+                
+                $stmt = $db->prepare("SELECT estado FROM clientes WHERE id = ?");
+                $stmt->execute([$id]);
+                $cliente = $stmt->fetch();
+                
+                if (!$cliente) {
+                    throw new Exception('Cliente no encontrado');
+                }
+                
+                $stmt = $db->prepare("UPDATE clientes SET estado = 'activo', fecha_actualizacion = NOW() WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Cliente activado exitosamente']);
             }
             break;
             
