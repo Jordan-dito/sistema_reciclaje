@@ -198,6 +198,22 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Material desactivado exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = $_POST['id'] ?? 0;
+                
+                $stmt = $db->prepare("SELECT estado FROM materiales WHERE id = ?");
+                $stmt->execute([$id]);
+                $material = $stmt->fetch();
+                
+                if (!$material) {
+                    throw new Exception('Material no encontrado');
+                }
+                
+                $stmt = $db->prepare("UPDATE materiales SET estado = 'activo' WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Material activado exitosamente']);
             }
             break;
             

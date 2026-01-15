@@ -90,6 +90,16 @@ if (!$auth->isAuthenticated()) {
                     <div class="card-head-row">
                       <div class="card-title">Lista de Productos</div>
                     </div>
+                    <div class="card-category">
+                      <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active" id="pills-activos-tab" data-bs-toggle="pill" href="#pills-activos" role="tab" onclick="cambiarFiltroEstado('activos')">Activos</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="pills-inactivos-tab" data-bs-toggle="pill" href="#pills-inactivos" role="tab" onclick="cambiarFiltroEstado('inactivos')">Inactivos</a>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
@@ -329,6 +339,12 @@ if (!$auth->isAuthenticated()) {
         });
         
         var productosList = [];
+        var estadoActual = 'activos';
+
+        window.cambiarFiltroEstado = function(nuevoEstado) {
+          estadoActual = nuevoEstado;
+          cargarProductos();
+        };
 
         cargarMateriales();
         cargarUnidades();
@@ -370,7 +386,7 @@ if (!$auth->isAuthenticated()) {
 
         function cargarProductos() {
           $.ajax({
-            url: 'api.php?action=listar',
+            url: 'api.php?action=listar&estado=' + estadoActual,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -385,6 +401,14 @@ if (!$auth->isAuthenticated()) {
                   var precioCompra = producto.precio_compra ? '$' + parseFloat(producto.precio_compra).toFixed(2) : '-';
                   var unidad = producto.unidad_simbolo || producto.unidad_nombre || '-';
                   
+                  var botones = '<button class="btn btn-link btn-primary btn-sm" onclick="editarProducto(' + producto.id + ')"><i class="fa fa-edit"></i></button> ';
+                  
+                  if (estadoActual === 'activos') {
+                    botones += '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarProducto(' + producto.id + ')"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botones += '<button class="btn btn-link btn-success btn-sm" onclick="activarProducto(' + producto.id + ')"><i class="fa fa-check"></i></button>';
+                  }
+
                   table.row.add([
                     '<strong>' + producto.nombre + '</strong>',
                     producto.material_nombre || '-',
@@ -393,8 +417,7 @@ if (!$auth->isAuthenticated()) {
                     precioVenta,
                     precioCompra,
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarProducto(' + producto.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarProducto(' + producto.id + ')"><i class="fa fa-times"></i></button>'
+                    botones
                   ]);
                 });
                 table.draw();
@@ -584,6 +607,33 @@ if (!$auth->isAuthenticated()) {
                 url: 'api.php',
                 method: 'POST',
                 data: { id: id, action: 'eliminar' },
+                dataType: 'json',
+                success: function(response) {
+                  if (response.success) {
+                    swal("¡Éxito!", response.message, "success");
+                    cargarProductos();
+                  } else {
+                    swal("Error", response.message, "error");
+                  }
+                }
+              });
+            }
+          });
+        };
+
+        window.activarProducto = function(id) {
+          swal({
+            title: "¿Desea activar el producto?",
+            text: "El producto volverá a estar disponible",
+            icon: "info",
+            buttons: true,
+          })
+          .then((willActivate) => {
+            if (willActivate) {
+              $.ajax({
+                url: 'api.php',
+                method: 'POST',
+                data: { id: id, action: 'activar' },
                 dataType: 'json',
                 success: function(response) {
                   if (response.success) {

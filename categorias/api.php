@@ -173,6 +173,22 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Categoría desactivada exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = $_POST['id'] ?? 0;
+                
+                $stmt = $db->prepare("SELECT estado FROM categorias WHERE id = ?");
+                $stmt->execute([$id]);
+                $categoria = $stmt->fetch();
+                
+                if (!$categoria) {
+                    throw new Exception('Categoría no encontrada');
+                }
+                
+                $stmt = $db->prepare("UPDATE categorias SET estado = 'activo' WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Categoría activada exitosamente']);
             }
             break;
             

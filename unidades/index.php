@@ -250,13 +250,20 @@ if (!$auth->isAuthenticated()) {
                     'cantidad': 'Cantidad'
                   };
                   
+                  var botones = '<button class="btn btn-link btn-primary btn-sm" onclick="editarUnidad(' + unidad.id + ')"><i class="fa fa-edit"></i></button> ';
+                  
+                  if (estadoActual === 'activos') {
+                    botones += '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarUnidad(' + unidad.id + ')"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botones += '<button class="btn btn-link btn-success btn-sm" onclick="activarUnidad(' + unidad.id + ')"><i class="fa fa-check"></i></button>';
+                  }
+
                   table.row.add([
                     '<strong>' + unidad.nombre + '</strong>',
                     unidad.simbolo || '-',
                     tipoLabels[unidad.tipo] || unidad.tipo,
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarUnidad(' + unidad.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarUnidad(' + unidad.id + ')"><i class="fa fa-times"></i></button>'
+                    botones
                   ]);
                 });
                 table.draw();
@@ -455,6 +462,33 @@ if (!$auth->isAuthenticated()) {
                 url: 'api.php',
                 method: 'POST',
                 data: { id: id, action: 'eliminar' },
+                dataType: 'json',
+                success: function(response) {
+                  if (response.success) {
+                    swal("¡Éxito!", response.message, "success");
+                    cargarUnidades();
+                  } else {
+                    swal("Error", response.message, "error");
+                  }
+                }
+              });
+            }
+          });
+        };
+
+        window.activarUnidad = function(id) {
+          swal({
+            title: "¿Desea activar la unidad?",
+            text: "La unidad volverá a estar disponible",
+            icon: "info",
+            buttons: true,
+          })
+          .then((willActivate) => {
+            if (willActivate) {
+              $.ajax({
+                url: 'api.php',
+                method: 'POST',
+                data: { id: id, action: 'activar' },
                 dataType: 'json',
                 success: function(response) {
                   if (response.success) {

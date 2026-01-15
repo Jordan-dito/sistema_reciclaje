@@ -170,6 +170,22 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Unidad desactivada exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = $_POST['id'] ?? 0;
+                
+                $stmt = $db->prepare("SELECT estado FROM unidades WHERE id = ?");
+                $stmt->execute([$id]);
+                $unidad = $stmt->fetch();
+                
+                if (!$unidad) {
+                    throw new Exception('Unidad no encontrada');
+                }
+                
+                $stmt = $db->prepare("UPDATE unidades SET estado = 'activo' WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Unidad activada exitosamente']);
             }
             break;
             

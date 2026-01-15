@@ -223,12 +223,19 @@ if (!$auth->isAuthenticated()) {
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
                   
+                  var botones = '<button class="btn btn-link btn-primary btn-sm" onclick="editarCategoria(' + categoria.id + ')"><i class="fa fa-edit"></i></button> ';
+                  
+                  if (estadoActual === 'activos') {
+                    botones += '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCategoria(' + categoria.id + ')"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botones += '<button class="btn btn-link btn-success btn-sm" onclick="activarCategoria(' + categoria.id + ')"><i class="fa fa-check"></i></button>';
+                  }
+
                   table.row.add([
                     '<strong>' + categoria.nombre + '</strong>',
                     categoria.descripcion || '-',
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarCategoria(' + categoria.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCategoria(' + categoria.id + ')"><i class="fa fa-times"></i></button>'
+                    botones
                   ]);
                 });
                 table.draw();
@@ -424,6 +431,33 @@ if (!$auth->isAuthenticated()) {
                 url: 'api.php',
                 method: 'POST',
                 data: { id: id, action: 'eliminar' },
+                dataType: 'json',
+                success: function(response) {
+                  if (response.success) {
+                    swal("¡Éxito!", response.message, "success");
+                    cargarCategorias();
+                  } else {
+                    swal("Error", response.message, "error");
+                  }
+                }
+              });
+            }
+          });
+        };
+
+        window.activarCategoria = function(id) {
+          swal({
+            title: "¿Desea activar la categoría?",
+            text: "La categoría volverá a estar disponible",
+            icon: "info",
+            buttons: true,
+          })
+          .then((willActivate) => {
+            if (willActivate) {
+              $.ajax({
+                url: 'api.php',
+                method: 'POST',
+                data: { id: id, action: 'activar' },
                 dataType: 'json',
                 success: function(response) {
                   if (response.success) {
