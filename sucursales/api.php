@@ -170,10 +170,14 @@ try {
                 }
                 
                 if ($responsable_id) {
-                    $stmt = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
+                    $stmt = $db->prepare("SELECT id, sucursal_id FROM usuarios WHERE id = ?");
                     $stmt->execute([$responsable_id]);
-                    if (!$stmt->fetch()) {
+                    $usuario = $stmt->fetch();
+                    if (!$usuario) {
                         throw new Exception('Responsable inválido');
+                    }
+                    if ($usuario['sucursal_id'] !== null) {
+                        throw new Exception('Este usuario ya es responsable de otra sucursal');
                     }
                 }
                 
@@ -248,10 +252,15 @@ try {
                 }
                 
                 if ($responsable_id) {
-                    $stmt = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
+                    $stmt = $db->prepare("SELECT id, sucursal_id FROM usuarios WHERE id = ?");
                     $stmt->execute([$responsable_id]);
-                    if (!$stmt->fetch()) {
+                    $usuario = $stmt->fetch();
+                    if (!$usuario) {
                         throw new Exception('Responsable inválido');
+                    }
+                    // Si tiene sucursal_id y no es la actual sucursal que estamos editando
+                    if ($usuario['sucursal_id'] !== null && $usuario['sucursal_id'] != $id) {
+                        throw new Exception('Este usuario ya es responsable de otra sucursal');
                     }
                 }
 
