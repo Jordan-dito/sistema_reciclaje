@@ -108,6 +108,16 @@ if (!$auth->isAuthenticated()) {
                     <div class="card-head-row">
                       <div class="card-title">Lista de Proveedores</div>
                     </div>
+                    <div class="card-category">
+                      <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active" id="pills-activos-tab" data-bs-toggle="pill" href="#pills-activos" role="tab" onclick="cambiarFiltroEstado('activos')">Activos</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="pills-inactivos-tab" data-bs-toggle="pill" href="#pills-inactivos" role="tab" onclick="cambiarFiltroEstado('inactivos')">Inactivos</a>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
@@ -159,15 +169,16 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Cédula / RUC</label>
-                    <input type="text" id="cedula_ruc" name="cedula_ruc" class="form-control" placeholder="0998765432001" maxlength="20">
+                    <label>Cédula / RUC <span class="text-danger">*</span></label>
+                    <input type="text" id="cedula_ruc" name="cedula_ruc" class="form-control" placeholder="0998765432001" maxlength="20" required>
                     <small class="form-text text-muted">Cédula o RUC del proveedor</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Tipo de Documento</label>
-                    <select id="tipo_documento" name="tipo_documento" class="form-control">
+                    <label>Tipo de Documento <span class="text-danger">*</span></label>
+                    <select id="tipo_documento" name="tipo_documento" class="form-control" required>
+                      <option value="" selected disabled>Seleccione Tipo de Documento</option>
                       <option value="ruc">RUC</option>
                       <option value="cedula">Cédula</option>
                       <option value="pasaporte">Pasaporte</option>
@@ -177,20 +188,20 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="proveedor@email.com">
+                    <label>Email <span class="text-danger">*</span></label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="proveedor@email.com" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="02-2345678">
+                    <label>Teléfono <span class="text-danger">*</span></label>
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="02-2345678" required>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Dirección</label>
-                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa"></textarea>
+                    <label>Dirección <span class="text-danger">*</span></label>
+                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa" required></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -201,8 +212,9 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Tipo de Proveedor</label>
-                    <select id="tipo_proveedor" name="tipo_proveedor" class="form-control">
+                    <label>Tipo de Proveedor <span class="text-danger">*</span></label>
+                    <select id="tipo_proveedor" name="tipo_proveedor" class="form-control" required>
+                      <option value="" selected disabled>Seleccione Tipo de Proveedor</option>
                       <option value="recolector">Recolector</option>
                       <option value="procesador">Procesador</option>
                       <option value="mayorista">Mayorista</option>
@@ -212,17 +224,8 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Materiales que Suministra</label>
-                    <textarea id="materiales_suministra" name="materiales_suministra" class="form-control" rows="2" placeholder="Ej: Papel, plástico, vidrio"></textarea>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
+                    <label>Materiales que Suministra <span class="text-danger">*</span></label>
+                    <textarea id="materiales_suministra" name="materiales_suministra" class="form-control" rows="2" placeholder="Ej: Papel, plástico, vidrio" required></textarea>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -340,6 +343,32 @@ if (!$auth->isAuthenticated()) {
           }
         });
 
+        var estadoActual = 'activos';
+        
+        // Función para cambiar color de selects cuando están en placeholder
+        function actualizarColorSelect() {
+          $('#tipo_documento, #tipo_proveedor').each(function() {
+            if ($(this).val() === '' || $(this).val() === null) {
+              $(this).css('color', '#6c757d');
+            } else {
+              $(this).css('color', '#575962');
+            }
+          });
+        }
+        
+        // Aplicar color gris al cargar
+        actualizarColorSelect();
+        
+        // Cambiar color cuando se selecciona una opción
+        $('#tipo_documento, #tipo_proveedor').on('change', function() {
+          actualizarColorSelect();
+        });
+
+        window.cambiarFiltroEstado = function(nuevoEstado) {
+          estadoActual = nuevoEstado;
+          cargarProveedores();
+        };
+
         // Validar RUC - solo números
         $('#cedula_ruc').on('input', function() {
           this.value = this.value.replace(/[^0-9]/g, '');
@@ -348,7 +377,7 @@ if (!$auth->isAuthenticated()) {
         // Cargar proveedores
         function cargarProveedores() {
           $.ajax({
-            url: 'api.php?action=listar',
+            url: 'api.php?action=listar&estado=' + estadoActual,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -359,6 +388,14 @@ if (!$auth->isAuthenticated()) {
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
                   
+                  var botones = '<button class="btn btn-link btn-primary btn-sm" onclick="editarProveedor(' + proveedor.id + ')"><i class="fa fa-edit"></i></button> ';
+                  
+                  if (estadoActual === 'activos') {
+                    botones += '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarProveedor(' + proveedor.id + ')"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botones += '<button class="btn btn-link btn-success btn-sm" onclick="activarProveedor(' + proveedor.id + ')"><i class="fa fa-check"></i></button>';
+                  }
+
                   table.row.add([
                     '<strong>' + proveedor.nombre + '</strong>',
                     proveedor.cedula_ruc || '-',
@@ -366,8 +403,7 @@ if (!$auth->isAuthenticated()) {
                     proveedor.telefono || '-',
                     proveedor.direccion || '-',
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarProveedor(' + proveedor.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarProveedor(' + proveedor.id + ')"><i class="fa fa-times"></i></button>'
+                    botones
                   ]);
                 });
                 table.draw();
@@ -401,8 +437,10 @@ if (!$auth->isAuthenticated()) {
             telefono: $('#telefono').val(),
             email: $('#email').val(),
             contacto: $('#contacto').val(),
-            telefono_contacto: $('#telefono_contacto').val(),
-            observaciones: $('#observaciones').val(),
+            tipo_proveedor: $('#tipo_proveedor').val(),
+            materiales_suministra: $('#materiales_suministra').val(),
+            notas: $('#notas').val(),
+            estado: 'activo',
             action: action
           };
           
@@ -432,6 +470,12 @@ if (!$auth->isAuthenticated()) {
           $('#formAgregarProveedor')[0].reset();
           $('#proveedor_id').val('');
           $('#modalProveedorTitle').text('Nuevo Proveedor');
+          // Habilitar campos al crear nuevo proveedor
+          $('#nombre').prop('readonly', false);
+          $('#cedula_ruc').prop('readonly', false);
+          $('#tipo_documento').prop('disabled', false);
+          // Actualizar color de selects
+          actualizarColorSelect();
         });
         
         // Cargar datos al iniciar
@@ -458,8 +502,14 @@ if (!$auth->isAuthenticated()) {
               $('#telefono').val(proveedor.telefono || '');
               $('#direccion').val(proveedor.direccion || '');
               $('#contacto').val(proveedor.contacto || '');
-              $('#telefono_contacto').val(proveedor.telefono_contacto || '');
-              $('#observaciones').val(proveedor.observaciones || '');
+              $('#tipo_proveedor').val(proveedor.tipo_proveedor || 'recolector');
+              $('#materiales_suministra').val(proveedor.materiales_suministra || '');
+              $('#notas').val(proveedor.notas || '');
+              
+              // Deshabilitar campos que no se pueden editar
+              $('#nombre').prop('readonly', true);
+              $('#cedula_ruc').prop('readonly', true);
+              $('#tipo_documento').prop('disabled', true);
               
               // Cambiar título del modal
               $('#modalProveedorTitle').text('Editar Proveedor');
@@ -490,6 +540,33 @@ if (!$auth->isAuthenticated()) {
               url: 'api.php',
               method: 'POST',
               data: { id: id, action: 'eliminar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", response.message, "success");
+                  cargarProveedores();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              }
+            });
+          }
+        });
+      }
+
+      function activarProveedor(id) {
+        swal({
+          title: "¿Desea activar el proveedor?",
+          text: "El proveedor volverá a estar activo en el sistema",
+          icon: "info",
+          buttons: true,
+        })
+        .then((willActivate) => {
+          if (willActivate) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: { id: id, action: 'activar' },
               dataType: 'json',
               success: function(response) {
                 if (response.success) {
