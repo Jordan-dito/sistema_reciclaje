@@ -57,6 +57,7 @@ try {
                 }
                 
                 $sucursal_id = $_GET['sucursal_id'] ?? $sucursal_usuario;
+                $filtro_estado = $_GET['estado'] ?? 'activos'; // Por defecto solo activos
                 
                 // Verificar que la tabla ventas existe
                 try {
@@ -94,7 +95,7 @@ try {
                                COALESCE(s.nombre, 'Sucursal eliminada') as sucursal_nombre 
                         FROM ventas v 
                         LEFT JOIN sucursales s ON v.sucursal_id = s.id 
-                        WHERE v.estado <> 'cancelada'
+                        WHERE 1=1
                     ";
                 } else {
                     // Si la tabla sucursales no existe, solo obtener ventas sin JOIN
@@ -103,7 +104,7 @@ try {
                                COALESCE(v.cliente_nombre, 'Sin cliente') as cliente_nombre,
                                CAST(v.sucursal_id AS CHAR) as sucursal_nombre 
                         FROM ventas v 
-                        WHERE v.estado <> 'cancelada'
+                        WHERE 1=1
                     ";
                 }
                 
@@ -112,6 +113,13 @@ try {
                 if ($sucursal_id) {
                     $sql .= " AND v.sucursal_id = ?";
                     $params[] = $sucursal_id;
+                }
+
+                if ($filtro_estado === 'activos') {
+                    $sql .= " AND v.estado <> 'cancelada'";
+                } elseif ($filtro_estado !== 'todos') {
+                    $sql .= " AND v.estado = ?";
+                    $params[] = $filtro_estado;
                 }
                 
                 $sql .= " ORDER BY v.fecha_venta DESC, v.id DESC";
@@ -133,9 +141,21 @@ try {
                             WHERE vd.venta_id = ?
                         ");
                         $stmtDetalles->execute([$venta['id']]);
-                        $venta['detalles'] = $stmtDetalles->fetchAll();
+                        $detalles = $stmtDetalles->fetchAll();
+                        
+                        // Asegurar que cada detalle tenga precio_unitario
+                        foreach ($detalles as &$det) {
+                            if (!isset($det['precio_unitario']) || floatval($det['precio_unitario']) <= 0) {
+                                if (floatval($det['cantidad']) > 0) {
+                                    $det['precio_unitario'] = floatval($det['subtotal']) / floatval($det['cantidad']);
+                                } else {
+                                    $det['precio_unitario'] = 0;
+                                }
+                            }
+                        }
+                        $venta['detalles'] = $detalles;
                     } catch (PDOException $e) {
-                        // Si la tabla de detalles no existe, asignar array vacío
+                        error_log("Error al cargar detalles de venta " . $venta['id'] . ": " . $e->getMessage());
                         $venta['detalles'] = [];
                     }
                 }
@@ -315,6 +335,7 @@ try {
                             $producto_id = intval($detalle['producto_id'] ?? 0);
                             $precio_id = !empty($detalle['precio_id']) ? intval($detalle['precio_id']) : null;
                             $cantidad = floatval($detalle['cantidad'] ?? 0);
+                            $precio_unitario_detalle = floatval($detalle['precio_unitario'] ?? 0);
                             $subtotal_detalle = floatval($detalle['subtotal'] ?? 0);
                             
                             if ($inventario_id <= 0 || $producto_id <= 0) {
@@ -350,6 +371,9 @@ try {
                                 $precio = $stmt->fetch();
                                 if ($precio) {
                                     $precio_id = $precio['id'];
+                                    if ($precio_unitario_detalle <= 0) {
+                                        $precio_unitario_detalle = floatval($precio['precio_unitario']);
+                                    }
                                 }
                             }
                             
