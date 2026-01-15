@@ -205,10 +205,11 @@ try {
                 
                 // Obtener venta
                 $stmt = $db->prepare("
-                    SELECT v.*, c.nombre as cliente_nombre, s.nombre as sucursal_nombre 
+                    SELECT v.*, 
+                           COALESCE(v.cliente_nombre, 'Cliente General') as cliente_nombre, 
+                           COALESCE(s.nombre, 'Sucursal eliminada') as sucursal_nombre 
                     FROM ventas v 
-                    INNER JOIN clientes c ON v.cliente_id = c.id 
-                    INNER JOIN sucursales s ON v.sucursal_id = s.id 
+                    LEFT JOIN sucursales s ON v.sucursal_id = s.id 
                     WHERE v.id = ?
                 ");
                 $stmt->execute([$id]);
@@ -218,24 +219,32 @@ try {
                     // Obtener detalles con información de productos
                     $stmt = $db->prepare("
                         SELECT vd.*, 
-                               i.producto_id,
                                p.nombre as producto_nombre,
                                m.nombre as material_nombre,
                                c.nombre as categoria_nombre,
                                u.nombre as unidad_nombre,
-                               u.simbolo as unidad_simbolo,
-                               pr.precio_unitario
+                               u.simbolo as unidad_simbolo
                         FROM ventas_detalle vd
-                        INNER JOIN inventarios i ON vd.inventario_id = i.id
-                        INNER JOIN productos p ON i.producto_id = p.id
-                        INNER JOIN materiales m ON p.material_id = m.id
+                        LEFT JOIN productos p ON vd.producto_id = p.id
+                        LEFT JOIN materiales m ON p.material_id = m.id
                         LEFT JOIN categorias c ON m.categoria_id = c.id
-                        INNER JOIN unidades u ON p.unidad_id = u.id
-                        LEFT JOIN precios pr ON vd.precio_id = pr.id
+                        LEFT JOIN unidades u ON p.unidad_id = u.id
                         WHERE vd.venta_id = ?
                     ");
                     $stmt->execute([$id]);
-                    $venta['detalles'] = $stmt->fetchAll();
+                    $detalles = $stmt->fetchAll();
+
+                    // Asegurar que cada detalle tenga precio_unitario
+                    foreach ($detalles as &$det) {
+                        if (!isset($det['precio_unitario']) || floatval($det['precio_unitario']) <= 0) {
+                            if (floatval($det['cantidad']) > 0) {
+                                $det['precio_unitario'] = floatval($det['subtotal']) / floatval($det['cantidad']);
+                            } else {
+                                $det['precio_unitario'] = 0;
+                            }
+                        }
+                    }
+                    $venta['detalles'] = $detalles;
                 }
                 
                 ob_end_clean();

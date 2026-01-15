@@ -628,7 +628,7 @@ if (!$auth->isAuthenticated()) {
                     '<strong>$' + parseFloat(venta.total).toFixed(2) + '</strong>',
                     venta.cliente_nombre,
                     badgeEstado,
-                    '<a href="../reportes/pdf.php?id=' + venta.id + '&type=venta" target="_blank" class="btn btn-link btn-primary btn-sm" title="Ver PDF"><i class="fa fa-eye"></i></a> ' +
+                    '<a href="ver.php?id=' + venta.id + '" target="_blank" class="btn btn-link btn-success btn-sm" title="Ver Factura"><i class="fa fa-eye"></i></a> ' +
                     '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarVenta(' + venta.id + ')" title="Cancelar Venta"><i class="fa fa-times"></i></button>'
                   ]).node();
 
