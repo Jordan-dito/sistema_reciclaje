@@ -199,15 +199,6 @@ if (!$auth->isAuthenticated()) {
                     <input type="password" id="password" name="password" class="form-control" placeholder="Mínimo 8 caracteres" required>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
-                </div>
               </div>
             </form>
           </div>
@@ -234,19 +225,19 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Nombre Completo *</label>
-                    <input type="text" id="editar_nombre" name="nombre" class="form-control" required>
+                    <input type="text" id="editar_nombre" name="nombre" class="form-control" required readonly>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Cédula / RUC *</label>
-                    <input type="text" id="editar_cedula" name="cedula" class="form-control" required placeholder="Cédula (10) o RUC (13)">
+                    <input type="text" id="editar_cedula" name="cedula" class="form-control" required placeholder="Cédula (10) o RUC (13)" readonly>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Email *</label>
-                    <input type="email" id="editar_email" name="email" class="form-control" required>
+                    <input type="email" id="editar_email" name="email" class="form-control" required readonly>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -267,15 +258,6 @@ if (!$auth->isAuthenticated()) {
                   <div class="form-group">
                     <label>Nueva Contraseña (dejar vacío para no cambiar)</label>
                     <input type="password" id="editar_password" name="password" class="form-control" placeholder="Mínimo 8 caracteres">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Estado</label>
-                    <select id="editar_estado" name="estado" class="form-control">
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -404,7 +386,6 @@ if (!$auth->isAuthenticated()) {
             telefono: $('#telefono').val(),
             password: $('#password').val(),
             rol_id: $('#rol_id').val(),
-            estado: $('#estado').val(),
             action: 'crear'
           };
           
@@ -449,7 +430,6 @@ if (!$auth->isAuthenticated()) {
             email: $('#editar_email').val(),
             telefono: $('#editar_telefono').val(),
             rol_id: $('#editar_rol_id').val(),
-            estado: $('#editar_estado').val(),
             action: 'actualizar'
           };
           
@@ -527,7 +507,6 @@ if (!$auth->isAuthenticated()) {
               $('#editar_email').val(u.email);
               $('#editar_telefono').val(u.telefono || '');
               $('#editar_rol_id').val(u.rol_id);
-              $('#editar_estado').val(u.estado);
               $('#editar_password').val(''); // Limpiar campo de contraseña
               $('#modalEditarUsuario').modal('show');
             } else {

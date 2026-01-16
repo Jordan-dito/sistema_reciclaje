@@ -92,12 +92,26 @@ try {
                 }
                 $nombre = limpiarEspacios($nombre);
                 
+                // Verificar si el nombre ya existe
+                $stmt = $db->prepare("SELECT id FROM proveedores WHERE LOWER(nombre) = LOWER(?) AND estado = 'activo'");
+                $stmt->execute([$nombre]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Ya existe un proveedor activo con este nombre');
+                }
+                
                 // Validar email si se proporciona
                 if (!empty($email)) {
                     $email = limpiarEspacios($email);
                     $validacionEmail = validarEmail($email);
                     if (!$validacionEmail['valid']) {
                         throw new Exception($validacionEmail['message']);
+                    }
+                    
+                    // Verificar si el email ya existe
+                    $stmt = $db->prepare("SELECT id FROM proveedores WHERE LOWER(email) = LOWER(?) AND estado = 'activo'");
+                    $stmt->execute([$email]);
+                    if ($stmt->fetch()) {
+                        throw new Exception('El email ya está registrado en otro proveedor activo');
                     }
                 }
                 
@@ -128,10 +142,10 @@ try {
                     }
                     
                     // Verificar si ya existe
-                    $stmt = $db->prepare("SELECT id FROM proveedores WHERE cedula_ruc = ?");
+                    $stmt = $db->prepare("SELECT id FROM proveedores WHERE cedula_ruc = ? AND estado = 'activo'");
                     $stmt->execute([$cedula_ruc]);
                     if ($stmt->fetch()) {
-                        throw new Exception('La cédula/RUC ya está registrada');
+                        throw new Exception('La cédula/RUC ya está registrada en otro proveedor activo');
                     }
                 }
                 
@@ -194,6 +208,13 @@ try {
                     if (!$validacionEmail['valid']) {
                         throw new Exception($validacionEmail['message']);
                     }
+                    
+                    // Verificar si el email ya existe en otro proveedor
+                    $stmt = $db->prepare("SELECT id FROM proveedores WHERE LOWER(email) = LOWER(?) AND id != ? AND estado = 'activo'");
+                    $stmt->execute([$email, $id]);
+                    if ($stmt->fetch()) {
+                        throw new Exception('El email ya está registrado en otro proveedor activo');
+                    }
                 }
                 
                 // Validar teléfono si se proporciona y no está vacío
@@ -230,10 +251,10 @@ try {
                     }
                     
                     // Verificar si ya existe en otro proveedor
-                    $stmt = $db->prepare("SELECT id FROM proveedores WHERE cedula_ruc = ? AND id != ?");
+                    $stmt = $db->prepare("SELECT id FROM proveedores WHERE cedula_ruc = ? AND id != ? AND estado = 'activo'");
                     $stmt->execute([$cedula_ruc, $id]);
                     if ($stmt->fetch()) {
-                        throw new Exception('La cédula/RUC ya está registrada en otro proveedor');
+                        throw new Exception('La cédula/RUC ya está registrada en otro proveedor activo');
                     }
                 }
                 
