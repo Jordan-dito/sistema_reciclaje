@@ -113,16 +113,31 @@ if (!$auth->isAuthenticated()) {
                     </div>
                   </div>
                   <div class="card-body">
+                    <!-- Filtros por estado (Tabs) -->
+                    <ul class="nav nav-pills nav-secondary nav-pills-no-bd mb-3" id="pills-tab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link active" id="tab-activos" data-bs-toggle="pill" href="#pills-activos" role="tab" onclick="cambiarFiltroEstado('activos')">Activos</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="tab-completadas" data-bs-toggle="pill" href="#pills-completadas" role="tab" onclick="cambiarFiltroEstado('completada')">Completadas</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="tab-pendientes" data-bs-toggle="pill" href="#pills-pendientes" role="tab" onclick="cambiarFiltroEstado('pendiente')">Pendientes</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="tab-canceladas" data-bs-toggle="pill" href="#pills-canceladas" role="tab" onclick="cambiarFiltroEstado('cancelada')">Inactivos</a>
+                      </li>
+                    </ul>
+
                     <div class="table-responsive">
                       <table id="ventasTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
+                            <th style="width: 20px;"></th>
                             <th>Fecha</th>
                             <th>Sucursal</th>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Unidad</th>
-                            <th>Precio Unitario</th>
+                            <th>Productos</th>
+                            <th>Cant. Total</th>
                             <th>Total</th>
                             <th>Cliente</th>
                             <th>Estado</th>
@@ -194,7 +209,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Número de Factura</label>
-                    <input type="text" id="numero_factura" name="numero_factura" class="form-control" placeholder="Opcional">
+                    <input type="text" id="numero_factura" name="numero_factura" class="form-control" placeholder="Se generará automáticamente" readonly>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -212,14 +227,14 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
+                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" value="0" min="0" required>
                     <small class="form-text text-muted" id="stockDisponible">Stock disponible: -</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Precio Unitario (Venta) <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required>
+                    <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required readonly style="background-color: #e9ecef;">
                     <small class="form-text text-muted">Se cargará automáticamente desde el precio de venta del producto</small>
                   </div>
                 </div>
@@ -238,12 +253,8 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>Método de Pago</label>
-                    <select id="metodo_pago" name="metodo_pago" class="form-control">
-                      <option value="efectivo">Efectivo</option>
-                      <option value="transferencia">Transferencia</option>
-                      <option value="cheque">Cheque</option>
-                      <option value="tarjeta">Tarjeta</option>
-                      <option value="credito">Crédito</option>
+                    <select id="metodo_pago" name="metodo_pago" class="form-control" style="background-color: #e9ecef; pointer-events: none;" tabindex="-1">
+                      <option value="efectivo" selected>Efectivo</option>
                     </select>
                   </div>
                 </div>
@@ -388,15 +399,66 @@ if (!$auth->isAuthenticated()) {
           "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
           },
-          "order": [[0, "desc"]]
+          "order": [[1, "desc"]],
+          "columnDefs": [
+            { "orderable": false, "targets": [0, 8] }
+          ]
         });
+
+        // Función para formatear el detalle desplegable
+        function formatoDetalle(d) {
+          var html = '<div class="p-3 bg-light rounded border">' +
+                     '<h6 class="fw-bold mb-2"><i class="fa fa-list"></i> Detalle de Productos:</h6>' +
+                     '<table class="table table-sm table-bordered bg-white mb-0">' +
+                     '<thead class="thead-light"><tr>' +
+                     '<th>Producto</th><th>Cantidad</th><th>Unidad</th><th>Precio Unitario</th><th>Subtotal</th>' +
+                     '</tr></thead><tbody>';
+          
+          d.detalles.forEach(function(det) {
+            html += '<tr>' +
+                    '<td>' + (det.producto_nombre || '-') + '</td>' +
+                    '<td>' + parseFloat(det.cantidad || 0).toFixed(2) + '</td>' +
+                    '<td>' + (det.unidad_simbolo || '-') + '</td>' +
+                    '<td>$' + parseFloat(det.precio_unitario || 0).toFixed(2) + '</td>' +
+                    '<td>$' + parseFloat(det.subtotal || 0).toFixed(2) + '</td>' +
+                    '</tr>';
+          });
+          
+          html += '</tbody></table></div>';
+          return html;
+        }
+
+        // Listener para el botón de expansión
+        $('#ventasTable tbody').on('click', 'td.details-control', function() {
+          var tr = $(this).closest('tr');
+          var row = table.row(tr);
+          var icon = $(this).find('i');
+
+          if (row.child.isShown()) {
+            row.child.hide();
+            tr.removeClass('shown');
+            icon.removeClass('fa-minus-circle text-danger').addClass('fa-plus-circle text-primary');
+          } else {
+            row.child(formatoDetalle(tr.data('venta'))).show();
+            tr.addClass('shown');
+            icon.removeClass('fa-plus-circle text-primary').addClass('fa-minus-circle text-danger');
+          }
+        });
+
+        var estadoActual = 'activos';
+
+        window.cambiarFiltroEstado = function(nuevoEstado) {
+          estadoActual = nuevoEstado;
+          cargarVentas();
+        };
+
+        window.cargarVentas = cargarVentas;
         
         // Establecer fecha actual por defecto
         $('#fecha_venta').val(new Date().toISOString().split('T')[0]);
         
         // Cargar datos iniciales
         function cargarDatos() {
-          // Cargar sucursales
           $.ajax({
             url: '../sucursales/api.php?action=activas',
             method: 'GET',
@@ -412,7 +474,6 @@ if (!$auth->isAuthenticated()) {
             }
           });
           
-          // Cargar clientes
           $.ajax({
             url: '../clientes/api.php?action=listar',
             method: 'GET',
@@ -431,24 +492,18 @@ if (!$auth->isAuthenticated()) {
           });
         }
         
-        window.cargarVentas = cargarVentas;
-        
-        
-        var inventarioData = []; // Variable global para almacenar datos de inventario
+        var inventarioData = [];
 
-        // Manejar clic en botón de búsqueda de inventario
         $('#btnBuscarInventario').click(function() {
           var sucursal_id = $('#sucursal_id').val();
           if (!sucursal_id) {
             swal("Atención", "Primero debe seleccionar una sucursal", "warning");
             return;
           }
-          
           $('#modalBuscarInventario').modal('show');
           cargarInventarioModal(sucursal_id);
         });
 
-        // Al cambiar de sucursal, limpiar el producto seleccionado
         $('#sucursal_id').change(function() {
           limpiarSeleccionProducto();
         });
@@ -461,7 +516,6 @@ if (!$auth->isAuthenticated()) {
           calcularTotal();
         }
 
-        // Cargar inventario en el modal
         function cargarInventarioModal(sucursal_id) {
           var tbody = $('#tablaInventario tbody');
           var mensajeSin = $('#mensajeSinInventario');
@@ -477,8 +531,7 @@ if (!$auth->isAuthenticated()) {
             dataType: 'json',
             success: function(response) {
               mensajeCargando.hide();
-              inventarioData = []; // Limpiar datos anteriores
-              
+              inventarioData = [];
               if (response.success && response.data && response.data.length > 0) {
                 inventarioData = response.data;
                 renderizarTablaInventario(inventarioData);
@@ -486,49 +539,28 @@ if (!$auth->isAuthenticated()) {
                 mensajeSin.text("No hay productos disponibles en esta sucursal").show();
               }
             },
-            error: function(xhr, status, error) {
+            error: function() {
               mensajeCargando.hide();
               mensajeSin.text("Error al cargar inventario").show();
-              console.error('Error:', error);
             }
           });
         }
 
-        // Renderizar tabla de inventario
         function renderizarTablaInventario(datos) {
           var tbody = $('#tablaInventario tbody');
           var mensajeSin = $('#mensajeSinInventario');
           tbody.empty();
-          
           if (datos.length === 0) {
             mensajeSin.show();
             return;
           }
-          
           mensajeSin.hide();
-          
           datos.forEach(function(item) {
             var precio = parseFloat(item.precio_unitario || 0).toFixed(2);
-            var fila = `
-              <tr>
-                <td><strong>${item.producto_nombre}</strong></td>
-                <td>${item.material_nombre || '-'}</td>
-                <td>${item.categoria_nombre || '-'}</td>
-                <td>${item.cantidad} ${item.unidad}</td>
-                <td>$${precio}</td>
-                <td>
-                  <button type="button" class="btn btn-sm btn-primary" 
-                    onclick="seleccionarInventario(${item.inventario_id})">
-                    <i class="fa fa-check"></i> Seleccionar
-                  </button>
-                </td>
-              </tr>
-            `;
-            tbody.append(fila);
+            tbody.append('<tr><td><strong>' + item.producto_nombre + '</strong></td><td>' + (item.material_nombre || '-') + '</td><td>' + (item.categoria_nombre || '-') + '</td><td>' + item.cantidad + ' ' + item.unidad + '</td><td>$' + precio + '</td><td><button type="button" class="btn btn-sm btn-primary" onclick="seleccionarInventario(' + item.inventario_id + ')"><i class="fa fa-check"></i> Seleccionar</button></td></tr>');
           });
         }
 
-        // Filtrar inventario en el modal
         $('#filtroInventario').on('keyup', function() {
           var valor = $(this).val().toLowerCase();
           var datosFiltrados = inventarioData.filter(function(item) {
@@ -539,181 +571,102 @@ if (!$auth->isAuthenticated()) {
           renderizarTablaInventario(datosFiltrados);
         });
 
-        // Función global para seleccionar inventario desde el modal
         window.seleccionarInventario = function(id) {
           var item = inventarioData.find(function(i) { return i.inventario_id == id; });
           if (item) {
             $('#inventario_id').val(item.inventario_id);
             $('#producto_seleccionado').val(item.producto_nombre);
-            
-            // Guardar datos adicionales en el input hidden o usarlos directamente
             $('#inventario_id').data('producto-id', item.producto_id);
             $('#inventario_id').data('precio-id', item.precio_id);
             $('#inventario_id').data('cantidad', item.cantidad);
-            
             $('#precio_unitario').val(item.precio_unitario || 0);
             $('#stockDisponible').text('Stock disponible: ' + item.cantidad + ' ' + item.unidad);
-            
             calcularTotal();
             $('#modalBuscarInventario').modal('hide');
           }
         };
 
-        // Cargar inventarios cuando se abre el modal si ya hay una sucursal seleccionada
-        $('#modalNuevaVenta').on('shown.bs.modal', function() {
-          // Ya no necesitamos cargar nada automáticamente aquí, se hace bajo demanda
+        $('#modalNuevaVenta').on('show.bs.modal', function() {
+          cargarSiguienteNumeroFactura();
+          // Resetear fecha a hoy al abrir
+          $('#fecha_venta').val(new Date().toISOString().split('T')[0]);
         });
-        
-        // Limpiar campos cuando se cierra el modal
+
         $('#modalNuevaVenta').on('hidden.bs.modal', function() {
            limpiarSeleccionProducto();
         });
-        
-        // Auto-completar campos cuando se selecciona inventario - YA NO ES NECESARIO (se maneja en seleccionarInventario)
 
-        
-        // Cargar ventas
-        function cargarVentas() {
+        // Función para cargar el siguiente número de factura
+        function cargarSiguienteNumeroFactura() {
+          $('#numero_factura').val('Cargando...');
           $.ajax({
-            url: 'api.php?action=listar',
+            url: 'api.php?action=siguiente_numero_factura',
             method: 'GET',
             dataType: 'json',
+            cache: false,
             success: function(response) {
-              if (response.success) {
-                table.clear();
-                
-                if (!response.data || response.data.length === 0) {
-                  // Mostrar mensaje si no hay ventas
-                  table.row.add([
-                    '',
-                    '',
-                    '<em>No hay ventas registradas</em>',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    ''
-                  ]);
-                  table.draw();
-                  return;
-                }
-                
-                response.data.forEach(function(venta) {
-                  // Obtener el primer detalle para mostrar en la tabla
-                  var detalle = venta.detalles && venta.detalles.length > 0 ? venta.detalles[0] : null;
-                  
-                  if (detalle) {
-                    var badgeEstado = '';
-                    if (venta.estado === 'completada') {
-                      badgeEstado = '<span class="badge badge-success">Completada</span>';
-                    } else if (venta.estado === 'pendiente') {
-                      badgeEstado = '<span class="badge badge-warning">Pendiente</span>';
-                    } else {
-                      badgeEstado = '<span class="badge badge-danger">Cancelada</span>';
-                    }
-                    
-                    var productoNombre = detalle.producto_nombre || detalle.nombre_producto || '-';
-                    var unidad = detalle.unidad_simbolo || detalle.unidad || '-';
-                    var precio = detalle.precio_unitario ? parseFloat(detalle.precio_unitario).toFixed(2) : '0.00';
-                    
-                    table.row.add([
-                      venta.fecha_venta,
-                      venta.sucursal_nombre,
-                      '<strong>' + productoNombre + '</strong>',
-                      detalle.cantidad,
-                      unidad,
-                      '$' + precio,
-                      '$' + parseFloat(venta.total).toFixed(2),
-                      venta.cliente_nombre,
-                      badgeEstado,
-                      '<button class="btn btn-link btn-primary btn-sm" onclick="verVenta(' + venta.id + ')"><i class="fa fa-eye"></i></button> ' +
-                      '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarVenta(' + venta.id + ')"><i class="fa fa-times"></i></button>'
-                    ]);
-                  } else {
-                    // Si no hay detalles, mostrar la venta sin detalles
-                    var badgeEstado = '';
-                    if (venta.estado === 'completada') {
-                      badgeEstado = '<span class="badge badge-success">Completada</span>';
-                    } else if (venta.estado === 'pendiente') {
-                      badgeEstado = '<span class="badge badge-warning">Pendiente</span>';
-                    } else {
-                      badgeEstado = '<span class="badge badge-danger">Cancelada</span>';
-                    }
-                    
-                    table.row.add([
-                      venta.fecha_venta,
-                      venta.sucursal_nombre,
-                      '-',
-                      '-',
-                      '-',
-                      '-',
-                      '$' + parseFloat(venta.total).toFixed(2),
-                      venta.cliente_nombre,
-                      badgeEstado,
-                      '<button class="btn btn-link btn-primary btn-sm" onclick="verVenta(' + venta.id + ')"><i class="fa fa-eye"></i></button> ' +
-                      '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarVenta(' + venta.id + ')"><i class="fa fa-times"></i></button>'
-                    ]);
-                  }
-                });
-                table.draw();
+              if (response.success && response.numero_factura) {
+                $('#numero_factura').val(response.numero_factura);
+              } else {
+                $('#numero_factura').val('00001');
               }
             },
-            error: function(xhr, status, error) {
-              console.error('Error al cargar ventas:', error);
-              console.error('Status:', xhr.status);
-              console.error('Respuesta:', xhr.responseText);
-              
-              var mensaje = "No se pudieron cargar las ventas";
-              var responseData = null;
-              
-              try {
-                responseData = xhr.responseJSON || JSON.parse(xhr.responseText);
-              } catch (e) {
-                // Si no es JSON, usar el texto de respuesta
-                responseData = { message: xhr.responseText || error };
-              }
-              
-              if (responseData) {
-                if (responseData.message) {
-                  mensaje = responseData.message;
-                } else if (responseData.error && responseData.error.message) {
-                  mensaje = responseData.error.message;
-                } else if (responseData.type === 'Database Error' && responseData.message) {
-                  mensaje = responseData.message;
-                }
-              }
-              
-              if (xhr.status === 500) {
-                mensaje = "Error del servidor: " + mensaje + ". Verifica que las tablas existan en la base de datos.";
-              } else if (xhr.status === 401) {
-                mensaje = "No autorizado. Por favor, inicia sesión nuevamente.";
-              } else if (xhr.status === 0) {
-                mensaje = "Error de conexión. Verifica tu conexión a internet o que el servidor esté funcionando.";
-              }
-              
-              swal("Error", mensaje, "error");
-              
-              // Limpiar la tabla y mostrar mensaje
-              table.clear();
-              table.row.add([
-                '',
-                '',
-                '<em style="color: #ff6b6b;">' + mensaje + '</em>',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                ''
-              ]).draw();
+            error: function() {
+              $('#numero_factura').val('00001');
             }
           });
         }
         
-        // Calcular total automáticamente
+        // Cargar ventas
+        function cargarVentas() {
+          $.ajax({
+            url: 'api.php?action=listar&estado=' + estadoActual,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              console.log('cargarVentas response:', response); // debug
+              if (response.success) {
+                table.clear();
+                response.data.forEach(function(venta) {
+                  var detalles = venta.detalles || [];
+                  var numProductos = detalles.length;
+                  
+                  var badgeEstado = '';
+                  if (venta.estado === 'completada') {
+                    badgeEstado = '<span class="badge badge-success">Completada</span>';
+                  } else if (venta.estado === 'pendiente') {
+                    badgeEstado = '<span class="badge badge-warning">Pendiente</span>';
+                  } else {
+                    badgeEstado = '<span class="badge badge-danger">Inactiva</span>';
+                  }
+
+                  var cantTotal = detalles.reduce(function(sum, d) { return sum + parseFloat(d.cantidad || 0); }, 0);
+                  
+                  var rowNode = table.row.add([
+                    '<i class="fa fa-plus-circle text-primary" style="font-size: 1.2rem; cursor: pointer;"></i>',
+                    venta.fecha_venta,
+                    venta.sucursal_nombre,
+                    '<strong>' + numProductos + ' producto(s)</strong>',
+                    cantTotal.toFixed(2),
+                    '<strong>$' + parseFloat(venta.total).toFixed(2) + '</strong>',
+                    venta.cliente_nombre,
+                    badgeEstado,
+                    '<a href="ver.php?id=' + venta.id + '" target="_blank" class="btn btn-link btn-success btn-sm" title="Ver Factura"><i class="fa fa-eye"></i></a> ' +
+                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarVenta(' + venta.id + ')" title="Cancelar Venta"><i class="fa fa-times"></i></button>'
+                  ]).node();
+
+                  $(rowNode).data('venta', venta);
+                  $(rowNode).find('td:first').addClass('details-control text-center');
+                });
+                table.draw();
+              }
+            },
+            error: function() {
+              swal("Error", "No se pudieron cargar las ventas", "error");
+            }
+          });
+        }
+        
         $('#cantidad, #precio_unitario, #iva, #descuento').on('input', function() {
           calcularTotal();
         });
@@ -728,7 +681,6 @@ if (!$auth->isAuthenticated()) {
           $('#totalVenta').text('$' + total.toFixed(2));
         }
         
-        // Guardar nueva venta
         $('#btnGuardarVenta').click(function() {
           var form = $('#formNuevaVenta')[0];
           if (!form.checkValidity()) {
@@ -753,7 +705,6 @@ if (!$auth->isAuthenticated()) {
           var subtotal = cantidad * precio_unitario;
           var total = subtotal + iva - descuento;
           
-          // Verificar stock disponible
           var stockDisponible = parseFloat(inventarioInput.data('cantidad')) || 0;
           if (cantidad > stockDisponible) {
             swal("Error", "La cantidad solicitada (" + cantidad + ") excede el stock disponible (" + stockDisponible + ")", "error");
@@ -779,6 +730,7 @@ if (!$auth->isAuthenticated()) {
               producto_id: producto_id,
               precio_id: precio_id,
               cantidad: cantidad,
+              precio_unitario: precio_unitario,
               subtotal: subtotal
             }]),
             action: 'crear'
@@ -795,7 +747,6 @@ if (!$auth->isAuthenticated()) {
                 $('#modalNuevaVenta').modal('hide');
                 $('#formNuevaVenta')[0].reset();
                 $('#fecha_venta').val(new Date().toISOString().split('T')[0]);
-                $('#inventario_id').empty().append('<option value="">Seleccione un producto del inventario</option>');
                 calcularTotal();
                 cargarVentas();
               } else {
@@ -809,14 +760,9 @@ if (!$auth->isAuthenticated()) {
           });
         });
         
-        // Cargar datos al iniciar
         cargarDatos();
         cargarVentas();
       });
-      
-      function verVenta(id) {
-        swal("Próximamente", "La funcionalidad de visualización estará disponible pronto", "info");
-      }
       
       function eliminarVenta(id) {
         swal({

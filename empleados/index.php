@@ -269,7 +269,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
                     <?php endif; ?>
 
                     <div class="mb-3">
-                      <button id="btnNuevoEmpleado" class="btn btn-primary">Nuevo Empleado</button>
+                      <button id="btnNuevoEmpleado" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalEmpleado">
+                        <i class="fa fa-plus"></i> Nuevo Empleado
+                      </button>
                     </div>
 
                     <div class="table-responsive">
@@ -303,6 +305,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
                                   <button
                                     class="btn-edit btn-open-edit"
                                     title="Editar"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalEmpleado"
                                     data-id="<?php echo (int)($emp['id'] ?? 0); ?>"
                                     data-sucursal_id="<?php echo (int)($emp['sucursal_id'] ?? 0); ?>"
                                     data-cedula="<?php echo htmlspecialchars($emp['cedula'] ?? ''); ?>"
@@ -352,9 +356,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
         });
         var currentEditRow = null;
         // Leave DataTables' default search control visible (no custom search)
-        // Abrir modal Nuevo Empleado de forma compatible con BS4 y BS5
-        $('#btnNuevoEmpleado').on('click', function(e){
-          e.preventDefault();
+        // Abrir modal Nuevo Empleado
+        $('#btnNuevoEmpleado').on('click', function(){
           // reset form for create
           var form = $('#modalEmpleado form')[0];
           if (form) form.reset();
@@ -375,15 +378,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           $('#estado').prop('disabled', false);
           $('#modalEmpleadoLabel').text('Nuevo Empleado');
           $('#modalEmpleado button[type="submit"]').text('Guardar');
-          var modalEl = document.getElementById('modalEmpleado');
-          if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-            var m = bootstrap.Modal.getOrCreateInstance(modalEl);
-            m.show();
-          } else if ($('#modalEmpleado').modal) {
-            $('#modalEmpleado').modal('show');
-          } else {
-            console.warn('No se encontró método para abrir modal');
-          }
         });
 
         // Cerrar modal al pulsar Cancelar (compatible BS4/BS5)
@@ -447,9 +441,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           }
         });
 
-        // Abrir modal en modo editar y poblar campos. Solo nombre, apellidos, estado y sucursal editables.
-        $(document).on('click', '.btn-open-edit', function(e) {
-          e.preventDefault();
+        // Abrir modal en modo editar y poblar campos.
+        $(document).on('click', '.btn-open-edit', function() {
           var btn = $(this);
           var id = btn.data('id');
           var sucursal_id = btn.data('sucursal_id');
@@ -483,15 +476,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           // clear cedula validation state (already readonly)
           $('#cedulaValidation').removeClass('show valid invalid').html('');
           $('#cedulaError').text('');
-
-          // show modal
-          var modalEl = document.getElementById('modalEmpleado');
-          if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-            var m = bootstrap.Modal.getOrCreateInstance(modalEl);
-            m.show();
-          } else if ($('#modalEmpleado').modal) {
-            $('#modalEmpleado').modal('show');
-          }
         });
 
         // Intercept form submit to perform AJAX update when editing
@@ -572,12 +556,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           <form method="post" action="">
             <input type="hidden" id="formAction" name="action" value="create">
             <input type="hidden" id="empleado_id" name="id" value="">
-            <div class="modal-header">
-              <h5 class="modal-title" id="modalEmpleadoLabel">Nuevo Empleado</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalEmpleadoLabel">Nuevo Empleado</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
             <div class="modal-body">
               <div class="form-row">
                 <div class="form-group col-md-6">
@@ -636,7 +618,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary">Guardar</button>
             </div>
           </form>

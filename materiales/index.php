@@ -90,6 +90,16 @@ if (!$auth->isAuthenticated()) {
                     <div class="card-head-row">
                       <div class="card-title">Lista de Materiales</div>
                     </div>
+                    <div class="card-category">
+                      <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active" id="pills-activos-tab" data-bs-toggle="pill" href="#pills-activos" role="tab" onclick="cambiarFiltroEstado('activos')">Activos</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="pills-inactivos-tab" data-bs-toggle="pill" href="#pills-inactivos" role="tab" onclick="cambiarFiltroEstado('inactivos')">Inactivos</a>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
@@ -254,6 +264,12 @@ if (!$auth->isAuthenticated()) {
         });
         
         var materialesList = [];
+        var estadoActual = 'activos';
+
+        window.cambiarFiltroEstado = function(nuevoEstado) {
+          estadoActual = nuevoEstado;
+          cargarMateriales();
+        };
 
         cargarCategorias();
         
@@ -288,7 +304,7 @@ if (!$auth->isAuthenticated()) {
 
         function cargarMateriales() {
           $.ajax({
-            url: 'api.php?action=listar',
+            url: 'api.php?action=listar&estado=' + estadoActual,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -300,13 +316,20 @@ if (!$auth->isAuthenticated()) {
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-danger">Inactivo</span>';
                   
+                  var botones = '<button class="btn btn-link btn-primary btn-sm" onclick="editarMaterial(' + material.id + ')"><i class="fa fa-edit"></i></button> ';
+                  
+                  if (estadoActual === 'activos') {
+                    botones += '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarMaterial(' + material.id + ')"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botones += '<button class="btn btn-link btn-success btn-sm" onclick="activarMaterial(' + material.id + ')"><i class="fa fa-check"></i></button>';
+                  }
+
                   table.row.add([
                     '<strong>' + material.nombre + '</strong>',
                     material.categoria_nombre || '-',
                     material.descripcion || '-',
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarMaterial(' + material.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarMaterial(' + material.id + ')"><i class="fa fa-times"></i></button>'
+                    botones
                   ]);
                 });
                 table.draw();
@@ -514,6 +537,33 @@ if (!$auth->isAuthenticated()) {
                 url: 'api.php',
                 method: 'POST',
                 data: { id: id, action: 'eliminar' },
+                dataType: 'json',
+                success: function(response) {
+                  if (response.success) {
+                    swal("¡Éxito!", response.message, "success");
+                    cargarMateriales();
+                  } else {
+                    swal("Error", response.message, "error");
+                  }
+                }
+              });
+            }
+          });
+        };
+
+        window.activarMaterial = function(id) {
+          swal({
+            title: "¿Desea activar el material?",
+            text: "El material volverá a estar disponible",
+            icon: "info",
+            buttons: true,
+          })
+          .then((willActivate) => {
+            if (willActivate) {
+              $.ajax({
+                url: 'api.php',
+                method: 'POST',
+                data: { id: id, action: 'activar' },
                 dataType: 'json',
                 success: function(response) {
                   if (response.success) {

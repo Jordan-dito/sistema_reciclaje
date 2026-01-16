@@ -56,19 +56,27 @@ try {
                 }
                 
                 $sucursal_id = $_GET['sucursal_id'] ?? $sucursal_usuario;
+                $filtro_estado = $_GET['estado'] ?? 'activos'; // Por defecto solo activos
                 
                 $sql = "
                     SELECT c.*, p.nombre as proveedor_nombre, s.nombre as sucursal_nombre 
                     FROM compras c 
                     INNER JOIN proveedores p ON c.proveedor_id = p.id 
                     INNER JOIN sucursales s ON c.sucursal_id = s.id 
-                    WHERE c.estado <> 'cancelada'
+                    WHERE 1=1
                 ";
                 $params = [];
                 
                 if ($sucursal_id) {
                     $sql .= " AND c.sucursal_id = ?";
                     $params[] = $sucursal_id;
+                }
+
+                if ($filtro_estado === 'activos') {
+                    $sql .= " AND c.estado <> 'cancelada'";
+                } elseif ($filtro_estado !== 'todos') {
+                    $sql .= " AND c.estado = ?";
+                    $params[] = $filtro_estado;
                 }
                 
                 $sql .= " ORDER BY c.fecha_compra DESC, c.id DESC";
@@ -462,15 +470,14 @@ try {
                     }
                     
                     if ($compra['estado'] === 'completada') {
-                        $stmt = $db->prepare("SELECT inventario_id, cantidad FROM compras_detalle WHERE compra_id = ?");
+                        $stmt = $db->prepare("SELECT producto_id, cantidad FROM compras_detalle WHERE compra_id = ?");
                         $stmt->execute([$id]);
                         $detalles = $stmt->fetchAll();
                         
                         foreach ($detalles as $detalle) {
-                            if (!empty($detalle['inventario_id'])) {
-                                $stmt = $db->prepare("UPDATE inventarios SET cantidad = GREATEST(cantidad - ?, 0) WHERE id = ?");
-                                $stmt->execute([$detalle['cantidad'], $detalle['inventario_id']]);
-                            }
+                            // Al cancelar una compra completada, restamos el stock del producto en esa sucursal
+                            $stmt = $db->prepare("UPDATE inventarios SET cantidad = GREATEST(cantidad - ?, 0) WHERE producto_id = ? AND sucursal_id = ?");
+                            $stmt->execute([$detalle['cantidad'], $detalle['producto_id'], $compra['sucursal_id']]);
                         }
                     }
                     
