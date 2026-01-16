@@ -369,9 +369,29 @@ if (!$auth->isAuthenticated()) {
           cargarProveedores();
         };
 
-        // Validar RUC - solo números
+        // Validar RUC/Cédula - solo números y longitud máxima
         $('#cedula_ruc').on('input', function() {
           this.value = this.value.replace(/[^0-9]/g, '');
+          
+          // Limitar longitud según tipo de documento
+          var tipoDoc = $('#tipo_documento').val();
+          if (tipoDoc === 'cedula' && this.value.length > 10) {
+            this.value = this.value.substring(0, 10);
+          } else if (tipoDoc === 'ruc' && this.value.length > 13) {
+            this.value = this.value.substring(0, 13);
+          }
+        });
+        
+        // Ajustar longitud máxima cuando cambia el tipo de documento
+        $('#tipo_documento').on('change', function() {
+          var cedula_ruc = $('#cedula_ruc');
+          var valor = cedula_ruc.val();
+          
+          if (this.value === 'cedula' && valor.length > 10) {
+            cedula_ruc.val(valor.substring(0, 10));
+          } else if (this.value === 'ruc' && valor.length > 13) {
+            cedula_ruc.val(valor.substring(0, 13));
+          }
         });
         
         // Cargar proveedores
