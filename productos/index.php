@@ -106,7 +106,7 @@ if (!$auth->isAuthenticated()) {
                       <table id="productosTable" class="display table table-striped table-hover">
                         <thead>
                           <tr>
-                            <th>Nombre</th>
+                            <th>Código</th>
                             <th>Material</th>
                             <th>Categoría</th>
                             <th>Unidad</th>
@@ -144,7 +144,8 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Código <span class="text-danger">*</span></label>
-                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: 0001" required>
+                    <input type="text" id="nombre" name="nombre" class="form-control" value="Se generará automáticamente" readonly style="background-color: #f5f5f5;">
+                    <small class="form-text text-muted">El código se asignará automáticamente de forma secuencial</small>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -165,20 +166,20 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Precio de Venta ($)</label>
-                    <input type="number" id="precio_venta" name="precio_venta" class="form-control" step="0.01" min="0" placeholder="0.00">
+                    <label>Precio de Venta ($) <span class="text-danger">*</span></label>
+                    <input type="number" id="precio_venta" name="precio_venta" class="form-control" step="0.01" min="0.01" placeholder="0.00" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Precio de Compra ($)</label>
-                    <input type="number" id="precio_compra" name="precio_compra" class="form-control" step="0.01" min="0" placeholder="0.00">
+                    <label>Precio de Compra ($) <span class="text-danger">*</span></label>
+                    <input type="number" id="precio_compra" name="precio_compra" class="form-control" step="0.01" min="0.01" placeholder="0.00" required>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Descripción</label>
-                    <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del producto"></textarea>
+                    <label>Descripción <span class="text-danger">*</span></label>
+                    <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del producto" required></textarea>
                   </div>
                 </div>
                 <input type="hidden" id="estado" name="estado" value="activo">
@@ -229,20 +230,20 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Precio de Venta ($)</label>
-                    <input type="number" id="edit_precio_venta" name="precio_venta" class="form-control" step="0.01" min="0">
+                    <label>Precio de Venta ($) <span class="text-danger">*</span></label>
+                    <input type="number" id="edit_precio_venta" name="precio_venta" class="form-control" step="0.01" min="0.01" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Precio de Compra ($)</label>
-                    <input type="number" id="edit_precio_compra" name="precio_compra" class="form-control" step="0.01" min="0">
+                    <label>Precio de Compra ($) <span class="text-danger">*</span></label>
+                    <input type="number" id="edit_precio_compra" name="precio_compra" class="form-control" step="0.01" min="0.01" required>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Descripción</label>
-                    <textarea id="edit_descripcion" name="descripcion" class="form-control" rows="3"></textarea>
+                    <label>Descripción <span class="text-danger">*</span></label>
+                    <textarea id="edit_descripcion" name="descripcion" class="form-control" rows="3" required></textarea>
                   </div>
                 </div>
                 <input type="hidden" id="edit_estado" name="estado" value="activo">
@@ -429,25 +430,31 @@ if (!$auth->isAuthenticated()) {
           });
         }
 
-        // Validar código en tiempo real
-        $('#nombre').on('blur', function() {
-          var nombre = $(this).val().trim();
-          if (nombre.length > 0) {
-            var codigoExiste = productosList.some(function(prod) {
-              return prod.estado === 'activo' && prod.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+        // Validar duplicados en tiempo real (material + unidad)
+        $('#material_id, #unidad_id').on('change', function() {
+          var material_id = $('#material_id').val();
+          var unidad_id = $('#unidad_id').val();
+          
+          if (material_id && unidad_id) {
+            // Verificar si existe combinación
+            var existe = productosList.some(function(prod) {
+              return prod.estado === 'activo' && 
+                     prod.material_id == material_id && 
+                     prod.unidad_id == unidad_id;
             });
             
-            if (codigoExiste) {
-              $(this).addClass('is-invalid');
-              $(this).removeClass('is-valid');
-              var feedback = $(this).next('.invalid-feedback');
-              if (feedback.length === 0) {
-                $(this).after('<div class="invalid-feedback">Ya existe un producto activo con este código</div>');
-              }
-            } else {
-              $(this).removeClass('is-invalid');
-              $(this).addClass('is-valid');
-              $(this).next('.invalid-feedback').remove();
+            if (existe) {
+              var productoExistente = productosList.find(function(prod) {
+                return prod.estado === 'activo' && 
+                       prod.material_id == material_id && 
+                       prod.unidad_id == unidad_id;
+              });
+              
+              swal({
+                title: "Producto Duplicado",
+                text: "Ya existe un producto con este material y unidad (Código: " + productoExistente.nombre + ")",
+                icon: "warning"
+              });
             }
           }
         });
@@ -459,26 +466,55 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
-          var nombre = $('#nombre').val().trim();
+          // Validar duplicados antes de enviar
+          var material_id = $('#material_id').val();
+          var unidad_id = $('#unidad_id').val();
           
-          // Validar que el código no exista
-          var codigoExiste = productosList.some(function(prod) {
-            return prod.estado === 'activo' && prod.nombre.toLowerCase().trim() === nombre.toLowerCase().trim();
+          var existe = productosList.some(function(prod) {
+            return prod.estado === 'activo' && 
+                   prod.material_id == material_id && 
+                   prod.unidad_id == unidad_id;
           });
           
-          if (codigoExiste) {
-            swal("Error", "Ya existe un producto activo con el código \"" + nombre + "\"", "error");
-            $('#nombre').focus();
+          if (existe) {
+            var productoExistente = productosList.find(function(prod) {
+              return prod.estado === 'activo' && 
+                     prod.material_id == material_id && 
+                     prod.unidad_id == unidad_id;
+            });
+            swal("Error", "Ya existe un producto con este material y unidad (Código: " + productoExistente.nombre + ")", "error");
+            return;
+          }
+          
+          // Validar campos obligatorios adicionales
+          var descripcion = $('#descripcion').val().trim();
+          var precio_venta = parseFloat($('#precio_venta').val());
+          var precio_compra = parseFloat($('#precio_compra').val());
+          
+          if (!descripcion) {
+            swal("Error", "La descripción es obligatoria", "error");
+            $('#descripcion').focus();
+            return;
+          }
+          
+          if (!precio_venta || precio_venta <= 0) {
+            swal("Error", "El precio de venta es obligatorio y debe ser mayor a 0", "error");
+            $('#precio_venta').focus();
+            return;
+          }
+          
+          if (!precio_compra || precio_compra <= 0) {
+            swal("Error", "El precio de compra es obligatorio y debe ser mayor a 0", "error");
+            $('#precio_compra').focus();
             return;
           }
           
           var formData = {
-            nombre: nombre,
-            material_id: $('#material_id').val(),
-            unidad_id: $('#unidad_id').val(),
-            descripcion: $('#descripcion').val(),
-            precio_venta: $('#precio_venta').val() || 0,
-            precio_compra: $('#precio_compra').val() || 0,
+            material_id: material_id,
+            unidad_id: unidad_id,
+            descripcion: descripcion,
+            precio_venta: precio_venta,
+            precio_compra: precio_compra,
             estado: $('#estado').val(),
             action: 'crear'
           };
@@ -512,15 +548,61 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
+          // Validar duplicados antes de actualizar
+          var id = $('#edit_id').val();
+          var material_id = $('#edit_material_id').val();
+          var unidad_id = $('#edit_unidad_id').val();
+          
+          var existe = productosList.some(function(prod) {
+            return prod.estado === 'activo' && 
+                   prod.id != id &&
+                   prod.material_id == material_id && 
+                   prod.unidad_id == unidad_id;
+          });
+          
+          if (existe) {
+            var productoExistente = productosList.find(function(prod) {
+              return prod.estado === 'activo' && 
+                     prod.id != id &&
+                     prod.material_id == material_id && 
+                     prod.unidad_id == unidad_id;
+            });
+            swal("Error", "Ya existe otro producto con este material y unidad (Código: " + productoExistente.nombre + ")", "error");
+            return;
+          }
+          
+          // Validar campos obligatorios adicionales
+          var descripcion = $('#edit_descripcion').val().trim();
+          var precio_venta = parseFloat($('#edit_precio_venta').val());
+          var precio_compra = parseFloat($('#edit_precio_compra').val());
+          
+          if (!descripcion) {
+            swal("Error", "La descripción es obligatoria", "error");
+            $('#edit_descripcion').focus();
+            return;
+          }
+          
+          if (!precio_venta || precio_venta <= 0) {
+            swal("Error", "El precio de venta es obligatorio y debe ser mayor a 0", "error");
+            $('#edit_precio_venta').focus();
+            return;
+          }
+          
+          if (!precio_compra || precio_compra <= 0) {
+            swal("Error", "El precio de compra es obligatorio y debe ser mayor a 0", "error");
+            $('#edit_precio_compra').focus();
+            return;
+          }
+          
           // Obtener valores de campos deshabilitados antes de enviar
           var formData = {
-            id: $('#edit_id').val(),
+            id: id,
             nombre: $('#edit_nombre').val(), // Campo deshabilitado pero necesario
-            material_id: $('#edit_material_id').val(), // Campo deshabilitado pero necesario
-            unidad_id: $('#edit_unidad_id').val(), // Campo deshabilitado pero necesario
-            descripcion: $('#edit_descripcion').val(),
-            precio_venta: $('#edit_precio_venta').val() || 0,
-            precio_compra: $('#edit_precio_compra').val() || 0,
+            material_id: material_id, // Campo deshabilitado pero necesario
+            unidad_id: unidad_id, // Campo deshabilitado pero necesario
+            descripcion: descripcion,
+            precio_venta: precio_venta,
+            precio_compra: precio_compra,
             estado: $('#edit_estado').val() || 'activo',
             action: 'actualizar'
           };

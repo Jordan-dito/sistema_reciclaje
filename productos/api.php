@@ -114,7 +114,6 @@ try {
             if ($action === 'crear') {
                 $db->beginTransaction();
                 try {
-                    $nombre = trim($_POST['nombre'] ?? '');
                     $material_id = $_POST['material_id'] ?? 0;
                     $unidad_id = $_POST['unidad_id'] ?? 0;
                     $descripcion = trim($_POST['descripcion'] ?? '');
@@ -122,26 +121,80 @@ try {
                     $precio_venta = $_POST['precio_venta'] ?? 0;
                     $precio_compra = $_POST['precio_compra'] ?? 0;
                     
-                    // Validar nombre: no solo espacios
-                    $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
-                    if (!$validacionNombre['valid']) {
-                        throw new Exception($validacionNombre['message']);
+                    if (empty($material_id) || empty($unidad_id)) {
+                        throw new Exception('Material y unidad son obligatorios');
                     }
-                    $nombre = limpiarEspacios($nombre);
+                    
                     $descripcion = limpiarEspacios($descripcion);
                     
-                    // Validar precios: solo números (decimales permitidos)
-                    if (!empty($precio_venta)) {
-                        $validacionPrecioVenta = validarSoloNumeros($precio_venta, 'Precio de Venta', true);
-                        if (!$validacionPrecioVenta['valid']) {
-                            throw new Exception($validacionPrecioVenta['message']);
-                        }
+                    // Generar código automáticamente y secuencialmente
+                    // Buscar el último código numérico (formato 0001, 0002, etc.)
+                    $stmt = $db->query("
+                        SELECT nombre 
+                        FROM productos 
+                        WHERE nombre REGEXP '^[0-9]{4}$'
+                        ORDER BY CAST(nombre AS UNSIGNED) DESC 
+                        LIMIT 1
+                    ");
+                    $ultimoCodigo = $stmt->fetch();
+                    
+                    if ($ultimoCodigo) {
+                        $numeroActual = intval($ultimoCodigo['nombre']);
+                        $nuevoNumero = $numeroActual + 1;
+                    } else {
+                        // Si no hay códigos numéricos, comenzar desde 1
+                        $nuevoNumero = 1;
                     }
-                    if (!empty($precio_compra)) {
-                        $validacionPrecioCompra = validarSoloNumeros($precio_compra, 'Precio de Compra', true);
-                        if (!$validacionPrecioCompra['valid']) {
-                            throw new Exception($validacionPrecioCompra['message']);
-                        }
+                    
+                    // Formatear con 4 dígitos (0001, 0002, etc.)
+                    $nombre = str_pad($nuevoNumero, 4, '0', STR_PAD_LEFT);
+                    
+                    // Verificar que no exista (por seguridad, en caso de concurrencia)
+                    $stmt = $db->prepare("SELECT id FROM productos WHERE nombre = ?");
+                    $stmt->execute([$nombre]);
+                    if ($stmt->fetch()) {
+                        throw new Exception('El código generado ya existe. Por favor, intente nuevamente.');
+                    }
+                    
+                    // Validar que no exista la combinación material + unidad
+                    $stmt = $db->prepare("
+                        SELECT id, nombre 
+                        FROM productos 
+                        WHERE material_id = ? AND unidad_id = ? AND estado = 'activo'
+                    ");
+                    $stmt->execute([$material_id, $unidad_id]);
+                    $productoExistente = $stmt->fetch();
+                    
+                    if ($productoExistente) {
+                        throw new Exception('Ya existe un producto activo con este material y unidad (Código: ' . $productoExistente['nombre'] . ')');
+                    }
+                    
+                    // Validar descripción obligatoria
+                    if (empty($descripcion)) {
+                        throw new Exception('La descripción es obligatoria');
+                    }
+                    $validacionDescripcion = validarNoSoloEspacios($descripcion, 'Descripción');
+                    if (!$validacionDescripcion['valid']) {
+                        throw new Exception($validacionDescripcion['message']);
+                    }
+                    
+                    // Validar precios obligatorios
+                    if (empty($precio_venta) || $precio_venta <= 0) {
+                        throw new Exception('El precio de venta es obligatorio y debe ser mayor a 0');
+                    }
+                    if (empty($precio_compra) || $precio_compra <= 0) {
+                        throw new Exception('El precio de compra es obligatorio y debe ser mayor a 0');
+                    }
+                    
+                    // Validar precios: solo números (decimales permitidos)
+                    $validacionPrecioVenta = validarSoloNumeros($precio_venta, 'Precio de Venta', true);
+                    if (!$validacionPrecioVenta['valid']) {
+                        throw new Exception($validacionPrecioVenta['message']);
+                    }
+                    
+                    $validacionPrecioCompra = validarSoloNumeros($precio_compra, 'Precio de Compra', true);
+                    if (!$validacionPrecioCompra['valid']) {
+                        throw new Exception($validacionPrecioCompra['message']);
                     }
                     
                     if (empty($material_id) || empty($unidad_id)) {
@@ -198,6 +251,36 @@ try {
                     
                     if (empty($nombre) || empty($material_id) || empty($unidad_id)) {
                         throw new Exception('Nombre, material y unidad son obligatorios');
+                    }
+                    
+                    // Validar que no exista otro producto con la misma combinación material + unidad
+                    $stmt = $db->prepare("
+                        SELECT id, nombre 
+                        FROM productos 
+                        WHERE material_id = ? AND unidad_id = ? AND id != ? AND estado = 'activo'
+                    ");
+                    $stmt->execute([$material_id, $unidad_id, $id]);
+                    $productoExistente = $stmt->fetch();
+                    
+                    if ($productoExistente) {
+                        throw new Exception('Ya existe otro producto activo con este material y unidad (Código: ' . $productoExistente['nombre'] . ')');
+                    }
+                    
+                    // Validar descripción obligatoria
+                    if (empty($descripcion)) {
+                        throw new Exception('La descripción es obligatoria');
+                    }
+                    $validacionDescripcion = validarNoSoloEspacios($descripcion, 'Descripción');
+                    if (!$validacionDescripcion['valid']) {
+                        throw new Exception($validacionDescripcion['message']);
+                    }
+                    
+                    // Validar precios obligatorios
+                    if (empty($precio_venta) || $precio_venta <= 0) {
+                        throw new Exception('El precio de venta es obligatorio y debe ser mayor a 0');
+                    }
+                    if (empty($precio_compra) || $precio_compra <= 0) {
+                        throw new Exception('El precio de compra es obligatorio y debe ser mayor a 0');
                     }
                     
                     // Actualizar producto
