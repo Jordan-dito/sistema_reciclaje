@@ -35,11 +35,17 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $stmt = $db->query("
-                    SELECT * FROM unidades 
-                    WHERE estado = 'activo'
-                    ORDER BY nombre ASC
-                ");
+                $estado = $_GET['estado'] ?? 'activos';
+                
+                $sql = "SELECT * FROM unidades WHERE 1=1";
+                if ($estado === 'activos') {
+                    $sql .= " AND estado = 'activo'";
+                } elseif ($estado === 'inactivos') {
+                    $sql .= " AND estado = 'inactivo'";
+                }
+                $sql .= " ORDER BY nombre ASC";
+                
+                $stmt = $db->query($sql);
                 $unidades = $stmt->fetchAll();
                 
                 ob_end_clean();
@@ -164,6 +170,22 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Unidad desactivada exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = $_POST['id'] ?? 0;
+                
+                $stmt = $db->prepare("SELECT estado FROM unidades WHERE id = ?");
+                $stmt->execute([$id]);
+                $unidad = $stmt->fetch();
+                
+                if (!$unidad) {
+                    throw new Exception('Unidad no encontrada');
+                }
+                
+                $stmt = $db->prepare("UPDATE unidades SET estado = 'activo' WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Unidad activada exitosamente']);
             }
             break;
             

@@ -225,7 +225,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Nombre de la Sucursal *</label>
-                    <input type="text" id="editar_nombre" name="nombre" class="form-control" required>
+                    <input type="text" id="editar_nombre" name="nombre" class="form-control" required readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -258,7 +258,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select id="editar_estado" name="estado" class="form-control">
+                    <select id="editar_estado" name="estado" class="form-control" style="background-color: #f8f9fa; cursor: not-allowed; pointer-events: none;" tabindex="-1">
                       <option value="activa">Activa</option>
                       <option value="inactiva">Inactiva</option>
                     </select>
@@ -313,7 +313,8 @@ if (!$auth->isAuthenticated()) {
                 var select = $('#responsable_id');
                 select.empty().append('<option value="">Seleccione un responsable</option>');
                 response.data.forEach(function(usuario) {
-                  if (usuario.estado === 'activo') {
+                  // Filtro: Solo activos y que NO tengan sucursal_id asignado
+                  if (usuario.estado === 'activo' && !usuario.sucursal_id) {
                     select.append('<option value="' + usuario.id + '">' + usuario.nombre + '</option>');
                   }
                 });
@@ -546,24 +547,7 @@ if (!$auth->isAuthenticated()) {
       });
       
       function editarSucursal(id) {
-        // Cargar usuarios en el select de edición
-        $.ajax({
-          url: '../usuarios/api.php?action=listar',
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success) {
-              var select = $('#editar_responsable_id');
-              select.empty().append('<option value="">Seleccione un responsable</option>');
-              response.data.forEach(function(usuario) {
-                if (usuario.estado === 'activo') {
-                  select.append('<option value="' + usuario.id + '">' + usuario.nombre + '</option>');
-                }
-              });
-            }
-          }
-        });
-        
+        // 1. Primero obtenemos los datos de la sucursal para saber quién es el responsable actual
         $.ajax({
           url: 'api.php?action=obtener&id=' + id,
           method: 'GET',
@@ -572,19 +556,53 @@ if (!$auth->isAuthenticated()) {
             withCredentials: true
           },
           crossDomain: false,
-          success: function(response) {
-            if (response.success) {
-              var s = response.data;
-              $('#editar_id').val(s.id);
-              $('#editar_nombre').val(s.nombre);
-              $('#editar_direccion').val(s.direccion || '');
-              $('#editar_telefono').val(s.telefono || '');
-              $('#editar_email').val(s.email || '');
-              $('#editar_responsable_id').val(s.responsable_id || '');
-              $('#editar_estado').val(s.estado);
-              $('#editar_saldo').val(s.saldo || 0);
-              $('#modalEditarSucursal').modal('show');
+          success: function(responseSucursal) {
+            if (responseSucursal.success) {
+              var s = responseSucursal.data;
+              var id_responsable_actual = s.responsable_id;
+
+              // 2. Ahora cargamos los usuarios filtrando por los que están libres
+              $.ajax({
+                url: '../usuarios/api.php?action=listar',
+                method: 'GET',
+                dataType: 'json',
+                success: function(responseUsuarios) {
+                  if (responseUsuarios.success) {
+                    var select = $('#editar_responsable_id');
+                    select.empty().append('<option value="">Seleccione un responsable</option>');
+                    
+                    responseUsuarios.data.forEach(function(usuario) {
+                      // Filtro: Solo activos y que (NO tengan sucursal_id O sea el responsable actual de esta sucursal)
+                      if (usuario.estado === 'activo' && (!usuario.sucursal_id || usuario.id == id_responsable_actual)) {
+                        select.append('<option value="' + usuario.id + '">' + usuario.nombre + '</option>');
+                      }
+                    });
+
+                    // Si el responsable actual está inactivo o ya no está en el filtro, lo añadimos manualmente
+                    if (id_responsable_actual && select.find('option[value="' + id_responsable_actual + '"]').length === 0) {
+                      select.append('<option value="' + id_responsable_actual + '">' + (s.responsable_nombre || 'Usuario Inactivo/Ocupado') + '</option>');
+                    }
+
+                    // Llenar el resto de los campos
+                    $('#editar_id').val(s.id);
+                    $('#editar_nombre').val(s.nombre);
+                    $('#editar_direccion').val(s.direccion || '');
+                    $('#editar_telefono').val(s.telefono || '');
+                    $('#editar_email').val(s.email || '');
+                    $('#editar_responsable_id').val(s.responsable_id || '');
+                    $('#editar_estado').val(s.estado);
+                    $('#editar_saldo').val(s.saldo || 0);
+                    $('#modalEditarSucursal').modal('show');
+                  }
+                },
+                error: function() {
+                  swal("Error", "No se pudo cargar la lista de usuarios", "error");
+                }
+              });
             }
+          },
+          error: function() {
+            swal("Error", "No se pudieron obtener los datos de la sucursal", "error");
           }
         });
       }

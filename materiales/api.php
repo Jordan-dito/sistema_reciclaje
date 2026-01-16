@@ -35,13 +35,22 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $stmt = $db->query("
-                    SELECT m.*, c.nombre as categoria_nombre 
-                    FROM materiales m 
-                    LEFT JOIN categorias c ON m.categoria_id = c.id 
-                    WHERE m.estado = 'activo'
-                    ORDER BY m.nombre ASC
-                ");
+                $estado = $_GET['estado'] ?? 'activos';
+                
+                $sql = "SELECT m.*, c.nombre as categoria_nombre 
+                        FROM materiales m 
+                        LEFT JOIN categorias c ON m.categoria_id = c.id 
+                        WHERE 1=1";
+                
+                if ($estado === 'activos') {
+                    $sql .= " AND m.estado = 'activo'";
+                } elseif ($estado === 'inactivos') {
+                    $sql .= " AND m.estado = 'inactivo'";
+                }
+                
+                $sql .= " ORDER BY m.nombre ASC";
+                
+                $stmt = $db->query($sql);
                 $materiales = $stmt->fetchAll();
                 
                 ob_end_clean();
@@ -189,6 +198,22 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Material desactivado exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = $_POST['id'] ?? 0;
+                
+                $stmt = $db->prepare("SELECT estado FROM materiales WHERE id = ?");
+                $stmt->execute([$id]);
+                $material = $stmt->fetch();
+                
+                if (!$material) {
+                    throw new Exception('Material no encontrado');
+                }
+                
+                $stmt = $db->prepare("UPDATE materiales SET estado = 'activo' WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Material activado exitosamente']);
             }
             break;
             

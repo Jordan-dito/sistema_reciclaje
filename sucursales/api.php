@@ -170,10 +170,14 @@ try {
                 }
                 
                 if ($responsable_id) {
-                    $stmt = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
+                    $stmt = $db->prepare("SELECT id, sucursal_id FROM usuarios WHERE id = ?");
                     $stmt->execute([$responsable_id]);
-                    if (!$stmt->fetch()) {
+                    $usuario = $stmt->fetch();
+                    if (!$usuario) {
                         throw new Exception('Responsable inválido');
+                    }
+                    if ($usuario['sucursal_id'] !== null) {
+                        throw new Exception('Este usuario ya es responsable de otra sucursal');
                     }
                 }
                 
@@ -182,6 +186,9 @@ try {
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 ");
                 
+                // Log de depuración: datos recibidos
+                error_log("sucursales/api.php - crear POST: " . print_r($_POST, true));
+
                 $stmt->execute([
                     $nombre,
                     $direccion ?: null,
@@ -192,12 +199,32 @@ try {
                     $saldo
                 ]);
                 
-                ob_end_clean();
-                echo json_encode([
+                $nueva_sucursal_id = $db->lastInsertId();
+
+                // Si se asignó un responsable, actualizar su sucursal_id en la tabla usuarios
+                if ($responsable_id) {
+                    $stmt = $db->prepare("UPDATE usuarios SET sucursal_id = ? WHERE id = ?");
+                    $stmt->execute([$nueva_sucursal_id, $responsable_id]);
+                    error_log("sucursales/api.php - crear: actualizado usuarios.sucursal_id para usuario {$responsable_id} => sucursal {$nueva_sucursal_id}. Affected: " . $stmt->rowCount());
+                }
+
+                // Preparar respuesta (añadir debug sólo si APP_DEBUG está activado)
+                $response = [
                     'success' => true,
                     'message' => 'Sucursal creada exitosamente',
-                    'id' => $db->lastInsertId()
-                ]);
+                    'id' => $nueva_sucursal_id
+                ];
+
+                if (defined('APP_DEBUG') && APP_DEBUG) {
+                    $response['debug'] = [
+                        'post' => $_POST,
+                        'nueva_sucursal_id' => $nueva_sucursal_id,
+                        'responsable_id' => $responsable_id
+                    ];
+                }
+
+                ob_end_clean();
+                echo json_encode($response);
             } elseif ($action === 'actualizar') {
                 $id = intval($_POST['id'] ?? 0);
                 $nombre = trim($_POST['nombre'] ?? '');
@@ -225,12 +252,22 @@ try {
                 }
                 
                 if ($responsable_id) {
-                    $stmt = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
+                    $stmt = $db->prepare("SELECT id, sucursal_id FROM usuarios WHERE id = ?");
                     $stmt->execute([$responsable_id]);
-                    if (!$stmt->fetch()) {
+                    $usuario = $stmt->fetch();
+                    if (!$usuario) {
                         throw new Exception('Responsable inválido');
                     }
+                    // Si tiene sucursal_id y no es la actual sucursal que estamos editando
+                    if ($usuario['sucursal_id'] !== null && $usuario['sucursal_id'] != $id) {
+                        throw new Exception('Este usuario ya es responsable de otra sucursal');
+                    }
                 }
+
+                // Obtener el responsable actual antes de actualizar para gestionar el cambio
+                $stmt = $db->prepare("SELECT responsable_id FROM sucursales WHERE id = ?");
+                $stmt->execute([$id]);
+                $responsable_anterior = $stmt->fetchColumn();
                 
                 $stmt = $db->prepare("
                     UPDATE sucursales 
@@ -247,9 +284,41 @@ try {
                     $estado,
                     $id
                 ]);
-                
+
+                // Gestionar actualización de sucursal_id en la tabla usuarios
+                if ($responsable_anterior != $responsable_id) {
+                    // Si había un responsable anterior, quitarle la vinculación a esta sucursal
+                    if ($responsable_anterior) {
+                        $stmt = $db->prepare("UPDATE usuarios SET sucursal_id = NULL WHERE id = ? AND sucursal_id = ?");
+                        $stmt->execute([$responsable_anterior, $id]);
+                        error_log("sucursales/api.php - actualizar: desvinculado usuario {$responsable_anterior} de sucursal {$id}. Affected: " . $stmt->rowCount());
+                    }
+                    
+                    // Si hay un nuevo responsable, vincularlo a esta sucursal
+                    if ($responsable_id) {
+                        $stmt = $db->prepare("UPDATE usuarios SET sucursal_id = ? WHERE id = ?");
+                        $stmt->execute([$id, $responsable_id]);
+                        error_log("sucursales/api.php - actualizar: vinculado usuario {$responsable_id} a sucursal {$id}. Affected: " . $stmt->rowCount());
+                    }
+                } else {
+                    error_log("sucursales/api.php - actualizar: responsable no cambiado (anterior={$responsable_anterior} nuevo={$responsable_id})");
+                }
+
+                // Respuesta con posible información de depuración
+                $response = [
+                    'success' => true,
+                    'message' => 'Sucursal actualizada exitosamente'
+                ];
+                if (defined('APP_DEBUG') && APP_DEBUG) {
+                    $response['debug'] = [
+                        'post' => $_POST,
+                        'responsable_anterior' => $responsable_anterior,
+                        'responsable_id' => $responsable_id
+                    ];
+                }
+
                 ob_end_clean();
-                echo json_encode(['success' => true, 'message' => 'Sucursal actualizada exitosamente']);
+                echo json_encode($response);
             } elseif ($action === 'eliminar' || $action === 'desactivar') {
                 $id = intval($_POST['id'] ?? 0);
                 

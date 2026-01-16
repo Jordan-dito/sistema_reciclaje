@@ -57,6 +57,7 @@ try {
                 }
                 
                 $sucursal_id = $_GET['sucursal_id'] ?? $sucursal_usuario;
+                $filtro_estado = $_GET['estado'] ?? 'activos'; // Por defecto solo activos
                 
                 // Verificar que la tabla ventas existe
                 try {
@@ -94,7 +95,7 @@ try {
                                COALESCE(s.nombre, 'Sucursal eliminada') as sucursal_nombre 
                         FROM ventas v 
                         LEFT JOIN sucursales s ON v.sucursal_id = s.id 
-                        WHERE v.estado <> 'cancelada'
+                        WHERE 1=1
                     ";
                 } else {
                     // Si la tabla sucursales no existe, solo obtener ventas sin JOIN
@@ -103,7 +104,7 @@ try {
                                COALESCE(v.cliente_nombre, 'Sin cliente') as cliente_nombre,
                                CAST(v.sucursal_id AS CHAR) as sucursal_nombre 
                         FROM ventas v 
-                        WHERE v.estado <> 'cancelada'
+                        WHERE 1=1
                     ";
                 }
                 
@@ -112,6 +113,13 @@ try {
                 if ($sucursal_id) {
                     $sql .= " AND v.sucursal_id = ?";
                     $params[] = $sucursal_id;
+                }
+
+                if ($filtro_estado === 'activos') {
+                    $sql .= " AND v.estado <> 'cancelada'";
+                } elseif ($filtro_estado !== 'todos') {
+                    $sql .= " AND v.estado = ?";
+                    $params[] = $filtro_estado;
                 }
                 
                 $sql .= " ORDER BY v.fecha_venta DESC, v.id DESC";
@@ -133,9 +141,21 @@ try {
                             WHERE vd.venta_id = ?
                         ");
                         $stmtDetalles->execute([$venta['id']]);
-                        $venta['detalles'] = $stmtDetalles->fetchAll();
+                        $detalles = $stmtDetalles->fetchAll();
+                        
+                        // Asegurar que cada detalle tenga precio_unitario
+                        foreach ($detalles as &$det) {
+                            if (!isset($det['precio_unitario']) || floatval($det['precio_unitario']) <= 0) {
+                                if (floatval($det['cantidad']) > 0) {
+                                    $det['precio_unitario'] = floatval($det['subtotal']) / floatval($det['cantidad']);
+                                } else {
+                                    $det['precio_unitario'] = 0;
+                                }
+                            }
+                        }
+                        $venta['detalles'] = $detalles;
                     } catch (PDOException $e) {
-                        // Si la tabla de detalles no existe, asignar array vacío
+                        error_log("Error al cargar detalles de venta " . $venta['id'] . ": " . $e->getMessage());
                         $venta['detalles'] = [];
                     }
                 }
@@ -185,10 +205,11 @@ try {
                 
                 // Obtener venta
                 $stmt = $db->prepare("
-                    SELECT v.*, c.nombre as cliente_nombre, s.nombre as sucursal_nombre 
+                    SELECT v.*, 
+                           COALESCE(v.cliente_nombre, 'Cliente General') as cliente_nombre, 
+                           COALESCE(s.nombre, 'Sucursal eliminada') as sucursal_nombre 
                     FROM ventas v 
-                    INNER JOIN clientes c ON v.cliente_id = c.id 
-                    INNER JOIN sucursales s ON v.sucursal_id = s.id 
+                    LEFT JOIN sucursales s ON v.sucursal_id = s.id 
                     WHERE v.id = ?
                 ");
                 $stmt->execute([$id]);
@@ -198,24 +219,32 @@ try {
                     // Obtener detalles con información de productos
                     $stmt = $db->prepare("
                         SELECT vd.*, 
-                               i.producto_id,
                                p.nombre as producto_nombre,
                                m.nombre as material_nombre,
                                c.nombre as categoria_nombre,
                                u.nombre as unidad_nombre,
-                               u.simbolo as unidad_simbolo,
-                               pr.precio_unitario
+                               u.simbolo as unidad_simbolo
                         FROM ventas_detalle vd
-                        INNER JOIN inventarios i ON vd.inventario_id = i.id
-                        INNER JOIN productos p ON i.producto_id = p.id
-                        INNER JOIN materiales m ON p.material_id = m.id
+                        LEFT JOIN productos p ON vd.producto_id = p.id
+                        LEFT JOIN materiales m ON p.material_id = m.id
                         LEFT JOIN categorias c ON m.categoria_id = c.id
-                        INNER JOIN unidades u ON p.unidad_id = u.id
-                        LEFT JOIN precios pr ON vd.precio_id = pr.id
+                        LEFT JOIN unidades u ON p.unidad_id = u.id
                         WHERE vd.venta_id = ?
                     ");
                     $stmt->execute([$id]);
-                    $venta['detalles'] = $stmt->fetchAll();
+                    $detalles = $stmt->fetchAll();
+
+                    // Asegurar que cada detalle tenga precio_unitario
+                    foreach ($detalles as &$det) {
+                        if (!isset($det['precio_unitario']) || floatval($det['precio_unitario']) <= 0) {
+                            if (floatval($det['cantidad']) > 0) {
+                                $det['precio_unitario'] = floatval($det['subtotal']) / floatval($det['cantidad']);
+                            } else {
+                                $det['precio_unitario'] = 0;
+                            }
+                        }
+                    }
+                    $venta['detalles'] = $detalles;
                 }
                 
                 ob_end_clean();
@@ -224,6 +253,49 @@ try {
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Venta no encontrada']);
                 }
+            } elseif ($action === 'siguiente_numero_factura') {
+                // Obtener el siguiente número de factura disponible
+                $siguienteNumero = 1;
+                
+                try {
+                    // Obtener todos los números de factura que sean numéricos
+                    $stmt = $db->query("
+                        SELECT numero_factura 
+                        FROM ventas 
+                        WHERE numero_factura IS NOT NULL 
+                          AND numero_factura <> ''
+                          AND estado <> 'cancelada'
+                        ORDER BY id DESC
+                    ");
+                    $todos = $stmt->fetchAll();
+                    
+                    // Buscar el número más alto
+                    foreach ($todos as $row) {
+                        if (!empty($row['numero_factura'])) {
+                            // Limpiar el número y extraer solo dígitos
+                            $numeroLimpio = preg_replace('/[^0-9]/', '', $row['numero_factura']);
+                            if (!empty($numeroLimpio) && is_numeric($numeroLimpio)) {
+                                $num = intval($numeroLimpio);
+                                if ($num >= $siguienteNumero) {
+                                    $siguienteNumero = $num + 1;
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Si hay error, usar 1 como valor por defecto
+                    error_log("Error al obtener siguiente número de factura de venta: " . $e->getMessage());
+                    $siguienteNumero = 1;
+                }
+                
+                // Formatear con ceros a la izquierda (5 dígitos: 00001, 00002, etc.)
+                $numeroFormateado = str_pad($siguienteNumero, 5, '0', STR_PAD_LEFT);
+                
+                ob_end_clean();
+                echo json_encode([
+                    'success' => true, 
+                    'numero_factura' => $numeroFormateado
+                ], JSON_UNESCAPED_UNICODE);
             }
             break;
             
@@ -315,6 +387,7 @@ try {
                             $producto_id = intval($detalle['producto_id'] ?? 0);
                             $precio_id = !empty($detalle['precio_id']) ? intval($detalle['precio_id']) : null;
                             $cantidad = floatval($detalle['cantidad'] ?? 0);
+                            $precio_unitario_detalle = floatval($detalle['precio_unitario'] ?? 0);
                             $subtotal_detalle = floatval($detalle['subtotal'] ?? 0);
                             
                             if ($inventario_id <= 0 || $producto_id <= 0) {
@@ -350,6 +423,9 @@ try {
                                 $precio = $stmt->fetch();
                                 if ($precio) {
                                     $precio_id = $precio['id'];
+                                    if ($precio_unitario_detalle <= 0) {
+                                        $precio_unitario_detalle = floatval($precio['precio_unitario']);
+                                    }
                                 }
                             }
                             

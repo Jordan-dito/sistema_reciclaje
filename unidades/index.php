@@ -90,6 +90,16 @@ if (!$auth->isAuthenticated()) {
                     <div class="card-head-row">
                       <div class="card-title">Lista de Unidades</div>
                     </div>
+                    <div class="card-category">
+                      <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active" id="pills-activos-tab" data-bs-toggle="pill" href="#pills-activos" role="tab" onclick="cambiarFiltroEstado('activos')">Activos</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="pills-inactivos-tab" data-bs-toggle="pill" href="#pills-inactivos" role="tab" onclick="cambiarFiltroEstado('inactivos')">Inactivos</a>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
@@ -145,13 +155,6 @@ if (!$auth->isAuthenticated()) {
                   <option value="cantidad">Cantidad</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label>Estado</label>
-                <select id="estado" name="estado" class="form-control">
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
-              </div>
             </form>
           </div>
           <div class="modal-footer">
@@ -190,13 +193,6 @@ if (!$auth->isAuthenticated()) {
                   <option value="cantidad">Cantidad</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label>Estado</label>
-                <select id="edit_estado" name="estado" class="form-control">
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
-              </div>
             </form>
           </div>
           <div class="modal-footer">
@@ -226,10 +222,16 @@ if (!$auth->isAuthenticated()) {
         });
         
         var unidadesList = [];
+        var estadoActual = 'activos';
+
+        window.cambiarFiltroEstado = function(nuevoEstado) {
+          estadoActual = nuevoEstado;
+          cargarUnidades();
+        };
 
         function cargarUnidades() {
           $.ajax({
-            url: 'api.php?action=listar',
+            url: 'api.php?action=listar&estado=' + estadoActual,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -248,13 +250,20 @@ if (!$auth->isAuthenticated()) {
                     'cantidad': 'Cantidad'
                   };
                   
+                  var botones = '<button class="btn btn-link btn-primary btn-sm" onclick="editarUnidad(' + unidad.id + ')"><i class="fa fa-edit"></i></button> ';
+                  
+                  if (estadoActual === 'activos') {
+                    botones += '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarUnidad(' + unidad.id + ')"><i class="fa fa-times"></i></button>';
+                  } else {
+                    botones += '<button class="btn btn-link btn-success btn-sm" onclick="activarUnidad(' + unidad.id + ')"><i class="fa fa-check"></i></button>';
+                  }
+
                   table.row.add([
                     '<strong>' + unidad.nombre + '</strong>',
                     unidad.simbolo || '-',
                     tipoLabels[unidad.tipo] || unidad.tipo,
                     badgeEstado,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarUnidad(' + unidad.id + ')"><i class="fa fa-edit"></i></button> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarUnidad(' + unidad.id + ')"><i class="fa fa-times"></i></button>'
+                    botones
                   ]);
                 });
                 table.draw();
@@ -338,7 +347,7 @@ if (!$auth->isAuthenticated()) {
             nombre: nombre,
             simbolo: $('#simbolo').val(),
             tipo: $('#tipo').val(),
-            estado: $('#estado').val(),
+            estado: 'activo',
             action: 'crear'
           };
           
@@ -394,7 +403,7 @@ if (!$auth->isAuthenticated()) {
             nombre: nombre,
             simbolo: $('#edit_simbolo').val(),
             tipo: $('#edit_tipo').val(),
-            estado: $('#edit_estado').val(),
+            estado: 'activo',
             action: 'actualizar'
           };
           
@@ -433,7 +442,6 @@ if (!$auth->isAuthenticated()) {
                 $('#edit_nombre').val(unidad.nombre);
                 $('#edit_simbolo').val(unidad.simbolo || '');
                 $('#edit_tipo').val(unidad.tipo);
-                $('#edit_estado').val(unidad.estado);
                 $('#modalEditarUnidad').modal('show');
               }
             }
@@ -454,6 +462,33 @@ if (!$auth->isAuthenticated()) {
                 url: 'api.php',
                 method: 'POST',
                 data: { id: id, action: 'eliminar' },
+                dataType: 'json',
+                success: function(response) {
+                  if (response.success) {
+                    swal("¡Éxito!", response.message, "success");
+                    cargarUnidades();
+                  } else {
+                    swal("Error", response.message, "error");
+                  }
+                }
+              });
+            }
+          });
+        };
+
+        window.activarUnidad = function(id) {
+          swal({
+            title: "¿Desea activar la unidad?",
+            text: "La unidad volverá a estar disponible",
+            icon: "info",
+            buttons: true,
+          })
+          .then((willActivate) => {
+            if (willActivate) {
+              $.ajax({
+                url: 'api.php',
+                method: 'POST',
+                data: { id: id, action: 'activar' },
                 dataType: 'json',
                 success: function(response) {
                   if (response.success) {

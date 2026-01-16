@@ -35,8 +35,9 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $stmt = $db->query("
-                    SELECT p.*, 
+                $estado = $_GET['estado'] ?? 'activos';
+                
+                $sql = "SELECT p.*, 
                            m.nombre as material_nombre,
                            c.nombre as categoria_nombre,
                            u.nombre as unidad_nombre,
@@ -47,9 +48,17 @@ try {
                     INNER JOIN materiales m ON p.material_id = m.id 
                     LEFT JOIN categorias c ON m.categoria_id = c.id
                     INNER JOIN unidades u ON p.unidad_id = u.id
-                    WHERE p.estado = 'activo'
-                    ORDER BY p.nombre ASC
-                ");
+                    WHERE 1=1";
+                
+                if ($estado === 'activos') {
+                    $sql .= " AND p.estado = 'activo'";
+                } elseif ($estado === 'inactivos') {
+                    $sql .= " AND p.estado = 'inactivo'";
+                }
+                
+                $sql .= " ORDER BY p.nombre ASC";
+                
+                $stmt = $db->query($sql);
                 $productos = $stmt->fetchAll();
                 
                 ob_end_clean();
@@ -276,6 +285,22 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Producto desactivado exitosamente']);
+            } elseif ($action === 'activar') {
+                $id = $_POST['id'] ?? 0;
+                
+                $stmt = $db->prepare("SELECT estado FROM productos WHERE id = ?");
+                $stmt->execute([$id]);
+                $producto = $stmt->fetch();
+                
+                if (!$producto) {
+                    throw new Exception('Producto no encontrado');
+                }
+                
+                $stmt = $db->prepare("UPDATE productos SET estado = 'activo' WHERE id = ?");
+                $stmt->execute([$id]);
+                
+                ob_end_clean();
+                echo json_encode(['success' => true, 'message' => 'Producto activado exitosamente']);
             }
             break;
             

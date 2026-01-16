@@ -338,36 +338,12 @@ if (!$auth->isAuthenticated()) {
         });
         
         var estadoActual = 'activos';
-        
-        // Función para cambiar color de selects cuando están en placeholder
-        function actualizarColorSelect() {
-          $('#tipo_documento, #tipo_cliente').each(function() {
-            if ($(this).val() === '' || $(this).val() === null) {
-              $(this).css('color', '#6c757d');
-            } else {
-              $(this).css('color', '#575962');
-            }
-          });
-        }
-        
-        // Aplicar color gris al cargar
-        actualizarColorSelect();
-        
-        // Cambiar color cuando se selecciona una opción
-        $('#tipo_documento, #tipo_cliente').on('change', function() {
-          actualizarColorSelect();
-        });
 
         window.cambiarFiltroEstado = function(nuevoEstado) {
           estadoActual = nuevoEstado;
           cargarClientes();
         };
-        
-        // Validar solo números en cédula/RUC
-        $('#cedula_ruc').on('input', function() {
-          this.value = this.value.replace(/[^0-9]/g, '');
-        });
-        
+
         // Cargar clientes
         function cargarClientes() {
           $.ajax({
@@ -389,7 +365,7 @@ if (!$auth->isAuthenticated()) {
                   } else {
                     botones += '<button class="btn btn-link btn-success btn-sm" onclick="activarCliente(' + cliente.id + ')"><i class="fa fa-check"></i></button>';
                   }
-                  
+
                   table.row.add([
                     '<strong>' + cliente.nombre + '</strong>',
                     cliente.cedula_ruc || '-',
@@ -432,6 +408,7 @@ if (!$auth->isAuthenticated()) {
             email: $('#email').val(),
             contacto: $('#contacto').val(),
             tipo_cliente: $('#tipo_cliente').val(),
+            estado: 'activo',
             notas: $('#notas').val(),
             action: action
           };

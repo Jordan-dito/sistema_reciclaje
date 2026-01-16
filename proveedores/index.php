@@ -224,8 +224,8 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Materiales que Suministra <span class="text-danger">*</span></label>
-                    <textarea id="materiales_suministra" name="materiales_suministra" class="form-control" rows="2" placeholder="Ej: Papel, plástico, vidrio" required></textarea>
+                    <label>Materiales que Suministra</label>
+                    <textarea id="materiales_suministra" name="materiales_suministra" class="form-control" rows="2" placeholder="Ej: Papel, plástico, vidrio"></textarea>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -344,25 +344,6 @@ if (!$auth->isAuthenticated()) {
         });
 
         var estadoActual = 'activos';
-        
-        // Función para cambiar color de selects cuando están en placeholder
-        function actualizarColorSelect() {
-          $('#tipo_documento, #tipo_proveedor').each(function() {
-            if ($(this).val() === '' || $(this).val() === null) {
-              $(this).css('color', '#6c757d');
-            } else {
-              $(this).css('color', '#575962');
-            }
-          });
-        }
-        
-        // Aplicar color gris al cargar
-        actualizarColorSelect();
-        
-        // Cambiar color cuando se selecciona una opción
-        $('#tipo_documento, #tipo_proveedor').on('change', function() {
-          actualizarColorSelect();
-        });
 
         window.cambiarFiltroEstado = function(nuevoEstado) {
           estadoActual = nuevoEstado;
@@ -505,11 +486,6 @@ if (!$auth->isAuthenticated()) {
               $('#tipo_proveedor').val(proveedor.tipo_proveedor || 'recolector');
               $('#materiales_suministra').val(proveedor.materiales_suministra || '');
               $('#notas').val(proveedor.notas || '');
-              
-              // Deshabilitar campos que no se pueden editar
-              $('#nombre').prop('readonly', true);
-              $('#cedula_ruc').prop('readonly', true);
-              $('#tipo_documento').prop('disabled', true);
               
               // Cambiar título del modal
               $('#modalProveedorTitle').text('Editar Proveedor');
