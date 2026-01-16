@@ -98,31 +98,79 @@ try {
                 $email = trim($_POST['email'] ?? '');
                 $contacto = trim($_POST['contacto'] ?? '');
                 $tipo_cliente = $_POST['tipo_cliente'] ?? 'minorista';
-                $estado = $_POST['estado'] ?? 'activo';
+                $estado = 'activo';
                 $notas = trim($_POST['notas'] ?? '');
                 
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                // Validar nombre: no solo espacios
+                $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
+                }
+                $nombre = limpiarEspacios($nombre);
+                
+                // Verificar si el nombre ya existe
+                $stmt = $db->prepare("SELECT id FROM clientes WHERE LOWER(nombre) = LOWER(?) AND estado = 'activo'");
+                $stmt->execute([$nombre]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Ya existe un cliente activo con este nombre');
                 }
                 
-                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    throw new Exception('Email inválido');
+                // Validar cédula/RUC (obligatorio)
+                if (empty($cedula_ruc)) {
+                    throw new Exception('La cédula/RUC es obligatoria');
+                }
+                $cedula_ruc = preg_replace('/[^0-9]/', '', $cedula_ruc);
+                $validacionDoc = validarDocumentoEcuatoriano($cedula_ruc, $tipo_documento);
+                if (!$validacionDoc['valid']) {
+                    throw new Exception($validacionDoc['message']);
                 }
                 
-                // Validar cédula/RUC si se proporciona
-                if (!empty($cedula_ruc)) {
-                    $validacionDoc = validarDocumentoEcuatoriano($cedula_ruc, $tipo_documento);
-                    if (!$validacionDoc['valid']) {
-                        throw new Exception($validacionDoc['message']);
-                    }
-                    
-                    // Verificar si ya existe
-                    $stmt = $db->prepare("SELECT id FROM clientes WHERE cedula_ruc = ?");
-                    $stmt->execute([$cedula_ruc]);
-                    if ($stmt->fetch()) {
-                        throw new Exception('La cédula/RUC ya está registrada');
-                    }
+                // Verificar si ya existe
+                $stmt = $db->prepare("SELECT id FROM clientes WHERE cedula_ruc = ? AND estado = 'activo'");
+                $stmt->execute([$cedula_ruc]);
+                if ($stmt->fetch()) {
+                    throw new Exception('La cédula/RUC ya está registrada en otro cliente activo');
                 }
+                
+                // Validar email (obligatorio)
+                if (empty($email)) {
+                    throw new Exception('El email es obligatorio');
+                }
+                $email = limpiarEspacios($email);
+                $validacionEmail = validarEmail($email);
+                if (!$validacionEmail['valid']) {
+                    throw new Exception($validacionEmail['message']);
+                }
+                
+                // Verificar si el email ya existe
+                $stmt = $db->prepare("SELECT id FROM clientes WHERE LOWER(email) = LOWER(?) AND estado = 'activo'");
+                $stmt->execute([$email]);
+                if ($stmt->fetch()) {
+                    throw new Exception('El email ya está registrado en otro cliente activo');
+                }
+                
+                // Validar teléfono (obligatorio)
+                if (empty($telefono)) {
+                    throw new Exception('El teléfono es obligatorio');
+                }
+                $telefono = preg_replace('/[^0-9]/', '', $telefono);
+                $validacionTelefono = validarTelefonoEcuatoriano($telefono);
+                if (!$validacionTelefono['valid']) {
+                    throw new Exception($validacionTelefono['message']);
+                }
+                
+                // Validar contacto si se proporciona
+                if (!empty($contacto)) {
+                    $validacionContacto = validarSoloLetras($contacto, 'Contacto', true, true);
+                    if (!$validacionContacto['valid']) {
+                        throw new Exception($validacionContacto['message']);
+                    }
+                    $contacto = limpiarEspacios($contacto);
+                }
+                
+                // Limpiar campos de texto
+                $direccion = limpiarEspacios($direccion);
+                $notas = limpiarEspacios($notas);
                 
                 $stmt = $db->prepare("
                     INSERT INTO clientes 
@@ -150,7 +198,7 @@ try {
                     'message' => 'Cliente creado exitosamente',
                     'id' => $db->lastInsertId()
                 ]);
-            } elseif ($action === 'actualizar') {
+            } elseif ($action === 'actualizar' || $action === 'editar') {
                 $id = intval($_POST['id'] ?? 0);
                 $nombre = trim($_POST['nombre'] ?? '');
                 $cedula_ruc = trim($_POST['cedula_ruc'] ?? '');
@@ -160,36 +208,76 @@ try {
                 $email = trim($_POST['email'] ?? '');
                 $contacto = trim($_POST['contacto'] ?? '');
                 $tipo_cliente = $_POST['tipo_cliente'] ?? 'minorista';
-                $estado = $_POST['estado'] ?? 'activo';
                 $notas = trim($_POST['notas'] ?? '');
                 
-                if (empty($nombre)) {
-                    throw new Exception('El nombre es obligatorio');
+                // Validar nombre: no solo espacios
+                $validacionNombre = validarNoSoloEspacios($nombre, 'Nombre');
+                if (!$validacionNombre['valid']) {
+                    throw new Exception($validacionNombre['message']);
+                }
+                $nombre = limpiarEspacios($nombre);
+                
+                // Validar cédula/RUC (obligatorio)
+                if (empty($cedula_ruc)) {
+                    throw new Exception('La cédula/RUC es obligatoria');
+                }
+                $cedula_ruc = preg_replace('/[^0-9]/', '', $cedula_ruc);
+                $validacionDoc = validarDocumentoEcuatoriano($cedula_ruc, $tipo_documento);
+                if (!$validacionDoc['valid']) {
+                    throw new Exception($validacionDoc['message']);
                 }
                 
-                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    throw new Exception('Email inválido');
+                // Verificar si ya existe en otro cliente
+                $stmt = $db->prepare("SELECT id FROM clientes WHERE cedula_ruc = ? AND id != ? AND estado = 'activo'");
+                $stmt->execute([$cedula_ruc, $id]);
+                if ($stmt->fetch()) {
+                    throw new Exception('La cédula/RUC ya está registrada en otro cliente activo');
                 }
                 
-                // Validar cédula/RUC si se proporciona
-                if (!empty($cedula_ruc)) {
-                    $validacionDoc = validarDocumentoEcuatoriano($cedula_ruc, $tipo_documento);
-                    if (!$validacionDoc['valid']) {
-                        throw new Exception($validacionDoc['message']);
-                    }
-                    
-                    // Verificar si ya existe en otro cliente
-                    $stmt = $db->prepare("SELECT id FROM clientes WHERE cedula_ruc = ? AND id != ?");
-                    $stmt->execute([$cedula_ruc, $id]);
-                    if ($stmt->fetch()) {
-                        throw new Exception('La cédula/RUC ya está registrada en otro cliente');
-                    }
+                // Validar email (obligatorio)
+                if (empty($email)) {
+                    throw new Exception('El email es obligatorio');
                 }
+                $email = limpiarEspacios($email);
+                $validacionEmail = validarEmail($email);
+                if (!$validacionEmail['valid']) {
+                    throw new Exception($validacionEmail['message']);
+                }
+                
+                // Verificar si el email ya existe en otro cliente
+                $stmt = $db->prepare("SELECT id FROM clientes WHERE LOWER(email) = LOWER(?) AND id != ? AND estado = 'activo'");
+                $stmt->execute([$email, $id]);
+                if ($stmt->fetch()) {
+                    throw new Exception('El email ya está registrado en otro cliente activo');
+                }
+                
+                // Validar teléfono (obligatorio)
+                if (empty($telefono)) {
+                    throw new Exception('El teléfono es obligatorio');
+                }
+                $telefono = preg_replace('/[^0-9]/', '', $telefono);
+                $validacionTelefono = validarTelefonoEcuatoriano($telefono);
+                if (!$validacionTelefono['valid']) {
+                    throw new Exception($validacionTelefono['message']);
+                }
+                
+                // Validar contacto si se proporciona
+                if (!empty($contacto)) {
+                    $validacionContacto = validarSoloLetras($contacto, 'Contacto', true, true);
+                    if (!$validacionContacto['valid']) {
+                        throw new Exception($validacionContacto['message']);
+                    }
+                    $contacto = limpiarEspacios($contacto);
+                }
+                
+                // Limpiar campos de texto
+                $direccion = limpiarEspacios($direccion);
+                $notas = limpiarEspacios($notas);
                 
                 $stmt = $db->prepare("
                     UPDATE clientes 
                     SET nombre = ?, cedula_ruc = ?, tipo_documento = ?, direccion = ?, telefono = ?, email = ?, 
-                        contacto = ?, tipo_cliente = ?, estado = ?, notas = ?
+                        contacto = ?, tipo_cliente = ?, notas = ?
                     WHERE id = ?
                 ");
                 
@@ -202,7 +290,6 @@ try {
                     $email ?: null,
                     $contacto ?: null,
                     $tipo_cliente,
-                    $estado,
                     $notas ?: null,
                     $id
                 ]);

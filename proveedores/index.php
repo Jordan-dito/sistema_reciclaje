@@ -169,15 +169,16 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Cédula / RUC</label>
-                    <input type="text" id="cedula_ruc" name="cedula_ruc" class="form-control" placeholder="0998765432001" maxlength="20">
+                    <label>Cédula / RUC <span class="text-danger">*</span></label>
+                    <input type="text" id="cedula_ruc" name="cedula_ruc" class="form-control" placeholder="0998765432001" maxlength="20" required>
                     <small class="form-text text-muted">Cédula o RUC del proveedor</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Tipo de Documento</label>
-                    <select id="tipo_documento" name="tipo_documento" class="form-control">
+                    <label>Tipo de Documento <span class="text-danger">*</span></label>
+                    <select id="tipo_documento" name="tipo_documento" class="form-control" required>
+                      <option value="" selected disabled>Seleccione Tipo de Documento</option>
                       <option value="ruc">RUC</option>
                       <option value="cedula">Cédula</option>
                       <option value="pasaporte">Pasaporte</option>
@@ -187,20 +188,20 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="proveedor@email.com">
+                    <label>Email <span class="text-danger">*</span></label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="proveedor@email.com" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="02-2345678">
+                    <label>Teléfono <span class="text-danger">*</span></label>
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="02-2345678" required>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Dirección</label>
-                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa"></textarea>
+                    <label>Dirección <span class="text-danger">*</span></label>
+                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa" required></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -211,8 +212,9 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Tipo de Proveedor</label>
-                    <select id="tipo_proveedor" name="tipo_proveedor" class="form-control">
+                    <label>Tipo de Proveedor <span class="text-danger">*</span></label>
+                    <select id="tipo_proveedor" name="tipo_proveedor" class="form-control" required>
+                      <option value="" selected disabled>Seleccione Tipo de Proveedor</option>
                       <option value="recolector">Recolector</option>
                       <option value="procesador">Procesador</option>
                       <option value="mayorista">Mayorista</option>
@@ -449,6 +451,12 @@ if (!$auth->isAuthenticated()) {
           $('#formAgregarProveedor')[0].reset();
           $('#proveedor_id').val('');
           $('#modalProveedorTitle').text('Nuevo Proveedor');
+          // Habilitar campos al crear nuevo proveedor
+          $('#nombre').prop('readonly', false);
+          $('#cedula_ruc').prop('readonly', false);
+          $('#tipo_documento').prop('disabled', false);
+          // Actualizar color de selects
+          actualizarColorSelect();
         });
         
         // Cargar datos al iniciar
