@@ -19,11 +19,11 @@ $db = getDB();
 
 try {
     // Verificar si la tabla existe
-    $stmt = $db->query("SHOW TABLES LIKE 'gastos_empleados'");
+    $stmt = $db->query("SHOW TABLES LIKE 'gastos_varios'");
     if ($stmt->rowCount() == 0) {
-        // Crear la tabla
+        // Crear la tabla sin relación (sin foreign key)
         $db->exec("
-            CREATE TABLE gastos_empleados (
+            CREATE TABLE gastos_varios (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 empleado_id INT NOT NULL,
                 concepto VARCHAR(100) NOT NULL,
@@ -32,13 +32,12 @@ try {
                 fecha DATE NOT NULL,
                 estado ENUM('pendiente', 'aplicado', 'cancelado') DEFAULT 'pendiente',
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (empleado_id) REFERENCES empleados(id) ON DELETE CASCADE
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
     }
 } catch (Exception $e) {
-    error_log("Error al verificar/crear tabla gastos_empleados: " . $e->getMessage());
+    error_log("Error al verificar/crear tabla gastos_varios: " . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -273,7 +272,7 @@ try {
 
       function cargarEmpleados() {
         $.ajax({
-          url: 'api.php?action=list',
+          url: 'api_gastos.php?action=list_empleados',
           type: 'GET',
           success: function(response) {
             if (response.success) {

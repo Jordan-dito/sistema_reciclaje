@@ -227,7 +227,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" value="0" min="0" required>
+                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
                     <small class="form-text text-muted" id="stockDisponible">Stock disponible: -</small>
                   </div>
                 </div>
