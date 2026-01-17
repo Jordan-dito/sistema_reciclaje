@@ -161,7 +161,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Nueva Venta -->
-    <div class="modal fade" id="modalNuevaVenta" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalNuevaVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -294,7 +294,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Buscar Inventario -->
-    <div class="modal fade" id="modalBuscarInventario" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalBuscarInventario" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -342,7 +342,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Ver Venta -->
-    <div class="modal fade" id="modalVerVenta" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalVerVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
