@@ -194,7 +194,7 @@ $usuario = $auth->getCurrentUser();
     </div>
 
     <!-- Modal Agregar Rol -->
-    <div class="modal fade" id="modalAgregarRol" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalAgregarRol" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -228,7 +228,7 @@ $usuario = $auth->getCurrentUser();
     </div>
 
     <!-- Modal Editar Rol -->
-    <div class="modal fade" id="modalEditarRol" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalEditarRol" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">

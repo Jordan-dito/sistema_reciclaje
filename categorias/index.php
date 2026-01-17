@@ -127,7 +127,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Agregar Categoría -->
-    <div class="modal fade" id="modalAgregarCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalAgregarCategoria" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -155,7 +155,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Editar Categoría -->
-    <div class="modal fade" id="modalEditarCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalEditarCategoria" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
