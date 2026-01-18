@@ -78,7 +78,7 @@ function validarRucEcuatoriano($ruc) {
     // Limpiar el RUC (solo números)
     $ruc = preg_replace('/[^0-9]/', '', $ruc);
     
-    // Verificar que tenga exactamente 13 dígitos
+    // 1. Verificar que tenga exactamente 13 dígitos
     if (strlen($ruc) !== 13) {
         return [
             'valid' => false,
@@ -86,52 +86,107 @@ function validarRucEcuatoriano($ruc) {
         ];
     }
     
-    // Los primeros 2 dígitos deben ser el código de provincia (01-24)
+    // 2. Verificar que contenga solo dígitos
+    if (!ctype_digit($ruc)) {
+        return [
+            'valid' => false,
+            'message' => 'El RUC debe contener solo dígitos numéricos'
+        ];
+    }
+    
+    // 3. Validar código de provincia (primeros 2 dígitos)
     $provincia = intval(substr($ruc, 0, 2));
-    if ($provincia < 1 || $provincia > 24) {
+    if (($provincia < 1 || $provincia > 24) && $provincia !== 30) {
         return [
             'valid' => false,
-            'message' => 'El código de provincia del RUC no es válido (debe ser 01-24)'
+            'message' => 'El código de provincia del RUC no es válido (debe ser 01-24 o 30 para casos especiales)'
         ];
     }
     
-    // El tercer dígito debe ser 9 para personas jurídicas o 6 para públicas
+    // 4. Validar el tercer dígito (tipo de contribuyente)
     $tercerDigito = intval(substr($ruc, 2, 1));
-    if ($tercerDigito !== 9 && $tercerDigito !== 6) {
+    
+    // Personas naturales: 0-5, Entidad pública: 6, Sociedad privada: 9
+    if ($tercerDigito > 9 || ($tercerDigito > 6 && $tercerDigito < 9)) {
         return [
             'valid' => false,
-            'message' => 'El tercer dígito del RUC debe ser 9 (personas jurídicas) o 6 (públicas)'
+            'message' => 'El tercer dígito del RUC no es válido. Debe ser 0-5 (persona natural), 6 (entidad pública) o 9 (sociedad privada)'
         ];
     }
     
-    // Extraer los primeros 9 dígitos y el dígito verificador
-    $digitos = str_split(substr($ruc, 0, 9));
-    $verificador = intval(substr($ruc, 9, 1));
-    
-    // Algoritmo de validación (similar a cédula pero con coeficientes diferentes)
-    $coeficientes = [4, 3, 2, 7, 6, 5, 4, 3, 2];
-    $suma = 0;
-    
-    for ($i = 0; $i < 9; $i++) {
-        $suma += intval($digitos[$i]) * $coeficientes[$i];
-    }
-    
-    // Calcular el dígito verificador
-    $residuo = $suma % 11;
-    $digitoCalculado = ($residuo < 2) ? $residuo : (11 - $residuo);
-    
-    // Validar
-    if ($digitoCalculado === $verificador) {
-        return [
-            'valid' => true,
-            'message' => 'RUC válido'
-        ];
-    } else {
+    // 5. Validar número de establecimiento (últimos 3 dígitos)
+    $establecimiento = intval(substr($ruc, 10, 3));
+    if ($establecimiento < 1) {
         return [
             'valid' => false,
-            'message' => 'El RUC no es válido según el algoritmo de verificación'
+            'message' => 'El número de establecimiento debe ser mayor o igual a 001'
         ];
     }
+    
+    // 6. Validar dígito verificador según el tipo de contribuyente
+    if ($tercerDigito >= 0 && $tercerDigito <= 5) {
+        // Persona natural: validar primeros 10 dígitos como cédula (módulo 10)
+        $cedulaParte = substr($ruc, 0, 10);
+        $resultadoCedula = validarCedulaEcuatoriana($cedulaParte);
+        
+        if (!$resultadoCedula['valid']) {
+            return [
+                'valid' => false,
+                'message' => 'El RUC de persona natural no es válido. ' . $resultadoCedula['message']
+            ];
+        }
+    } elseif ($tercerDigito === 9) {
+        // Sociedad privada: usar primeros 9 dígitos, algoritmo módulo 11
+        $digitos = str_split(substr($ruc, 0, 9));
+        $verificador = intval(substr($ruc, 9, 1));
+        
+        // Coeficientes para sociedades privadas
+        $coeficientes = [4, 3, 2, 7, 6, 5, 4, 3, 2];
+        $suma = 0;
+        
+        for ($i = 0; $i < 9; $i++) {
+            $suma += intval($digitos[$i]) * $coeficientes[$i];
+        }
+        
+        // Calcular el dígito verificador
+        $residuo = $suma % 11;
+        $digitoCalculado = ($residuo === 0) ? 0 : (11 - $residuo);
+        
+        if ($digitoCalculado !== $verificador) {
+            return [
+                'valid' => false,
+                'message' => 'El dígito verificador del RUC de sociedad privada no es válido'
+            ];
+        }
+    } elseif ($tercerDigito === 6) {
+        // Entidad pública: usar primeros 8 dígitos, algoritmo módulo 11
+        $digitos = str_split(substr($ruc, 0, 8));
+        $verificador = intval(substr($ruc, 8, 1));
+        
+        // Coeficientes para entidades públicas
+        $coeficientes = [3, 2, 7, 6, 5, 4, 3, 2];
+        $suma = 0;
+        
+        for ($i = 0; $i < 8; $i++) {
+            $suma += intval($digitos[$i]) * $coeficientes[$i];
+        }
+        
+        // Calcular el dígito verificador
+        $residuo = $suma % 11;
+        $digitoCalculado = ($residuo === 0) ? 0 : (11 - $residuo);
+        
+        if ($digitoCalculado !== $verificador) {
+            return [
+                'valid' => false,
+                'message' => 'El dígito verificador del RUC de entidad pública no es válido'
+            ];
+        }
+    }
+    
+    return [
+        'valid' => true,
+        'message' => 'RUC válido'
+    ];
 }
 
 /**

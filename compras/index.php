@@ -161,7 +161,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Ver Compra -->
-    <div class="modal fade" id="modalVerCompra" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalVerCompra" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
@@ -181,8 +181,8 @@ if (!$auth->isAuthenticated()) {
               <div class="col-md-6">
                 <h6 class="text-muted mb-3">Totales</h6>
                 <p><strong>Subtotal:</strong> <span id="compraSubtotal">$0.00</span></p>
-                <p><strong>IVA:</strong> <span id="compraIva">$0.00</span></p>
-                <p><strong>Descuento:</strong> <span id="compraDescuento">$0.00</span></p>
+                <p><strong>IVA (%):</strong> <span id="compraIva">$0.00</span></p>
+                <p><strong>Descuento ($):</strong> <span id="compraDescuento">$0.00</span></p>
                 <p><strong>Total:</strong> <span id="compraTotal" class="h5 text-primary">$0.00</span></p>
                 <p><strong>Estado:</strong> <span id="compraEstado">-</span></p>
               </div>
@@ -242,7 +242,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Buscar Producto -->
-    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">

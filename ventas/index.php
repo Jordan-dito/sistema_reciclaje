@@ -161,7 +161,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Nueva Venta -->
-    <div class="modal fade" id="modalNuevaVenta" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalNuevaVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -240,17 +240,29 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>IVA</label>
-                    <input type="number" step="0.01" id="iva" name="iva" class="form-control" placeholder="0.00" value="0">
+                    <label>IVA (%)</label>
+                    <select id="iva" name="iva" class="form-control">
+                      <option value="0">0%</option>
+                      <option value="15">15%</option>
+                    </select>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Descuento</label>
-                    <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0.00" value="0">
+                    <label>Tipo Descuento</label>
+                    <select id="tipo_descuento" name="tipo_descuento" class="form-control">
+                      <option value="dinero">En $</option>
+                      <option value="porcentaje">En %</option>
+                    </select>
                   </div>
                 </div>
                 <div class="col-md-4">
+                  <div class="form-group">
+                    <label id="labelDescuento">Descuento ($)</label>
+                    <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0.00" value="0">
+                  </div>
+                </div>
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Método de Pago</label>
                     <select id="metodo_pago" name="metodo_pago" class="form-control" style="background-color: #e9ecef; pointer-events: none;" tabindex="-1">
@@ -258,7 +270,7 @@ if (!$auth->isAuthenticated()) {
                     </select>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <div class="form-group">
                     <label>Estado</label>
                     <select id="estado" name="estado" class="form-control">
@@ -294,7 +306,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Buscar Inventario -->
-    <div class="modal fade" id="modalBuscarInventario" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalBuscarInventario" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -342,7 +354,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Ver Venta -->
-    <div class="modal fade" id="modalVerVenta" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalVerVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -667,17 +679,36 @@ if (!$auth->isAuthenticated()) {
           });
         }
         
-        $('#cantidad, #precio_unitario, #iva, #descuento').on('input', function() {
+        $('#cantidad, #precio_unitario').on('input', function() {
+          calcularTotal();
+        });
+        
+        $('#iva, #tipo_descuento, #descuento').on('change input', function() {
+          calcularTotal();
+        });
+        
+        $('#tipo_descuento').on('change', function() {
+          var tipo = $(this).val();
+          if (tipo === 'porcentaje') {
+            $('#labelDescuento').text('Descuento (%)');
+          } else {
+            $('#labelDescuento').text('Descuento ($)');
+          }
           calcularTotal();
         });
         
         function calcularTotal() {
           var cantidad = parseFloat($('#cantidad').val()) || 0;
           var precio = parseFloat($('#precio_unitario').val()) || 0;
-          var iva = parseFloat($('#iva').val()) || 0;
-          var descuento = parseFloat($('#descuento').val()) || 0;
+          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
+          var valorDescuento = parseFloat($('#descuento').val()) || 0;
+          var tipoDescuento = $('#tipo_descuento').val();
+          
           var subtotal = cantidad * precio;
-          var total = subtotal + iva - descuento;
+          var ivaMonto = (subtotal * ivaPorcentaje) / 100;
+          var descuentoMonto = (tipoDescuento === 'porcentaje') ? (subtotal * valorDescuento) / 100 : valorDescuento;
+          var total = subtotal + ivaMonto - descuentoMonto;
+          
           $('#totalVenta').text('$' + total.toFixed(2));
         }
         
@@ -700,9 +731,13 @@ if (!$auth->isAuthenticated()) {
           
           var cantidad = parseFloat($('#cantidad').val()) || 0;
           var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
-          var iva = parseFloat($('#iva').val()) || 0;
-          var descuento = parseFloat($('#descuento').val()) || 0;
+          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
+          var valorDescuento = parseFloat($('#descuento').val()) || 0;
+          var tipoDescuento = $('#tipo_descuento').val();
+          
           var subtotal = cantidad * precio_unitario;
+          var iva = (subtotal * ivaPorcentaje) / 100;
+          var descuento = (tipoDescuento === 'porcentaje') ? (subtotal * valorDescuento) / 100 : valorDescuento;
           var total = subtotal + iva - descuento;
           
           var stockDisponible = parseFloat(inventarioInput.data('cantidad')) || 0;
