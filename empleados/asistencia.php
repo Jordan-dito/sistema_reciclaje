@@ -175,9 +175,13 @@ for($i = 0; $i < 7; $i++) {
                                    value="<?php echo $fechaRef; ?>" 
                                    onchange="location.href='?fecha='+this.value">
                             
-                            <span class="badge badge-primary px-3">
+                            <span class="badge badge-primary px-3 me-3">
                                 <?php echo date('d M', $lunesTimestamp); ?> - <?php echo date('d M', $domingoTimestamp); ?>
                             </span>
+
+                            <button id="btnGuardarTodo" class="btn btn-success btn-round shadow-sm" onclick="guardarCambiosBatch()" style="display: none;">
+                                <i class="fa fa-save"></i> Guardar Todo
+                            </button>
                         </div>
                     </div>
 
@@ -185,8 +189,12 @@ for($i = 0; $i < 7; $i++) {
                     <div class="row">
                         <div class="col-md-12">
                             <div class="card card-round">
-                                <div class="card-header">
+                                <div class="card-header d-flex align-items-center">
                                     <div class="card-title">Configuración de Jornada</div>
+                                    <div class="ms-auto">
+                                        <button type="button" class="btn btn-xs btn-primary" onclick="marcarTodosLosDias(true)">Marcar todos</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary" onclick="marcarTodosLosDias(false)">Desmarcar todos</button>
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     <div class="row" id="container-config-dias">
@@ -226,7 +234,12 @@ for($i = 0; $i < 7; $i++) {
                                         <table class="table table-hover table-attendance">
                                             <thead class="thead-light">
                                                 <tr>
-                                                    <th style="width: 250px">Empleado / Caja</th>
+                                                    <th style="width: 250px">
+                                                        <div class="d-flex align-items-center">
+                                                            <input type="checkbox" id="check-all-global" class="me-2" title="Seleccionar todos los días para todos los empleados">
+                                                            Empleado / Caja
+                                                        </div>
+                                                    </th>
                                                     <?php foreach($fechasSemana as $f): ?>
                                                         <th class="text-center col-dia-<?php echo $f['key']; ?>">
                                                             <?php echo $f['nombre']; ?>
@@ -252,22 +265,44 @@ for($i = 0; $i < 7; $i++) {
 
     <!-- Modal Pago -->
     <div class="modal fade" id="modalPago" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-success">
                     <h5 class="modal-title text-white" id="modalPagoTitle">Registrar Pago</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="pago_emp_id">
                     <input type="hidden" id="pago_fecha">
                     
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group mb-2">
+                                <label>Sueldo Diario ($)</label>
+                                <input type="number" class="form-control calc-pago" id="pago_sueldo" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-2">
+                                <label>Alimentación ($)</label>
+                                <input type="number" class="form-control calc-pago" id="pago_alimentacion" step="0.01" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-2">
+                                <label>Pasaje ($)</label>
+                                <input type="number" class="form-control calc-pago" id="pago_pasaje" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
                     <div class="form-group text-center">
-                        <label>Monto a Pagar ($)</label>
-                        <input type="number" class="form-control form-control-lg text-center font-weight-bold" id="pago_monto" step="0.01">
-                        <small class="form-text text-muted mt-2">Este valor se descontará de la caja de la sucursal.</small>
+                        <label class="fw-bold h6">TOTAL A PAGAR</label>
+                        <input type="number" class="form-control form-control-lg text-center font-weight-bold text-success" 
+                               id="pago_monto" step="0.01" readonly style="background-color: #f8f9fa; font-size: 1.5rem;">
+                        <small class="form-text text-muted mt-2">Este valor total es el que se descontará de la caja de la sucursal.</small>
                     </div>
                 </div>
                 <div class="modal-footer justify-content-center">
@@ -296,24 +331,165 @@ for($i = 0; $i < 7; $i++) {
         };
         const diasKeys = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
 
+        let hayCambiosSinGuardar = false;
+
         $(document).ready(function() {
             // Cargar datos vía AJAX
             cargarDatosSemana();
 
+            // Alerta antes de salir si hay cambios
+            window.onbeforeunload = function() {
+                if (hayCambiosSinGuardar) {
+                    return "¿Estás seguro de salir? Tienes cambios en la planilla que no has guardado.";
+                }
+            };
+
             // Listeners
             $(document).on('click', '.day-card', function(e) {
                 if($(e.target).is('input')) return;
-                toggleDiaConfig($(this).find('input').val());
+                toggleDiaConfigUI($(this).find('input').val());
             });
 
             $(document).on('change', '.check-asistencia', function() {
-                guardarAsistencia($(this));
+                marcarAsistenciaUI($(this));
             });
 
             $('#btnEliminarPago').click(function() {
                 eliminarPagoActual();
             });
+
+            // Escuchar cambios en los campos de cálculo del pago
+            $(document).on('input', '.calc-pago', function() {
+                calcularTotalPago();
+            });
+
+            // Seleccionar todos los días de un empleado (Fila)
+            $(document).on('change', '.check-row-all', function() {
+                let empId = $(this).data('emp');
+                let estado = $(this).is(':checked');
+                let checkboxes = $(`.check-asistencia[data-emp="${empId}"]:not(:disabled)`);
+                
+                checkboxes.prop('checked', estado);
+                checkboxes.each(function() {
+                    marcarAsistenciaUI($(this));
+                });
+                mostrarBotonGuardar();
+            });
+
+            // Seleccionar todos los empleados y todos los días laborables (Global)
+            $(document).on('change', '#check-all-global', function() {
+                let estado = $(this).is(':checked');
+                $('.check-row-all').prop('checked', estado).trigger('change');
+            });
         });
+
+        function toggleDiaConfigUI(dayKey) {
+            let card = $('#card-' + dayKey);
+            let check = $('#check-config-' + dayKey);
+            let esLaborable = !check.prop('checked');
+            
+            check.prop('checked', esLaborable);
+            
+            if (esLaborable) {
+                card.addClass('active');
+                card.find('.status-text').text('Laborable');
+                $('.col-dia-' + dayKey).removeClass('day-off').find('input').prop('disabled', false);
+            } else {
+                card.removeClass('active');
+                card.find('.status-text').text('Descanso');
+                $('.col-dia-' + dayKey).addClass('day-off').find('input').prop('disabled', true).prop('checked', false);
+                $('.col-dia-' + dayKey).find('.cell-content').removeClass('con-asistencia').addClass('no-asistencia');
+            }
+            mostrarBotonGuardar();
+        }
+
+        function marcarAsistenciaUI(checkbox) {
+            let empId = checkbox.data('emp');
+            let idx = checkbox.data('idx');
+            let estado = checkbox.is(':checked');
+            let cell = $('#cell-' + empId + '-' + idx);
+            
+            if (estado) cell.removeClass('no-asistencia').addClass('con-asistencia');
+            else cell.removeClass('con-asistencia').addClass('no-asistencia');
+            
+            mostrarBotonGuardar();
+        }
+
+        function mostrarBotonGuardar() {
+            hayCambiosSinGuardar = true;
+            $('#btnGuardarTodo').fadeIn();
+        }
+
+        function marcarTodosLosDias(estado) {
+            diasKeys.forEach(key => {
+                let check = $('#check-config-' + key);
+                if (check.prop('checked') !== estado) {
+                    toggleDiaConfigUI(key);
+                }
+            });
+        }
+
+        function calcularTotalPago() {
+            let sueldo = parseFloat($('#pago_sueldo').val()) || 0;
+            let alimentacion = parseFloat($('#pago_alimentacion').val()) || 0;
+            let pasaje = parseFloat($('#pago_pasaje').val()) || 0;
+            
+            let total = sueldo + alimentacion + pasaje;
+            $('#pago_monto').val(total.toFixed(2));
+        }
+
+        function guardarCambiosBatch() {
+            let configDias = [];
+            $('.config-day:checked').each(function() { configDias.push($(this).val()); });
+
+            let asistencias = [];
+            $('.check-asistencia').each(function() {
+                if ($(this).is(':checked')) {
+                    asistencias.push({
+                        empleado_id: $(this).data('emp'),
+                        fecha: $(this).data('fecha')
+                    });
+                }
+            });
+
+            swal({
+                title: "¿Guardar cambios?",
+                text: "Se actualizará toda la planilla de la semana.",
+                icon: "info",
+                buttons: ["Cancelar", "Sí, guardar"],
+            }).then((willSave) => {
+                if (willSave) {
+                    $('#btnGuardarTodo').html('<i class="fa fa-spinner fa-spin"></i> Guardando...').prop('disabled', true);
+                    
+                    $.ajax({
+                        url: 'api.php',
+                        method: 'POST',
+                        data: {
+                            action: 'save_batch',
+                            semana_inicio: lunesSemana,
+                            dias_laborables: JSON.stringify(configDias),
+                            asistencias: JSON.stringify(asistencias)
+                        },
+                        dataType: 'json',
+                        success: function(resp) {
+                            if (resp.success) {
+                                hayCambiosSinGuardar = false;
+                                $('#btnGuardarTodo').fadeOut().html('<i class="fa fa-save"></i> Guardar Todo').prop('disabled', false);
+                                swal("¡Guardado!", "Los cambios se han guardado exitosamente.", "success");
+                                cargarDatosSemana();
+                            } else {
+                                $('#btnGuardarTodo').prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Todo');
+                                swal("Error", resp.message, "error");
+                            }
+                        },
+                        error: function() {
+                            $('#btnGuardarTodo').prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Todo');
+                            swal("Error", "Error de conexión con el servidor.", "error");
+                        }
+                    });
+                }
+            });
+        }
 
         function cargarDatosSemana() {
             $.ajax({
@@ -412,7 +588,10 @@ for($i = 0; $i < 7; $i++) {
                 let tr = `
                     <tr>
                         <td>
-                            <div class="fw-bold text-dark">${emp.n}</div>
+                            <div class="d-flex align-items-center mb-1">
+                                <input type="checkbox" class="check-row-all me-2" data-emp="${emp.id}" title="Seleccionar todos los días de la semana">
+                                <div class="fw-bold text-dark">${emp.n}</div>
+                            </div>
                             <small class="text-muted d-block">${nombreSucursal}</small>
                             <div class="mt-1" style="font-size: 0.75rem; border-top: 1px solid #eee; padding-top: 2px;">
                                 Caja: <span class="${saldoClass} fw-bold">$${saldoVal.toFixed(2)}</span>
@@ -428,56 +607,29 @@ for($i = 0; $i < 7; $i++) {
             });
         }
 
-        // --- Acciones ---
-
-        function toggleDiaConfig(dayKey) {
-            let checkbox = $('#check-config-' + dayKey);
-            let newState = !checkbox.prop('checked'); 
-            checkbox.prop('checked', newState);
-
-            let diasSelected = [];
-            $('.config-day:checked').each(function() { diasSelected.push($(this).val()); });
-
-            $.post('api.php', { action: 'save_config_dias', semana_inicio: lunesSemana, dias: diasSelected }, function() {
-                cargarDatosSemana();
-            });
-        }
-
-        function guardarAsistencia(checkbox) {
-            let empId = checkbox.data('emp');
-            let fecha = checkbox.data('fecha');
-            let idx = checkbox.data('idx');
-            let estado = checkbox.is(':checked') ? 1 : 0;
-            let cell = $('#cell-' + empId + '-' + idx);
-
-            $.post('api.php', {
-                action: 'toggle_asistencia',
-                empleado_id: empId,
-                fecha: fecha,
-                estado: estado
-            }, function(resp) {
-                if(!resp.success) {
-                    checkbox.prop('checked', !estado); // Revertir
-                    swal('Aviso', resp.message, 'warning');
-                } else {
-                    if (estado) cell.removeClass('no-asistencia').addClass('con-asistencia');
-                    else cell.removeClass('con-asistencia').addClass('no-asistencia');
-                }
-            });
-        }
+        // --- Acciones de Modal ---
 
         function abrirModalPago(empId, fecha, monto, esPagado) {
             $('#pago_emp_id').val(empId);
             $('#pago_fecha').val(fecha);
-            $('#pago_monto').val(parseFloat(monto).toFixed(2));
             
             if (esPagado) {
                 $('#modalPagoTitle').text('Editar Pago');
                 $('#btnEliminarPago').show();
+                // Si ya está pagado, ponemos el monto total en sueldo y 0 en los otros
+                $('#pago_sueldo').val(parseFloat(monto).toFixed(2));
+                $('#pago_alimentacion').val('0.00');
+                $('#pago_pasaje').val('0.00');
             } else {
                 $('#modalPagoTitle').text('Registrar Pago');
                 $('#btnEliminarPago').hide();
+                // Cargar la tarifa base del empleado
+                $('#pago_sueldo').val(parseFloat(monto).toFixed(2));
+                $('#pago_alimentacion').val('0.00');
+                $('#pago_pasaje').val('0.00');
             }
+            
+            calcularTotalPago();
             $('#modalPago').modal('show');
         }
 
