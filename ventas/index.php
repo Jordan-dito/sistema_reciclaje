@@ -227,7 +227,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
+                    <input type="number" step="0.01" min="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
                     <small class="form-text text-muted" id="stockDisponible">Stock disponible: -</small>
                   </div>
                 </div>
@@ -730,7 +730,17 @@ if (!$auth->isAuthenticated()) {
           var precio_id = inventarioInput.data('precio-id') || null;
           
           var cantidad = parseFloat($('#cantidad').val()) || 0;
+          if (cantidad <= 0) {
+            swal("Error", "La cantidad debe ser mayor a cero", "error");
+            return;
+          }
+          
           var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
+          if (precio_unitario <= 0) {
+            swal("Error", "El precio unitario debe ser mayor a cero", "error");
+            return;
+          }
+          
           var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
           var valorDescuento = parseFloat($('#descuento').val()) || 0;
           var tipoDescuento = $('#tipo_descuento').val();

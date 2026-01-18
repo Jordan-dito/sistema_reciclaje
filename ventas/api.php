@@ -342,6 +342,10 @@ try {
                     if (empty($cliente_nombre) || $sucursal_id <= 0) {
                         throw new Exception('Cliente y sucursal son obligatorios');
                     }
+
+                    if ($total <= 0) {
+                        throw new Exception('El total de la venta debe ser mayor a cero');
+                    }
                     
                     // Insertar venta según la estructura real de la tabla
                     $stmt = $db->prepare("
@@ -390,6 +394,10 @@ try {
                             $precio_unitario_detalle = floatval($detalle['precio_unitario'] ?? 0);
                             $subtotal_detalle = floatval($detalle['subtotal'] ?? 0);
                             
+                            if ($cantidad <= 0) {
+                                throw new Exception('La cantidad de cada producto debe ser mayor a cero');
+                            }
+                            
                             if ($inventario_id <= 0 || $producto_id <= 0) {
                                 throw new Exception('Inventario y producto son obligatorios para cada detalle');
                             }
@@ -427,6 +435,10 @@ try {
                                         $precio_unitario_detalle = floatval($precio['precio_unitario']);
                                     }
                                 }
+                            }
+
+                            if ($precio_unitario_detalle <= 0) {
+                                throw new Exception('El precio unitario de cada producto debe ser mayor a cero');
                             }
                             
                             $stmt = $db->prepare("
