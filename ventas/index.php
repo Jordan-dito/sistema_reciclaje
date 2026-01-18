@@ -227,7 +227,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
+                    <input type="number" step="0.01" min="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
                     <small class="form-text text-muted" id="stockDisponible">Stock disponible: -</small>
                   </div>
                 </div>
@@ -524,6 +524,8 @@ if (!$auth->isAuthenticated()) {
           $('#inventario_id').val('');
           $('#producto_seleccionado').val('');
           $('#precio_unitario').val('');
+          $('#inventario_id').removeData('cantidad'); // Limpiar datos guardados
+          $('#inventario_id').removeData('unidad');
           $('#stockDisponible').text('Stock disponible: -');
           calcularTotal();
         }
@@ -591,12 +593,40 @@ if (!$auth->isAuthenticated()) {
             $('#inventario_id').data('producto-id', item.producto_id);
             $('#inventario_id').data('precio-id', item.precio_id);
             $('#inventario_id').data('cantidad', item.cantidad);
+            $('#inventario_id').data('unidad', item.unidad); // Guardar unidad
             $('#precio_unitario').val(item.precio_unitario || 0);
-            $('#stockDisponible').text('Stock disponible: ' + item.cantidad + ' ' + item.unidad);
+            
+            // Mostrar stock inicial
+            actualizarVisualizacionStock();
+            
             calcularTotal();
             $('#modalBuscarInventario').modal('hide');
           }
         };
+        
+        function actualizarVisualizacionStock() {
+            var cantidadVenta = parseFloat($('#cantidad').val()) || 0;
+            var stockActual = parseFloat($('#inventario_id').data('cantidad'));
+            var unidad = $('#inventario_id').data('unidad') || '';
+            
+            if (isNaN(stockActual)) {
+                $('#stockDisponible').text('Stock disponible: -');
+                return;
+            }
+            
+            var restante = stockActual - cantidadVenta;
+            
+            if (cantidadVenta > 0) {
+                if (restante < 0) {
+                    $('#stockDisponible').html('<span class="text-danger fw-bold"><i class="fa fa-exclamation-circle"></i> Stock insuficiente (Faltan ' + Math.abs(restante).toFixed(2) + ' ' + unidad + ')</span>');
+                } else {
+                    $('#stockDisponible').html('Stock disponible: ' + stockActual + ' ' + unidad + 
+                                               ' <br><span class="text-success small"><i class="fa fa-calculator"></i> Quedarán: <strong>' + restante.toFixed(2) + ' ' + unidad + '</strong></span>');
+                }
+            } else {
+                $('#stockDisponible').text('Stock disponible: ' + stockActual + ' ' + unidad);
+            }
+        }
 
         $('#modalNuevaVenta').on('show.bs.modal', function() {
           cargarSiguienteNumeroFactura();
@@ -681,6 +711,7 @@ if (!$auth->isAuthenticated()) {
         
         $('#cantidad, #precio_unitario').on('input', function() {
           calcularTotal();
+          actualizarVisualizacionStock(); // Actualizar visualización al escribir cantidad
         });
         
         $('#iva, #tipo_descuento, #descuento').on('change input', function() {
@@ -730,7 +761,17 @@ if (!$auth->isAuthenticated()) {
           var precio_id = inventarioInput.data('precio-id') || null;
           
           var cantidad = parseFloat($('#cantidad').val()) || 0;
+          if (cantidad <= 0) {
+            swal("Error", "La cantidad debe ser mayor a cero", "error");
+            return;
+          }
+          
           var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
+          if (precio_unitario <= 0) {
+            swal("Error", "El precio unitario debe ser mayor a cero", "error");
+            return;
+          }
+          
           var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
           var valorDescuento = parseFloat($('#descuento').val()) || 0;
           var tipoDescuento = $('#tipo_descuento').val();

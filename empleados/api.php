@@ -38,9 +38,17 @@ try {
         case 'toggle_asistencia':
             guardarAsistencia($db, $currentUser['id']);
             break;
+
+        case 'toggle_asistencia_semana':
+            guardarAsistenciaSemana($db, $currentUser['id']);
+            break;
             
         case 'save_config_dias':
             guardarConfigDias($db, $sucursalId);
+            break;
+            
+        case 'save_batch':
+            guardarBatch($db, $currentUser['id'], $sucursalId);
             break;
             
         case 'pagar_dia':
@@ -199,6 +207,45 @@ function guardarAsistencia($db, $userId) {
     echo json_encode(['success' => true]);
 }
 
+function guardarAsistenciaSemana($db, $userId) {
+    $empleadoId = $_POST['empleado_id'];
+    $fechas = $_POST['fechas'] ?? []; // Array de fechas
+    $estado = $_POST['estado'] == 1 ? 'asistio' : 'falta';
+
+    if (empty($fechas)) {
+        throw new Exception("No se proporcionaron fechas");
+    }
+
+    $db->beginTransaction();
+    try {
+        if ($estado === 'asistio') {
+            $stmt = $db->prepare("INSERT INTO asistencias (empleado_id, fecha, estado, registrado_por) VALUES (?, ?, 'asistio', ?) ON DUPLICATE KEY UPDATE estado = 'asistio'");
+            foreach ($fechas as $fecha) {
+                $stmt->execute([$empleadoId, $fecha, $userId]);
+            }
+        } else {
+            // Verificar si hay pagos en alguna de las fechas
+            $placeholders = implode(',', array_fill(0, count($fechas), '?'));
+            $sqlCheck = "SELECT id FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada IN ($placeholders)";
+            $stmtCheck = $db->prepare($sqlCheck);
+            $params = array_merge([$empleadoId], $fechas);
+            $stmtCheck->execute($params);
+            if ($stmtCheck->fetch()) {
+                throw new Exception("No puedes quitar la asistencia de días que ya tienen pagos registrados. Elimina los pagos primero.");
+            }
+
+            $sqlDel = "DELETE FROM asistencias WHERE empleado_id = ? AND fecha IN ($placeholders)";
+            $stmtDel = $db->prepare($sqlDel);
+            $stmtDel->execute($params);
+        }
+        $db->commit();
+        echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+        $db->rollBack();
+        throw $e;
+    }
+}
+
 function guardarConfigDias($db, $sucursalId) {
     $lunes = $_POST['semana_inicio'];
     $dias = $_POST['dias'] ?? [];
@@ -314,5 +361,75 @@ function eliminarPagoDia($db) {
     } catch (Exception $e) {
         $db->rollBack();
         throw $e;
+    }
+}
+
+function guardarBatch($db, $userId, $sucursalId) {
+    $lunes = $_POST['semana_inicio'];
+    $diasLaborables = json_decode($_POST['dias_laborables'], true) ?? [];
+    $asistencias = json_decode($_POST['asistencias'], true) ?? [];
+
+    $timestampLunes = strtotime($lunes);
+    $domingo = date('Y-m-d', strtotime($lunes . ' +6 days'));
+
+    $db->beginTransaction();
+    try {
+        // 1. Guardar Configuración de Días
+        if ($sucursalId) {
+            $stmt = $db->prepare("INSERT INTO configuracion_jornada (semana_inicio, dias_laborables, sucursal_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE dias_laborables = VALUES(dias_laborables)");
+            $stmt->execute([$lunes, json_encode($diasLaborables), $sucursalId]);
+        } else {
+            $stmtCheck = $db->prepare("SELECT id FROM configuracion_jornada WHERE semana_inicio = ? AND sucursal_id IS NULL");
+            $stmtCheck->execute([$lunes]);
+            $exist = $stmtCheck->fetch();
+            if ($exist) {
+                $stmt = $db->prepare("UPDATE configuracion_jornada SET dias_laborables = ? WHERE id = ?");
+                $stmt->execute([json_encode($diasLaborables), $exist['id']]);
+            } else {
+                $stmt = $db->prepare("INSERT INTO configuracion_jornada (semana_inicio, dias_laborables, sucursal_id) VALUES (?, ?, NULL)");
+                $stmt->execute([$lunes, json_encode($diasLaborables)]);
+            }
+        }
+
+        // 2. Procesar Asistencias
+        // Primero, obtener empleados de la sucursal para no borrar asistencias de otros
+        $sqlEmp = "SELECT id FROM empleados WHERE estado = 'ACTIVO'";
+        if ($sucursalId) {
+            $sqlEmp .= " AND e.sucursal_id = " . intval($sucursalId);
+        }
+        $stmtEmp = $db->query($sqlEmp);
+        $empleadosIds = $stmtEmp->fetchAll(PDO::FETCH_COLUMN);
+
+        if (!empty($empleadosIds)) {
+            $placeholders = implode(',', array_fill(0, count($empleadosIds), '?'));
+            
+            // NO borrar asistencias que ya tienen pagos
+            $sqlNoBorrar = "SELECT fecha_laborada as fecha, empleado_id FROM pagos_diarios WHERE fecha_laborada BETWEEN ? AND ? AND empleado_id IN ($placeholders)";
+            $stmtNoBorrar = $db->prepare($sqlNoBorrar);
+            $stmtNoBorrar->execute(array_merge([$lunes, $domingo], $empleadosIds));
+            $pagosExistentes = $stmtNoBorrar->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Borrar asistencias de la semana para estos empleados
+            $sqlDel = "DELETE FROM asistencias WHERE fecha BETWEEN ? AND ? AND empleado_id IN ($placeholders)";
+            $stmtDel = $db->prepare($sqlDel);
+            $stmtDel->execute(array_merge([$lunes, $domingo], $empleadosIds));
+
+            // Insertar nuevas asistencias del batch
+            $stmtIns = $db->prepare("INSERT INTO asistencias (empleado_id, fecha, estado, registrado_por) VALUES (?, ?, 'asistio', ?) ON DUPLICATE KEY UPDATE estado = 'asistio'");
+            foreach ($asistencias as $asist) {
+                $stmtIns->execute([$asist['empleado_id'], $asist['fecha'], $userId]);
+            }
+            
+            // Re-asegurar asistencias para días pagados (por si el DELETE anterior las borró)
+            foreach ($pagosExistentes as $pago) {
+                $stmtIns->execute([$pago['empleado_id'], $pago['fecha'], $userId]);
+            }
+        }
+
+        $db->commit();
+        echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+        $db->rollBack();
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
 }
