@@ -141,6 +141,7 @@ try {
                             <select id="sucursal_id" name="sucursal_id" class="form-control" required>
                               <option value="">Seleccione una sucursal</option>
                             </select>
+                            <small class="form-text text-muted" id="saldoSucursal">Saldo disponible: -</small>
                           </div>
                         </div>
                         <div class="col-md-6">
@@ -445,6 +446,7 @@ try {
                     select.val(sucursalUsuarioId);
                     // Disparar evento change por si hay listeners
                     select.trigger('change');
+                    cargarSaldoSucursal(sucursalUsuarioId);
                   } else {
                     console.warn("La sucursal del usuario (ID: " + sucursalUsuarioId + ") no está en la lista de sucursales activas devuelta por la API.");
                   }
@@ -454,6 +456,38 @@ try {
               }
             }
           });
+
+          // Listener para cambio de sucursal para actualizar el saldo
+          $('#sucursal_id').on('change', function() {
+            var id = $(this).val();
+            if (id) {
+              cargarSaldoSucursal(id);
+            } else {
+              $('#saldoSucursal').text('Saldo disponible: -').removeClass('text-danger text-success');
+            }
+          });
+
+          function cargarSaldoSucursal(id) {
+            $.ajax({
+              url: '../sucursales/api.php?action=obtener&id=' + id,
+              method: 'GET',
+              dataType: 'json',
+              success: function(response) {
+                if (response.success && response.data) {
+                  var saldo = parseFloat(response.data.saldo || 0);
+                  $('#saldoSucursal').data('saldo', saldo);
+                  $('#saldoSucursal').text('Saldo disponible: $' + saldo.toFixed(2));
+                  if (saldo <= 0) {
+                    $('#saldoSucursal').addClass('text-danger').removeClass('text-success');
+                  } else {
+                    $('#saldoSucursal').addClass('text-success').removeClass('text-danger');
+                  }
+                  // Recalcular totales para actualizar advertencias si las hay
+                  calcularTotal();
+                }
+              }
+            });
+          }
           
           // Cargar proveedores
           $.ajax({
@@ -821,7 +855,7 @@ try {
         window.limpiarTodosProductos = limpiarTodosProductos;
         
         // Calcular total automáticamente
-        $('#iva, #descuento, #tipo_descuento').on('input change', function() {
+        $('#iva, #descuento, #tipo_descuento, #estado, #sucursal_id').on('input change', function() {
           calcularTotal();
         });
         
@@ -872,6 +906,18 @@ try {
           // Actualizar resumen
           $('#ivaResumen').text(ivaPorcentaje.toFixed(0) + '%');
           $('#totalCompra').text('$' + total.toFixed(2));
+
+          // Verificar si el total excede el saldo de la sucursal
+          var saldoDisponible = $('#saldoSucursal').data('saldo') || 0;
+          if ($('#estado').val() === 'completada' && total > saldoDisponible) {
+            $('#totalCompra').addClass('text-danger');
+            if (!$('#warningSaldo').length) {
+              $('#totalCompra').after('<br><small id="warningSaldo" class="text-danger fw-bold"><i class="fa fa-exclamation-triangle"></i> ¡Saldo insuficiente!</small>');
+            }
+          } else {
+            $('#totalCompra').removeClass('text-danger');
+            $('#warningSaldo').remove();
+          }
         }
         
         // Guardar nueva compra
@@ -923,6 +969,15 @@ try {
           
           var total = subtotal + ivaMonto - descuentoMonto;
           
+          // VALIDACIÓN: Verificar si hay saldo suficiente en la sucursal si la compra es completada
+          var estado = $('#estado').val();
+          var saldoDisponible = $('#saldoSucursal').data('saldo') || 0;
+          
+          if (estado === 'completada' && total > saldoDisponible) {
+            swal("Saldo Insuficiente", "La sucursal no tiene saldo suficiente para completar esta compra.\nSaldo disponible: $" + saldoDisponible.toFixed(2) + "\nTotal compra: $" + total.toFixed(2), "error");
+            return;
+          }
+
           // Preparar detalles de productos
           var detalles = productosSeleccionados.map(function(producto) {
             return {

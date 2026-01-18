@@ -284,6 +284,21 @@ try {
                     if ($proveedor_id <= 0 || $sucursal_id <= 0) {
                         throw new Exception('Proveedor y sucursal son obligatorios');
                     }
+
+                    // VALIDACIÓN: Verificar si hay saldo suficiente en la sucursal
+                    if ($estado === 'completada') {
+                        $stmtSaldo = $db->prepare("SELECT saldo, nombre FROM sucursales WHERE id = ?");
+                        $stmtSaldo->execute([$sucursal_id]);
+                        $sucursal = $stmtSaldo->fetch();
+                        
+                        if (!$sucursal) {
+                            throw new Exception('Sucursal no encontrada');
+                        }
+                        
+                        if ($sucursal['saldo'] < $total) {
+                            throw new Exception("Saldo insuficiente en la sucursal '{$sucursal['nombre']}'. Saldo disponible: $" . number_format($sucursal['saldo'], 2) . ", Total compra: $" . number_format($total, 2));
+                        }
+                    }
                     
                     // Insertar compra
                     $stmt = $db->prepare("
