@@ -24,19 +24,27 @@ try {
             // Listar todos los gastos
             $stmt = $db->query("
                 SELECT g.*, 
-                       CONCAT(e.nombre, ' ', e.apellido) as empleado_nombre
-                FROM gastos_empleados g
-                INNER JOIN empleados e ON g.empleado_id = e.id
+                       CONCAT(e.nombres, ' ', e.apellidos) as empleado_nombre,
+                       e.cedula as empleado_cedula
+                FROM gastos_varios g
+                LEFT JOIN empleados e ON g.empleado_id = e.id
                 ORDER BY g.fecha DESC, g.id DESC
             ");
             $gastos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(['success' => true, 'data' => $gastos]);
             break;
 
+        case 'list_empleados':
+            // Listar empleados activos para el select
+            $stmt = $db->query("SELECT id, nombres as nombre, apellidos as apellido FROM empleados WHERE estado = 'ACTIVO' ORDER BY apellidos, nombres");
+            $empleados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'data' => $empleados]);
+            break;
+
         case 'get':
             // Obtener un gasto específico
             $id = $_GET['id'] ?? 0;
-            $stmt = $db->prepare("SELECT * FROM gastos_empleados WHERE id = ?");
+            $stmt = $db->prepare("SELECT * FROM gastos_varios WHERE id = ?");
             $stmt->execute([$id]);
             $gasto = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -68,7 +76,7 @@ try {
             }
 
             $stmt = $db->prepare("
-                INSERT INTO gastos_empleados (empleado_id, concepto, descripcion, monto, fecha, estado)
+                INSERT INTO gastos_varios (empleado_id, concepto, descripcion, monto, fecha, estado)
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
             
@@ -100,7 +108,7 @@ try {
             }
 
             $stmt = $db->prepare("
-                UPDATE gastos_empleados 
+                UPDATE gastos_varios 
                 SET empleado_id = ?, concepto = ?, descripcion = ?, monto = ?, fecha = ?, estado = ?
                 WHERE id = ?
             ");
@@ -121,7 +129,7 @@ try {
                 break;
             }
 
-            $stmt = $db->prepare("DELETE FROM gastos_empleados WHERE id = ?");
+            $stmt = $db->prepare("DELETE FROM gastos_varios WHERE id = ?");
             
             if ($stmt->execute([$id])) {
                 echo json_encode(['success' => true, 'message' => 'Gasto eliminado exitosamente']);
@@ -136,9 +144,9 @@ try {
             $estado = $_GET['estado'] ?? null;
             
             $sql = "
-                SELECT g.*, CONCAT(e.nombre, ' ', e.apellido) as empleado_nombre
-                FROM gastos_empleados g
-                INNER JOIN empleados e ON g.empleado_id = e.id
+                SELECT g.*, CONCAT(e.nombres, ' ', e.apellidos) as empleado_nombre
+                FROM gastos_varios g
+                LEFT JOIN empleados e ON g.empleado_id = e.id
                 WHERE g.empleado_id = ?
             ";
             
