@@ -83,11 +83,15 @@ if (!$compra_id) {
         table th:nth-child(6) { width: 8% !important; } /* Unidad */
         table th:nth-child(7) { width: 12% !important; } /* Precio Unitario */
         table th:nth-child(8) { width: 13% !important; } /* Subtotal */
-        .factura-header { margin-bottom: 5px !important; padding-bottom: 5px !important; font-size: 12px !important; }
+        .factura-header { margin-bottom: 15px !important; padding-bottom: 15px !important; font-size: 12px !important; }
         .factura-header h1 { font-size: 18px !important; margin: 3px 0 !important; }
+        .factura-header .row { align-items: flex-start !important; }
+        .factura-header .col-md-7 { display: flex !important; align-items: center !important; }
+        .factura-header .col-md-5 { display: block !important; text-align: right !important; margin-top: -80px !important; }
+        .factura-header .col-md-5 p { margin-bottom: 3px !important; line-height: 1.4 !important; }
         .factura-body { padding: 5px !important; margin: 0 !important; }
         .row { margin: 0 !important; }
-        .col-md-6 { padding: 3px !important; font-size: 10px !important; }
+        .col-md-6 { padding: 3px !important; font-size: 10px !important; display: inline-block !important; width: 49% !important; vertical-align: top !important; }
         h5, h6 { margin: 3px 0 !important; font-size: 11px !important; }
         .mb-4, .mb-3, .mb-2 { margin-bottom: 5px !important; }
         tfoot th { font-size: 9px !important; padding: 2px !important; }
@@ -166,11 +170,14 @@ if (!$compra_id) {
                     <!-- Encabezado de Factura -->
                     <div class="factura-header">
                       <div class="row">
-                        <div class="col-md-6">
-                          <h2 class="text-primary mb-0">FACTURA DE COMPRA</h2>
-                          <p class="text-muted mb-0">Sistema de Gestión de Reciclaje</p>
+                        <div class="col-md-7 d-flex align-items-center">
+                          <img src="../assets/img/logo.jpg" alt="Logo Recicladora" style="max-width: 100px; height: auto; margin-right: 20px;">
+                          <div>
+                            <h2 class="text-primary mb-0">COMPROBANTE DE FACTURA</h2>
+                            <p class="text-muted mb-0">HNOSYÁNEZ S.A.</p>
+                          </div>
                         </div>
-                        <div class="col-md-6 text-end">
+                        <div class="col-md-5 text-end">
                           <p class="mb-1"><strong>N° Factura:</strong> <span id="numeroFactura">-</span></p>
                           <p class="mb-1"><strong>Fecha:</strong> <span id="fechaCompra">-</span></p>
                           <p class="mb-0"><strong>Estado:</strong> <span id="estadoCompra">-</span></p>
@@ -220,11 +227,11 @@ if (!$compra_id) {
                             <th class="text-end" id="subtotalProductos">$0.00</th>
                           </tr>
                           <tr>
-                            <th colspan="7" class="text-end">IVA:</th>
+                            <th colspan="7" class="text-end">IVA (%):</th>
                             <th class="text-end" id="ivaTotal">$0.00</th>
                           </tr>
                           <tr>
-                            <th colspan="7" class="text-end">Descuento:</th>
+                            <th colspan="7" class="text-end">Descuento ($):</th>
                             <th class="text-end" id="descuentoTotal">$0.00</th>
                           </tr>
                           <tr class="table-primary">
@@ -322,7 +329,10 @@ if (!$compra_id) {
               }
               
               // Totales
-              $('#ivaTotal').text('$' + parseFloat(compra.iva || 0).toFixed(2));
+              var ivaValor = parseFloat(compra.iva || 0);
+              var subtotalVal = parseFloat(compra.subtotal || 0);
+              var ivaPorcentaje = subtotalVal > 0 ? (ivaValor / subtotalVal * 100) : 0;
+              $('#ivaTotal').text(ivaPorcentaje.toFixed(0) + '%');
               $('#descuentoTotal').text('$' + parseFloat(compra.descuento || 0).toFixed(2));
               $('#totalFinal').text('$' + parseFloat(compra.total || 0).toFixed(2));
               

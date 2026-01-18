@@ -161,12 +161,8 @@ try {
                         <div class="col-md-6">
                           <div class="form-group">
                             <label>Tipo de Comprobante</label>
-                            <select id="tipo_comprobante" name="tipo_comprobante" class="form-control">
-                              <option value="factura">Factura</option>
-                             
-                              <option value="nota_credito">Nota de Compra</option>
-                          
-                            </select>
+                            <input type="text" class="form-control" value="Factura" readonly style="background-color: #f5f5f5;">
+                            <input type="hidden" id="tipo_comprobante" name="tipo_comprobante" value="factura">
                           </div>
                         </div>
                         <div class="col-md-12">
@@ -227,14 +223,26 @@ try {
                         </div>
                         <div class="col-md-4">
                           <div class="form-group">
-                            <label>IVA</label>
-                            <input type="number" step="0.01" id="iva" name="iva" class="form-control" placeholder="0.00" value="0">
+                            <label>IVA (%)</label>
+                            <select id="iva" name="iva" class="form-control">
+                              <option value="0">0%</option>
+                              <option value="15">15%</option>
+                            </select>
                           </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                           <div class="form-group">
                             <label>Descuento</label>
-                            <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0.00" value="0">
+                            <select id="tipo_descuento" name="tipo_descuento" class="form-control">
+                              <option value="dinero">En $</option>
+                              <option value="porcentaje">En %</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-md-2">
+                          <div class="form-group">
+                            <label id="labelDescuento">Valor</label>
+                            <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0.00" value="0" min="0">
                           </div>
                         </div>
                         <div class="col-md-4">
@@ -253,7 +261,7 @@ try {
                               <div class="col-md-6">
                                 <i class="fas fa-info-circle"></i> 
                                 <strong>Subtotal Productos:</strong> <span id="subtotalProductosResumen">$0.00</span><br>
-                                <strong>IVA:</strong> <span id="ivaResumen">$0.00</span><br>
+                                <strong>IVA (%):</strong> <span id="ivaResumen">$0.00</span><br>
                                 <strong>Descuento:</strong> <span id="descuentoResumen">$0.00</span>
                               </div>
                               <div class="col-md-6 text-end">
@@ -292,7 +300,7 @@ try {
     </div>
 
     <!-- Modal Buscar Producto -->
-    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
@@ -813,8 +821,22 @@ try {
         window.limpiarTodosProductos = limpiarTodosProductos;
         
         // Calcular total automáticamente
-        $('#iva, #descuento').on('input', function() {
+        $('#iva, #descuento, #tipo_descuento').on('input change', function() {
           calcularTotal();
+        });
+        
+        // Cambiar label según tipo de descuento
+        $('#tipo_descuento').on('change', function() {
+          var tipo = $(this).val();
+          if (tipo === 'porcentaje') {
+            $('#labelDescuento').text('% Descuento');
+            $('#descuento').attr('placeholder', '0');
+            $('#descuento').attr('max', '100');
+          } else {
+            $('#labelDescuento').text('$ Descuento');
+            $('#descuento').attr('placeholder', '0.00');
+            $('#descuento').removeAttr('max');
+          }
         });
         
         function calcularTotal() {
@@ -828,14 +850,27 @@ try {
           $('#subtotalProductos').text('$' + subtotalProductos.toFixed(2));
           $('#subtotalProductosResumen').text('$' + subtotalProductos.toFixed(2));
           
-          // Calcular total con IVA y descuento
-          var iva = parseFloat($('#iva').val()) || 0;
-          var descuento = parseFloat($('#descuento').val()) || 0;
-          var total = subtotalProductos + iva - descuento;
+          // Calcular total con IVA (porcentaje) y descuento (cantidad o porcentaje)
+          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
+          var ivaMontoCalculado = (subtotalProductos * ivaPorcentaje) / 100;
+          
+          // Calcular descuento según el tipo
+          var tipoDescuento = $('#tipo_descuento').val();
+          var valorDescuento = parseFloat($('#descuento').val()) || 0;
+          var descuentoMonto = 0;
+          
+          if (tipoDescuento === 'porcentaje') {
+            descuentoMonto = (subtotalProductos * valorDescuento) / 100;
+            $('#descuentoResumen').text(valorDescuento.toFixed(0) + '%');
+          } else {
+            descuentoMonto = valorDescuento;
+            $('#descuentoResumen').text('$' + descuentoMonto.toFixed(2));
+          }
+          
+          var total = subtotalProductos + ivaMontoCalculado - descuentoMonto;
           
           // Actualizar resumen
-          $('#ivaResumen').text('$' + iva.toFixed(2));
-          $('#descuentoResumen').text('$' + descuento.toFixed(2));
+          $('#ivaResumen').text(ivaPorcentaje.toFixed(0) + '%');
           $('#totalCompra').text('$' + total.toFixed(2));
         }
         
@@ -871,9 +906,22 @@ try {
             subtotal += producto.subtotal;
           });
           
-          var iva = parseFloat($('#iva').val()) || 0;
-          var descuento = parseFloat($('#descuento').val()) || 0;
-          var total = subtotal + iva - descuento;
+          // IVA: calcular monto desde porcentaje
+          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
+          var ivaMonto = (subtotal * ivaPorcentaje) / 100;
+          
+          // Descuento: calcular monto según tipo
+          var tipoDescuento = $('#tipo_descuento').val();
+          var valorDescuento = parseFloat($('#descuento').val()) || 0;
+          var descuentoMonto = 0;
+          
+          if (tipoDescuento === 'porcentaje') {
+            descuentoMonto = (subtotal * valorDescuento) / 100;
+          } else {
+            descuentoMonto = valorDescuento;
+          }
+          
+          var total = subtotal + ivaMonto - descuentoMonto;
           
           // Preparar detalles de productos
           var detalles = productosSeleccionados.map(function(producto) {
@@ -892,8 +940,9 @@ try {
             numero_factura: $('#numero_factura').val(),
             tipo_comprobante: $('#tipo_comprobante').val(),
             subtotal: subtotal,
-            iva: iva,
-            descuento: descuento,
+            iva: ivaMonto, // Enviar el monto calculado
+            iva_porcentaje: ivaPorcentaje, // Enviar el porcentaje para referencia
+            descuento: descuentoMonto, // Enviar el monto calculado de descuento
             total: total,
             estado: $('#estado').val(),
             notas: $('#notas').val(),

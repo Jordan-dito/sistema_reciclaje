@@ -102,7 +102,7 @@ if (!$auth->isAuthenticated()) {
                         <thead>
                           <tr>
                             <th>Sucursal</th>
-                            <th>Producto</th>
+                            <th>Código</th>
                             <th>Material</th>
                             <th>Categoría</th>
                             <th>Peso</th>

@@ -128,7 +128,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Agregar Material -->
-    <div class="modal fade" id="modalAgregarMaterial" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalAgregarMaterial" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -163,7 +163,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Editar Material -->
-    <div class="modal fade" id="modalEditarMaterial" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalEditarMaterial" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">

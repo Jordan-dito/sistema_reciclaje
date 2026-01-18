@@ -72,11 +72,21 @@ if (!$venta_id) {
         .table-responsive { overflow: visible !important; }
         table { font-size: 9px !important; width: 100% !important; margin: 0 !important; }
         th, td { padding: 2px !important; line-height: 1.2 !important; }
-        .factura-header { margin-bottom: 5px !important; padding-bottom: 5px !important; font-size: 12px !important; }
+        table th:nth-child(1) { width: 20px !important; }
+        table th:nth-child(2) { width: 30% !important; }
+        table th:nth-child(3) { width: 15% !important; }
+        table th:nth-child(4) { width: 10% !important; }
+        table th:nth-child(5) { width: 20% !important; }
+        table th:nth-child(6) { width: 15% !important; }
+        .factura-header { margin-bottom: 15px !important; padding-bottom: 15px !important; font-size: 12px !important; }
         .factura-header h1 { font-size: 18px !important; margin: 3px 0 !important; }
+        .factura-header .row { align-items: flex-start !important; }
+        .factura-header .col-md-7 { display: flex !important; align-items: center !important; }
+        .factura-header .col-md-5 { display: block !important; text-align: right !important; margin-top: -80px !important; }
+        .factura-header .col-md-5 p { margin-bottom: 3px !important; line-height: 1.4 !important; }
         .factura-body { padding: 5px !important; margin: 0 !important; }
         .row { margin: 0 !important; }
-        .col-md-6 { padding: 3px !important; font-size: 10px !important; }
+        .col-md-6 { padding: 3px !important; font-size: 10px !important; display: inline-block !important; width: 49% !important; vertical-align: top !important; }
         h5, h6 { margin: 3px 0 !important; font-size: 11px !important; }
         .mb-4, .mb-3, .mb-2 { margin-bottom: 5px !important; }
         tfoot th { font-size: 9px !important; padding: 2px !important; }
@@ -154,11 +164,14 @@ if (!$venta_id) {
                     <!-- Encabezado de Factura -->
                     <div class="factura-header">
                       <div class="row">
-                        <div class="col-md-6">
-                          <h2 class="text-success mb-0">FACTURA DE VENTA</h2>
-                          <p class="text-muted mb-0">Sistema de Gestión de Reciclaje</p>
+                        <div class="col-md-7 d-flex align-items-center">
+                          <img src="../assets/img/logo.jpg" alt="Logo Recicladora" style="max-width: 100px; height: auto; margin-right: 20px;">
+                          <div>
+                            <h2 class="text-success mb-0">COMPROBANTE DE FACTURA</h2>
+                            <p class="text-muted mb-0">HNOSYÁNEZ S.A.</p>
+                          </div>
                         </div>
-                        <div class="col-md-6 text-end">
+                        <div class="col-md-5 text-end">
                           <p class="mb-1"><strong>N° Factura:</strong> <span id="numeroFactura">-</span></p>
                           <p class="mb-1"><strong>Fecha:</strong> <span id="fechaVenta">-</span></p>
                           <p class="mb-0"><strong>Estado:</strong> <span id="estadoVenta">-</span></p>
