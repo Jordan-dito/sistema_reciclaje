@@ -79,6 +79,12 @@ if (!$auth->isAuthenticated()) {
                   <div class="card-body">
                     <div class="row mb-4">
                         <div class="col-md-3">
+                            <label>Sucursal</label>
+                            <select id="filtroSucursal" class="form-control">
+                                <option value="">Todas las sucursales</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <label>Filtrar por Mes</label>
                             <select id="filtroMes" class="form-control">
                                 <option value="01">Enero</option><option value="02">Febrero</option>
@@ -93,7 +99,7 @@ if (!$auth->isAuthenticated()) {
                             <label>Año</label>
                             <input type="number" id="filtroAnio" class="form-control" value="<?php echo date('Y'); ?>">
                         </div>
-                        <div class="col-md-3 d-flex align-items-end">
+                        <div class="col-md-2 d-flex align-items-end">
                             <button class="btn btn-secondary" onclick="cargarGastos()"><i class="fa fa-filter"></i> Filtrar</button>
                         </div>
                         <div class="col-md-3 d-flex align-items-end justify-content-end">
@@ -138,6 +144,12 @@ if (!$auth->isAuthenticated()) {
           </div>
           <form id="formGasto">
             <div class="modal-body">
+              <div class="form-group" id="groupSucursalModal">
+                <label>Sucursal *</label>
+                <select class="form-control" id="sucursal_id" name="sucursal_id" required>
+                    <option value="">Seleccione una sucursal</option>
+                </select>
+              </div>
               <div class="form-group">
                 <label>Fecha *</label>
                 <input type="date" class="form-control" id="fecha" name="fecha" required>
@@ -195,8 +207,8 @@ if (!$auth->isAuthenticated()) {
           language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
           order: [[0, 'desc']]
         });
-
-        cargarGastos();
+        
+        cargarSucursales();
 
         $('#formGasto').on('submit', function(e) {
           e.preventDefault();
@@ -204,24 +216,80 @@ if (!$auth->isAuthenticated()) {
         });
       });
 
+      function cargarSucursales() {
+        $.ajax({
+            url: '../sucursales/api.php?action=activas',
+            type: 'GET',
+            success: function(response) {
+                if(response.success) {
+                    var filtro = $('#filtroSucursal');
+                    var modalSelect = $('#sucursal_id');
+                    
+                    // Limpiar (mantener opción por defecto en filtro)
+                    filtro.find('option:not(:first)').remove();
+                    modalSelect.find('option:not(:first)').remove();
+                    
+                    var sucursales = response.data;
+                    
+                    sucursales.forEach(function(suc) {
+                        filtro.append('<option value="'+suc.id+'">'+suc.nombre+'</option>');
+                        modalSelect.append('<option value="'+suc.id+'">'+suc.nombre+'</option>');
+                    });
+
+                    // Si solo hay una sucursal (usuario restringido), seleccionarla automáticamente
+                    if (sucursales.length === 1) {
+                        filtro.val(sucursales[0].id).prop('disabled', true);
+                        modalSelect.val(sucursales[0].id);
+                        // Ocultar el selector en modal si es obvio
+                        $('#groupSucursalModal').hide(); 
+                    } else {
+                        // Si hay varias, asegurarse que el modal las muestre
+                        $('#groupSucursalModal').show();
+                    }
+                    
+                    // Cargar gastos después de tener sucursales (por si hay preselección)
+                    cargarGastos();
+                }
+            }
+        });
+      }
+
       function cargarGastos() {
         var mes = $('#filtroMes').val();
         var anio = $('#filtroAnio').val();
+        var sucursal_id = $('#filtroSucursal').val();
+
         $.ajax({
           url: 'api_gastos.php?action=list',
           type: 'GET',
-          data: { mes: mes, anio: anio },
+          data: { 
+            mes: mes, 
+            anio: anio,
+            sucursal_id: sucursal_id
+          },
           success: function(response) {
             if (response.success) {
               var table = $('#gastosTable').DataTable();
               table.clear();
               $('#saldoCaja').text('$' + parseFloat(response.saldo_sucursal || 0).toFixed(2));
+              
               response.data.forEach(function(gasto) {
                 var estadoBadge = gasto.estado === 'completado' ? '<span class="badge bg-success">Pagado</span>' : '<span class="badge bg-danger">Cancelado</span>';
                 var acciones = gasto.estado === 'completado' ? '<button class="btn btn-sm btn-danger" onclick="eliminarGasto(' + gasto.id + ')"><i class="fa fa-times"></i></button>' : '<i class="fa fa-ban text-muted"></i>';
+                
+                // Mostrar nombre de sucursal si hay filtro de "Todas" o si es admin viendo varias
+                var conceptoHtml = '<strong>' + gasto.concepto + '</strong>';
+                if (!sucursal_id && gasto.sucursal_nombre) {
+                    conceptoHtml += '<br><small class="text-muted">' + gasto.sucursal_nombre + '</small>';
+                }
+
                 table.row.add([
-                  gasto.fecha, '<strong>' + gasto.concepto + '</strong>', gasto.descripcion || '-',
-                  '<strong>$' + parseFloat(gasto.monto).toFixed(2) + '</strong>', estadoBadge, acciones
+                  gasto.fecha, 
+                  conceptoHtml, 
+                  gasto.descripcion || '-',
+                  '<strong>$' + parseFloat(gasto.monto).toFixed(2) + '</strong>', 
+                  estadoBadge, 
+                  acciones
                 ]);
               });
               table.draw();
@@ -240,6 +308,8 @@ if (!$auth->isAuthenticated()) {
               swal("¡Éxito!", response.message, "success");
               $('#modalGasto').modal('hide');
               $('#formGasto')[0].reset();
+              // Restablecer fecha
+              $('#fecha').val(new Date().toISOString().split('T')[0]);
               cargarGastos();
             } else {
               swal("Error", response.message, "error");
@@ -265,6 +335,8 @@ if (!$auth->isAuthenticated()) {
                 if (response.success) {
                   swal("Cancelado", response.message, "success");
                   cargarGastos();
+                } else {
+                    swal("Error", response.message || "Error al cancelar", "error");
                 }
               }
             });
