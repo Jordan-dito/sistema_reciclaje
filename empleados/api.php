@@ -32,6 +32,10 @@ $sucursalId = null; // Mostrar todos los empleados
 
 try {
     switch ($action) {
+        case 'verificar_cedula':
+            verificarCedulaExistente($db);
+            break;
+            
         case 'get_semana':
             obtenerDatosSemana($db, $sucursalId);
             break;
@@ -66,6 +70,35 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
+
+function verificarCedulaExistente($db) {
+    $cedula = trim($_GET['cedula'] ?? '');
+    $empleado_id = (int)($_GET['empleado_id'] ?? 0);
+    
+    if (empty($cedula)) {
+        echo json_encode(['success' => false, 'message' => 'Cédula requerida']);
+        return;
+    }
+    
+    // Verificar si existe la cédula (excluyendo el empleado actual en caso de edición)
+    $sql = "SELECT id FROM empleados WHERE cedula = ?";
+    if ($empleado_id > 0) {
+        $sql .= " AND id != ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$cedula, $empleado_id]);
+    } else {
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$cedula]);
+    }
+    
+    $existe = $stmt->fetch();
+    
+    if ($existe) {
+        echo json_encode(['success' => false, 'existe' => true, 'message' => 'Esta cédula ya está registrada en el sistema']);
+    } else {
+        echo json_encode(['success' => true, 'existe' => false]);
+    }
 }
 
 function obtenerDatosSemana($db, $filtroSucursalId) {
