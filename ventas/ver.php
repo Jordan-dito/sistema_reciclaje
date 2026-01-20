@@ -135,8 +135,6 @@ if (!$venta_id) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -261,6 +259,12 @@ if (!$venta_id) {
         <footer class="footer no-print">
           <?php include __DIR__ . '/../includes/footer.php'; ?>
         </footer>
+        
+        <!-- Modales Globales -->
+        <?php 
+          include __DIR__ . '/../includes/modal-foto-perfil.php';
+          include __DIR__ . '/../includes/modal-cambiar-password.php';
+        ?>
       </div>
     </div>
 

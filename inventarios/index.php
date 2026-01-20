@@ -64,8 +64,6 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -122,72 +120,6 @@ if (!$auth->isAuthenticated()) {
         </div>
 
         <?php include __DIR__ . '/../includes/footer.php'; ?>
-      </div>
-    </div>
-
-    <!-- Modal Agregar Inventario -->
-    <div class="modal fade" id="modalAgregarInventario" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Nuevo Registro de Inventario</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="formAgregarInventario">
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Sucursales * <small class="text-muted">(Puede seleccionar múltiples)</small></label>
-                    <div id="sucursalesContainer" class="border rounded p-3" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">
-                      <div class="text-center text-muted">
-                        <i class="fa fa-spinner fa-spin"></i> Cargando sucursales...
-                      </div>
-                    </div>
-                    <small class="form-text text-muted">
-                      <i class="fa fa-info-circle"></i> Seleccione una o más sucursales donde desea crear el inventario.
-                    </small>
-                  </div>
-                </div>
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Producto *</label>
-                    <button type="button" class="btn btn-primary btn-block mb-2" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
-                      <i class="fa fa-search"></i> Buscar y Seleccionar Producto
-                    </button>
-                    <div id="productosSeleccionados" class="border rounded p-3" style="display: none; max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">
-                      <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong>Productos seleccionados: <span id="contadorProductos">0</span></strong>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarProductos()">
-                          <i class="fa fa-times"></i> Limpiar todo
-                        </button>
-                      </div>
-                      <div id="listaProductosSeleccionados"></div>
-                    </div>
-                    <input type="hidden" id="productos_ids" name="productos_ids">
-                    <small class="form-text text-muted"><i class="fa fa-info-circle"></i> Haga clic en el botón para buscar y seleccionar uno o más productos.</small>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Stock Mínimo</label>
-                    <input type="number" step="0.01" id="stock_minimo" name="stock_minimo" class="form-control" placeholder="0.00">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Stock Máximo</label>
-                    <input type="number" step="0.01" id="stock_maximo" name="stock_maximo" class="form-control" placeholder="0.00">
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnGuardarInventario">Guardar Inventario</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -264,6 +196,12 @@ if (!$auth->isAuthenticated()) {
         </div>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
     <script src="../assets/js/core/popper.min.js"></script>

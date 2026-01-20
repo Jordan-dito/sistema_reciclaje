@@ -64,8 +64,6 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -127,70 +125,6 @@ if (!$auth->isAuthenticated()) {
         </div>
 
         <?php include __DIR__ . '/../includes/footer.php'; ?>
-      </div>
-    </div>
-
-    <!-- Modal Agregar Producto -->
-    <div class="modal fade" id="modalAgregarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Material Comercializable</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="formAgregarProducto">
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Código <span class="text-danger">*</span></label>
-                    <input type="text" id="nombre" name="nombre" class="form-control" value="Se generará automáticamente" readonly style="background-color: #f5f5f5;">
-                    <small class="form-text text-muted">El código se asignará automáticamente de forma secuencial</small>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Material <span class="text-danger">*</span></label>
-                    <select id="material_id" name="material_id" class="form-control" required>
-                      <option value="">Seleccione un material</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Unidad <span class="text-danger">*</span></label>
-                    <select id="unidad_id" name="unidad_id" class="form-control" required>
-                      <option value="">Seleccione una unidad</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Precio de Venta ($) <span class="text-danger">*</span></label>
-                    <input type="number" id="precio_venta" name="precio_venta" class="form-control" step="0.01" min="0.01" placeholder="0.00" required>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Precio de Compra ($) <span class="text-danger">*</span></label>
-                    <input type="number" id="precio_compra" name="precio_compra" class="form-control" step="0.01" min="0.01" placeholder="0.00" required>
-                  </div>
-                </div>
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Descripción <span class="text-danger">*</span></label>
-                    <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Descripción del producto" required></textarea>
-                  </div>
-                </div>
-                <input type="hidden" id="estado" name="estado" value="activo">
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnGuardarProducto">Guardar Producto</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -257,6 +191,12 @@ if (!$auth->isAuthenticated()) {
         </div>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
     <script src="../assets/js/core/popper.min.js"></script>

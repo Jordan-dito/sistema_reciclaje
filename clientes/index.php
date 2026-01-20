@@ -82,8 +82,6 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -146,96 +144,6 @@ if (!$auth->isAuthenticated()) {
         </div>
 
         <?php include __DIR__ . '/../includes/footer.php'; ?>
-      </div>
-    </div>
-
-    <!-- Modal Agregar Cliente -->
-    <div class="modal fade" id="modalAgregarCliente" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalClienteTitle">Nuevo Cliente</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="formAgregarCliente">
-              <input type="hidden" id="cliente_id" name="id">
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Nombre / Razón Social <span class="text-danger">*</span></label>
-                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Industrias ABC" required>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Cédula / RUC <span class="text-danger">*</span></label>
-                    <input type="text" id="cedula_ruc" name="cedula_ruc" class="form-control" placeholder="0998765432001" required>
-                    <small class="form-text text-muted">Cédula (10 dígitos) o RUC (13 dígitos)</small>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Tipo de Documento <span class="text-danger">*</span></label>
-                    <select id="tipo_documento" name="tipo_documento" class="form-control" required>
-                      <option value="" selected disabled>Seleccione el tipo de documento</option>
-                      <option value="cedula">Cédula</option>
-                      <option value="ruc">RUC</option>
-                      <option value="pasaporte">Pasaporte</option>
-                      <option value="otro">Otro</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Email <span class="text-danger">*</span></label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="cliente@email.com" required>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Teléfono <span class="text-danger">*</span></label>
-                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="02-2345678" required>
-                  </div>
-                </div>
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Dirección <span class="text-danger">*</span></label>
-                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa" required></textarea>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Persona de Contacto</label>
-                    <input type="text" id="contacto" name="contacto" class="form-control" placeholder="Ej: Juan Pérez">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Tipo de Cliente <span class="text-danger">*</span></label>
-                    <select id="tipo_cliente" name="tipo_cliente" class="form-control" required>
-                      <option value="" selected disabled>Seleccione tipo de cliente</option>
-                      <option value="minorista">Minorista</option>
-                      <option value="mayorista">Mayorista</option>
-                      <option value="empresa">Empresa</option>
-                      <option value="institucion">Institución</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Notas</label>
-                    <textarea id="notas" name="notas" class="form-control" rows="2" placeholder="Notas adicionales"></textarea>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnGuardarCliente">Guardar Cliente</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -315,6 +223,12 @@ if (!$auth->isAuthenticated()) {
         </div>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <!-- Core JS Files -->
     <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
