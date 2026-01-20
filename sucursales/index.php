@@ -141,7 +141,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Agregar Sucursal -->
-    <div class="modal fade" id="modalAgregarSucursal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalAgregarSucursal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -211,7 +211,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Editar Sucursal -->
-    <div class="modal fade" id="modalEditarSucursal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalEditarSucursal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
