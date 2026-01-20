@@ -33,6 +33,7 @@ try {
         case 'list':
             $mes = $_GET['mes'] ?? date('m');
             $anio = $_GET['anio'] ?? date('Y');
+            $filtroSucursal = $_GET['sucursal_id'] ?? null;
             
             $sql = "
                 SELECT g.*, s.nombre as sucursal_nombre
@@ -42,9 +43,15 @@ try {
             ";
             
             $params = [];
-            if ($sucursalId) {
+            
+            // Si el usuario tiene sucursal asignada, se fuerza el filtro
+            if ($userSucursalId) {
                 $sql .= " AND g.sucursal_id = ?";
-                $params[] = $sucursalId;
+                $params[] = $userSucursalId;
+            } elseif ($filtroSucursal) {
+                // Si es admin y seleccionó una sucursal
+                $sql .= " AND g.sucursal_id = ?";
+                $params[] = $filtroSucursal;
             }
             
             if ($mes && $anio) {
@@ -60,9 +67,12 @@ try {
             $gastos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             $saldoSucursal = 0;
-            if ($sucursalId) {
+            // Calcular saldo de la sucursal visible
+            $sucursalParaSaldo = $userSucursalId ?: $filtroSucursal;
+            
+            if ($sucursalParaSaldo) {
                 $stmtSaldo = $db->prepare("SELECT saldo FROM sucursales WHERE id = ?");
-                $stmtSaldo->execute([$sucursalId]);
+                $stmtSaldo->execute([$sucursalParaSaldo]);
                 $saldoSucursal = $stmtSaldo->fetchColumn();
             }
             
@@ -78,8 +88,17 @@ try {
             $descripcion = $_POST['descripcion'] ?? '';
             $monto = floatval($_POST['monto'] ?? 0);
             $fecha = $_POST['fecha'] ?? date('Y-m-d');
+            $sucursalPost = $_POST['sucursal_id'] ?? null;
             
-            if (!$sucursalId) throw new Exception('No tienes una sucursal asignada');
+            $finalSucursalId = null;
+
+            if ($userSucursalId) {
+                $finalSucursalId = $userSucursalId;
+            } else {
+                if (empty($sucursalPost)) throw new Exception('Debe seleccionar una sucursal');
+                $finalSucursalId = $sucursalPost;
+            }
+            
             if (empty($concepto) || $monto <= 0) throw new Exception('Concepto y monto válido son requeridos');
 
             $db->beginTransaction();
@@ -88,10 +107,10 @@ try {
                 INSERT INTO gastos_varios (sucursal_id, concepto, descripcion, monto, fecha, creado_por)
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
-            $stmt->execute([$sucursalId, $concepto, $descripcion, $monto, $fecha, $currentUser['id']]);
+            $stmt->execute([$finalSucursalId, $concepto, $descripcion, $monto, $fecha, $currentUser['id']]);
             
             $stmtUpdate = $db->prepare("UPDATE sucursales SET saldo = saldo - ? WHERE id = ?");
-            $stmtUpdate->execute([$monto, $sucursalId]);
+            $stmtUpdate->execute([$monto, $finalSucursalId]);
             
             $db->commit();
             echo json_encode(['success' => true, 'message' => 'Gasto registrado y descontado de caja']);
@@ -106,6 +125,12 @@ try {
             $gasto = $stmt->fetch();
             
             if (!$gasto) throw new Exception('Gasto no encontrado');
+            
+            // Verificar permisos para borrar
+            if ($userSucursalId && $gasto['sucursal_id'] != $userSucursalId) {
+                throw new Exception('No tiene permiso para cancelar gastos de otra sucursal');
+            }
+
             if ($gasto['estado'] === 'cancelado') throw new Exception('El gasto ya está cancelado');
 
             $stmtUpdate = $db->prepare("UPDATE sucursales SET saldo = saldo + ? WHERE id = ?");
