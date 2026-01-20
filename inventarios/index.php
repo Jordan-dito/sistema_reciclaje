@@ -123,153 +123,6 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
-    <!-- Modal Agregar Inventario -->
-    <div class="modal fade" id="modalAgregarInventario" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Nuevo Registro de Inventario</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="formAgregarInventario">
-              <!-- Selección de Sucursales -->
-              <div class="form-group mb-3">
-                <label class="fw-bold">Sucursales <span class="text-danger">*</span></label>
-                <div id="sucursalesContainer" class="border rounded p-3" style="max-height: 150px; overflow-y: auto;">
-                  <p class="text-muted">Cargando sucursales...</p>
-                </div>
-                <small class="form-text text-muted">Seleccione una o más sucursales</small>
-              </div>
-
-              <!-- Selección de Productos -->
-              <div class="form-group mb-3">
-                <label class="fw-bold">Productos <span class="text-danger">*</span></label>
-                <button type="button" class="btn btn-outline-primary btn-sm d-block mb-2" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
-                  <i class="fa fa-search"></i> Buscar Productos
-                </button>
-                <input type="hidden" id="productos_ids" name="productos_ids">
-                <div id="productosSeleccionados" style="display: none;">
-                  <div class="alert alert-info">
-                    <strong><span id="contadorProductos">0</span> producto(s) seleccionado(s)</strong>
-                    <button type="button" class="btn btn-sm btn-link float-end" onclick="limpiarProductos()">
-                      <i class="fa fa-times"></i> Limpiar
-                    </button>
-                  </div>
-                  <div id="listaProductosSeleccionados" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;"></div>
-                </div>
-              </div>
-
-              <!-- Stock Mínimo y Máximo -->
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group mb-3">
-                    <label>Stock Mínimo <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" step="0.01" min="0" value="0" required>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group mb-3">
-                    <label>Stock Máximo <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="stock_maximo" name="stock_maximo" step="0.01" min="0" value="0" required>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnGuardarInventario">
-              <i class="fa fa-save"></i> Guardar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal Editar Inventario -->
-    <div class="modal fade" id="modalEditarInventario" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Editar Inventario</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="formEditarInventario">
-              <input type="hidden" id="edit_id" name="id">
-              
-              <!-- Información del Producto (Solo lectura) -->
-              <div class="alert alert-info">
-                <h6 class="mb-2"><i class="fa fa-box"></i> Información del Producto</h6>
-                <div class="row">
-                  <div class="col-md-6">
-                    <strong>Producto:</strong> <span id="edit_producto_nombre"></span>
-                  </div>
-                  <div class="col-md-6">
-                    <strong>Material:</strong> <span id="edit_material_nombre"></span>
-                  </div>
-                  <div class="col-md-6">
-                    <strong>Categoría:</strong> <span id="edit_categoria_nombre"></span>
-                  </div>
-                  <div class="col-md-6">
-                    <strong>Unidad:</strong> <span id="edit_unidad_simbolo"></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Sucursal (Solo lectura o editable según necesites) -->
-              <div class="form-group mb-3">
-                <label class="fw-bold">Sucursal <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="edit_sucursal_nombre" readonly>
-                <input type="hidden" id="edit_sucursal_id" name="sucursal_id">
-                <input type="hidden" id="edit_producto_id" name="producto_id">
-              </div>
-
-              <!-- Cantidad Actual -->
-              <div class="form-group mb-3">
-                <label>Cantidad Actual <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="edit_cantidad" name="cantidad" step="0.01" min="0" required>
-                <small class="form-text text-muted">Cantidad actual en inventario</small>
-              </div>
-
-              <!-- Stock Mínimo y Máximo -->
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group mb-3">
-                    <label>Stock Mínimo <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="edit_stock_minimo" name="stock_minimo" step="0.01" min="0" value="0" required>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group mb-3">
-                    <label>Stock Máximo <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="edit_stock_maximo" name="stock_maximo" step="0.01" min="0" value="0" required>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Estado -->
-              <div class="form-group mb-3">
-                <label>Estado <span class="text-danger">*</span></label>
-                <select class="form-control" id="edit_estado" name="estado" required>
-                  <option value="disponible">Disponible</option>
-                  <option value="agotado">Agotado</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnActualizarInventario">
-              <i class="fa fa-save"></i> Actualizar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Modal Buscar Producto -->
     <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-xl">
@@ -343,6 +196,12 @@ if (!$auth->isAuthenticated()) {
         </div>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <!-- Modales Globales -->
     <?php 

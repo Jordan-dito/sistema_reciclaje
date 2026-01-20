@@ -82,8 +82,6 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -148,6 +146,12 @@ if (!$auth->isAuthenticated()) {
         <?php include __DIR__ . '/../includes/footer.php'; ?>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <!-- Modal Agregar Proveedor -->
     <div class="modal fade" id="modalAgregarProveedor" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">

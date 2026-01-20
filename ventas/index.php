@@ -82,8 +82,6 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -160,7 +158,52 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
-    <!-- Modal Nueva Venta -->
+    <!-- Modal Ver Venta -->
+    <div class="modal fade" id="modalVerVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalle de Venta #1</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Fecha:</strong> 2024-11-05</p>
+                <p><strong>Sucursal:</strong> Sucursal Central</p>
+                <p><strong>Categoría:</strong> PET</p>
+                <p><strong>Cantidad:</strong> 50.00 kg</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Precio Unitario:</strong> $3.00</p>
+                <p><strong>Total:</strong> $150.00</p>
+                <p><strong>Cliente:</strong> Industrias ABC</p>
+                <p><strong>Estado:</strong> <span class="badge badge-success">Completada</span></p>
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-md-12">
+                <div class="alert alert-success">
+                  <i class="fas fa-check-circle"></i> 
+                  <strong>Inventario actualizado:</strong> Se restaron 50.00 kg de PET del inventario
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
+
+    <!-- Core JS Files -->
     <div class="modal fade" id="modalNuevaVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">

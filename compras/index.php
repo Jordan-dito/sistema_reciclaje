@@ -82,8 +82,6 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -160,87 +158,6 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
-    <!-- Modal Ver Compra -->
-    <div class="modal fade" id="modalVerCompra" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Detalle de Compra #<span id="compraIdModal">-</span></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <!-- Información general -->
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <h6 class="text-muted mb-3">Información General</h6>
-                <p><strong>Fecha:</strong> <span id="compraFecha">-</span></p>
-                <p><strong>Sucursal:</strong> <span id="compraSucursal">-</span></p>
-                <p><strong>Proveedor:</strong> <span id="compraProveedor">-</span></p>
-                <p><strong>Número de Factura:</strong> <span id="compraNumeroFactura">-</span></p>
-              </div>
-              <div class="col-md-6">
-                <h6 class="text-muted mb-3">Totales</h6>
-                <p><strong>Subtotal:</strong> <span id="compraSubtotal">$0.00</span></p>
-                <p><strong>IVA (%):</strong> <span id="compraIva">$0.00</span></p>
-                <p><strong>Descuento ($):</strong> <span id="compraDescuento">$0.00</span></p>
-                <p><strong>Total:</strong> <span id="compraTotal" class="h5 text-primary">$0.00</span></p>
-                <p><strong>Estado:</strong> <span id="compraEstado">-</span></p>
-              </div>
-            </div>
-            
-            <hr>
-            
-            <!-- Desglose de productos -->
-            <h6 class="text-muted mb-3">Productos de la Compra</h6>
-            <div class="table-responsive">
-              <table class="table table-striped table-hover">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Producto</th>
-                    <th>Material</th>
-                    <th>Categoría</th>
-                    <th>Cantidad</th>
-                    <th>Unidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody id="compraDetallesBody">
-                  <tr>
-                    <td colspan="8" class="text-center">
-                      <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Cargando...</span>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr class="table-info">
-                    <th colspan="7" class="text-end">Total:</th>
-                    <th id="compraTotalProductos">$0.00</th>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-            
-            <!-- Notas -->
-            <div class="row mt-3" id="compraNotasContainer" style="display: none;">
-              <div class="col-md-12">
-                <h6 class="text-muted mb-2">Notas</h6>
-                <div class="alert alert-light">
-                  <p id="compraNotas" class="mb-0">-</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Modal Buscar Producto -->
     <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-xl">
@@ -310,6 +227,12 @@ if (!$auth->isAuthenticated()) {
         </div>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <!-- Core JS Files -->
     <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
