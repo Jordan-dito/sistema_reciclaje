@@ -135,7 +135,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Nuevo Gasto -->
-    <div class="modal fade" id="modalGasto" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalGasto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">

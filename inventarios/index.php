@@ -124,7 +124,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Buscar Producto -->
-    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
@@ -196,6 +196,12 @@ if (!$auth->isAuthenticated()) {
         </div>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <!-- Modales Globales -->
     <?php 
@@ -727,13 +733,90 @@ if (!$auth->isAuthenticated()) {
           }
         });
         
+        // Manejador para actualizar inventario
+        $('#btnActualizarInventario').click(function() {
+          var formData = {
+            action: 'actualizar',
+            id: $('#edit_id').val(),
+            sucursal_id: $('#edit_sucursal_id').val(),
+            producto_id: $('#edit_producto_id').val(),
+            cantidad: $('#edit_cantidad').val(),
+            stock_minimo: $('#edit_stock_minimo').val(),
+            stock_maximo: $('#edit_stock_maximo').val(),
+            estado: $('#edit_estado').val()
+          };
+
+          // Validar campos requeridos
+          if (!formData.cantidad || parseFloat(formData.cantidad) < 0) {
+            swal("Error", "La cantidad debe ser mayor o igual a 0", "error");
+            return;
+          }
+
+          var btnActualizar = $('#btnActualizarInventario');
+          btnActualizar.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Actualizando...');
+
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+              btnActualizar.prop('disabled', false).html('<i class="fa fa-save"></i> Actualizar');
+              
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalEditarInventario').modal('hide');
+                window.cargarInventarios($('#filtroSucursal').val() || null);
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function() {
+              btnActualizar.prop('disabled', false).html('<i class="fa fa-save"></i> Actualizar');
+              swal("Error", "No se pudo actualizar el inventario", "error");
+            }
+          });
+        });
+
         cargarSucursales();
         cargarProductos();
         cargarInventarios();
       });
       
       function editarInventario(id) {
-        swal("Próximamente", "La funcionalidad de edición estará disponible pronto", "info");
+        // Cargar datos del inventario
+        $.ajax({
+          url: 'api.php?action=obtener&id=' + id,
+          method: 'GET',
+          dataType: 'json',
+          success: function(response) {
+            if (response.success && response.data) {
+              var inventario = response.data;
+              
+              // Llenar el formulario con los datos
+              $('#edit_id').val(inventario.id);
+              $('#edit_sucursal_id').val(inventario.sucursal_id);
+              $('#edit_producto_id').val(inventario.producto_id);
+              $('#edit_sucursal_nombre').val(inventario.sucursal_nombre);
+              $('#edit_producto_nombre').text(inventario.producto_nombre);
+              $('#edit_material_nombre').text(inventario.material_nombre);
+              $('#edit_categoria_nombre').text(inventario.categoria_nombre || '-');
+              $('#edit_unidad_simbolo').text(inventario.unidad_simbolo);
+              $('#edit_cantidad').val(inventario.cantidad);
+              $('#edit_stock_minimo').val(inventario.stock_minimo);
+              $('#edit_stock_maximo').val(inventario.stock_maximo);
+              $('#edit_estado').val(inventario.estado);
+              
+              // Mostrar el modal
+              $('#modalEditarInventario').modal('show');
+            } else {
+              swal("Error", response.message || "No se pudo cargar el inventario", "error");
+            }
+          },
+          error: function() {
+            swal("Error", "No se pudo cargar el inventario", "error");
+          }
+        });
       }
       
       function eliminarInventario(id) {
