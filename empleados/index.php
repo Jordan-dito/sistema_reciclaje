@@ -25,6 +25,21 @@ try {
   $errors[] = 'No se pudo conectar a la base de datos.';
 }
 
+// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO
+$sucursalId = null;
+if ($db) {
+  try {
+    $stmtSuc = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? OR id = (SELECT sucursal_id FROM usuarios WHERE id = ?)");
+    $stmtSuc->execute([$usuario['id'], $usuario['id']]);
+    $resSuc = $stmtSuc->fetch();
+    if ($resSuc) {
+      $sucursalId = $resSuc['id'];
+    }
+  } catch (Exception $e) {
+    // ignore
+  }
+}
+
 // Obtener sucursales para el select
 $sucursales = [];
 if ($db) {
@@ -36,11 +51,20 @@ if ($db) {
   }
 }
 
-// Obtener empleados para listado
+// Obtener empleados para listado (FILTRADO POR SUCURSAL DEL USUARIO)
 $empleados = [];
 if ($db) {
   try {
-    $stmt = $db->query("SELECT e.*, s.nombre AS sucursal_nombre FROM empleados e LEFT JOIN sucursales s ON e.sucursal_id = s.id ORDER BY e.id DESC");
+    $sql = "SELECT e.*, s.nombre AS sucursal_nombre FROM empleados e LEFT JOIN sucursales s ON e.sucursal_id = s.id WHERE 1=1";
+    
+    // Filtrar por sucursal si el usuario tiene una asignada
+    if ($sucursalId) {
+      $sql .= " AND e.sucursal_id = " . intval($sucursalId);
+    }
+    
+    $sql .= " ORDER BY e.id DESC";
+    
+    $stmt = $db->query($sql);
     $empleados = $stmt->fetchAll();
   } catch (Exception $e) {
     // tabla puede no existir aún

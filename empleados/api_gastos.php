@@ -19,14 +19,14 @@ $db = getDB();
 $currentUser = $auth->getCurrentUser();
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO
-$sucursalId = null;
-$stmtSuc = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? OR id = (SELECT sucursal_id FROM usuarios WHERE id = ?)");
-$stmtSuc->execute([$currentUser['id'], $currentUser['id']]);
-$resSuc = $stmtSuc->fetch();
-if ($resSuc) {
-    $sucursalId = $resSuc['id'];
-}
+// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO - DESHABILITADO PARA VER TODOS
+$sucursalId = null; // Mostrar todos los gastos
+// $stmtSuc = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? OR id = (SELECT sucursal_id FROM usuarios WHERE id = ?)");
+// $stmtSuc->execute([$currentUser['id'], $currentUser['id']]);
+// $resSuc = $stmtSuc->fetch();
+// if ($resSuc) {
+//     $sucursalId = $resSuc['id'];
+// }
 
 try {
     switch ($action) {

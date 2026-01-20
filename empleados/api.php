@@ -22,12 +22,13 @@ $db = getDB();
 $action = $_REQUEST['action'] ?? '';
 $currentUser = $auth->getCurrentUser();
 
-// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO
+// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO - DESHABILITADO PARA VER TODOS
 // Buscamos si el usuario es responsable de alguna sucursal
-$stmtSuc = $db->prepare("SELECT id, nombre FROM sucursales WHERE responsable_id = ?");
-$stmtSuc->execute([$currentUser['id']]);
-$miSucursal = $stmtSuc->fetch();
-$sucursalId = $miSucursal ? $miSucursal['id'] : null;
+// $stmtSuc = $db->prepare("SELECT id, nombre FROM sucursales WHERE responsable_id = ?");
+// $stmtSuc->execute([$currentUser['id']]);
+// $miSucursal = $stmtSuc->fetch();
+// $sucursalId = $miSucursal ? $miSucursal['id'] : null;
+$sucursalId = null; // Mostrar todos los empleados
 
 try {
     switch ($action) {
