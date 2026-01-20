@@ -150,7 +150,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Agregar Proveedor -->
-    <div class="modal fade" id="modalAgregarProveedor" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalAgregarProveedor" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -246,7 +246,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Editar Proveedor -->
-    <div class="modal fade" id="modalEditarProveedor" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalEditarProveedor" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">

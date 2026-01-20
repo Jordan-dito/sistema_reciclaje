@@ -64,8 +64,6 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -126,7 +124,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Agregar Inventario -->
-    <div class="modal fade" id="modalAgregarInventario" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalAgregarInventario" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -135,49 +133,45 @@ if (!$auth->isAuthenticated()) {
           </div>
           <div class="modal-body">
             <form id="formAgregarInventario">
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Sucursales * <small class="text-muted">(Puede seleccionar múltiples)</small></label>
-                    <div id="sucursalesContainer" class="border rounded p-3" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">
-                      <div class="text-center text-muted">
-                        <i class="fa fa-spinner fa-spin"></i> Cargando sucursales...
-                      </div>
-                    </div>
-                    <small class="form-text text-muted">
-                      <i class="fa fa-info-circle"></i> Seleccione una o más sucursales donde desea crear el inventario.
-                    </small>
-                  </div>
+              <!-- Selección de Sucursales -->
+              <div class="form-group mb-3">
+                <label class="fw-bold">Sucursales <span class="text-danger">*</span></label>
+                <div id="sucursalesContainer" class="border rounded p-3" style="max-height: 150px; overflow-y: auto;">
+                  <p class="text-muted">Cargando sucursales...</p>
                 </div>
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label>Producto *</label>
-                    <button type="button" class="btn btn-primary btn-block mb-2" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
-                      <i class="fa fa-search"></i> Buscar y Seleccionar Producto
+                <small class="form-text text-muted">Seleccione una o más sucursales</small>
+              </div>
+
+              <!-- Selección de Productos -->
+              <div class="form-group mb-3">
+                <label class="fw-bold">Productos <span class="text-danger">*</span></label>
+                <button type="button" class="btn btn-outline-primary btn-sm d-block mb-2" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
+                  <i class="fa fa-search"></i> Buscar Productos
+                </button>
+                <input type="hidden" id="productos_ids" name="productos_ids">
+                <div id="productosSeleccionados" style="display: none;">
+                  <div class="alert alert-info">
+                    <strong><span id="contadorProductos">0</span> producto(s) seleccionado(s)</strong>
+                    <button type="button" class="btn btn-sm btn-link float-end" onclick="limpiarProductos()">
+                      <i class="fa fa-times"></i> Limpiar
                     </button>
-                    <div id="productosSeleccionados" class="border rounded p-3" style="display: none; max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">
-                      <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong>Productos seleccionados: <span id="contadorProductos">0</span></strong>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarProductos()">
-                          <i class="fa fa-times"></i> Limpiar todo
-                        </button>
-                      </div>
-                      <div id="listaProductosSeleccionados"></div>
-                    </div>
-                    <input type="hidden" id="productos_ids" name="productos_ids">
-                    <small class="form-text text-muted"><i class="fa fa-info-circle"></i> Haga clic en el botón para buscar y seleccionar uno o más productos.</small>
+                  </div>
+                  <div id="listaProductosSeleccionados" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+              </div>
+
+              <!-- Stock Mínimo y Máximo -->
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label>Stock Mínimo <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" step="0.01" min="0" value="0" required>
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Stock Mínimo</label>
-                    <input type="number" step="0.01" id="stock_minimo" name="stock_minimo" class="form-control" placeholder="0.00">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Stock Máximo</label>
-                    <input type="number" step="0.01" id="stock_maximo" name="stock_maximo" class="form-control" placeholder="0.00">
+                  <div class="form-group mb-3">
+                    <label>Stock Máximo <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="stock_maximo" name="stock_maximo" step="0.01" min="0" value="0" required>
                   </div>
                 </div>
               </div>
@@ -185,14 +179,99 @@ if (!$auth->isAuthenticated()) {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnGuardarInventario">Guardar Inventario</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarInventario">
+              <i class="fa fa-save"></i> Guardar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Editar Inventario -->
+    <div class="modal fade" id="modalEditarInventario" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Editar Inventario</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="formEditarInventario">
+              <input type="hidden" id="edit_id" name="id">
+              
+              <!-- Información del Producto (Solo lectura) -->
+              <div class="alert alert-info">
+                <h6 class="mb-2"><i class="fa fa-box"></i> Información del Producto</h6>
+                <div class="row">
+                  <div class="col-md-6">
+                    <strong>Producto:</strong> <span id="edit_producto_nombre"></span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Material:</strong> <span id="edit_material_nombre"></span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Categoría:</strong> <span id="edit_categoria_nombre"></span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Unidad:</strong> <span id="edit_unidad_simbolo"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sucursal (Solo lectura o editable según necesites) -->
+              <div class="form-group mb-3">
+                <label class="fw-bold">Sucursal <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="edit_sucursal_nombre" readonly>
+                <input type="hidden" id="edit_sucursal_id" name="sucursal_id">
+                <input type="hidden" id="edit_producto_id" name="producto_id">
+              </div>
+
+              <!-- Cantidad Actual -->
+              <div class="form-group mb-3">
+                <label>Cantidad Actual <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="edit_cantidad" name="cantidad" step="0.01" min="0" required>
+                <small class="form-text text-muted">Cantidad actual en inventario</small>
+              </div>
+
+              <!-- Stock Mínimo y Máximo -->
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label>Stock Mínimo <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="edit_stock_minimo" name="stock_minimo" step="0.01" min="0" value="0" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label>Stock Máximo <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="edit_stock_maximo" name="stock_maximo" step="0.01" min="0" value="0" required>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estado -->
+              <div class="form-group mb-3">
+                <label>Estado <span class="text-danger">*</span></label>
+                <select class="form-control" id="edit_estado" name="estado" required>
+                  <option value="disponible">Disponible</option>
+                  <option value="agotado">Agotado</option>
+                  <option value="inactivo">Inactivo</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btnActualizarInventario">
+              <i class="fa fa-save"></i> Actualizar
+            </button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Modal Buscar Producto -->
-    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalBuscarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
@@ -264,6 +343,12 @@ if (!$auth->isAuthenticated()) {
         </div>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
     <script src="../assets/js/core/popper.min.js"></script>
@@ -789,13 +874,90 @@ if (!$auth->isAuthenticated()) {
           }
         });
         
+        // Manejador para actualizar inventario
+        $('#btnActualizarInventario').click(function() {
+          var formData = {
+            action: 'actualizar',
+            id: $('#edit_id').val(),
+            sucursal_id: $('#edit_sucursal_id').val(),
+            producto_id: $('#edit_producto_id').val(),
+            cantidad: $('#edit_cantidad').val(),
+            stock_minimo: $('#edit_stock_minimo').val(),
+            stock_maximo: $('#edit_stock_maximo').val(),
+            estado: $('#edit_estado').val()
+          };
+
+          // Validar campos requeridos
+          if (!formData.cantidad || parseFloat(formData.cantidad) < 0) {
+            swal("Error", "La cantidad debe ser mayor o igual a 0", "error");
+            return;
+          }
+
+          var btnActualizar = $('#btnActualizarInventario');
+          btnActualizar.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Actualizando...');
+
+          $.ajax({
+            url: 'api.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+              btnActualizar.prop('disabled', false).html('<i class="fa fa-save"></i> Actualizar');
+              
+              if (response.success) {
+                swal("¡Éxito!", response.message, "success");
+                $('#modalEditarInventario').modal('hide');
+                window.cargarInventarios($('#filtroSucursal').val() || null);
+              } else {
+                swal("Error", response.message, "error");
+              }
+            },
+            error: function() {
+              btnActualizar.prop('disabled', false).html('<i class="fa fa-save"></i> Actualizar');
+              swal("Error", "No se pudo actualizar el inventario", "error");
+            }
+          });
+        });
+
         cargarSucursales();
         cargarProductos();
         cargarInventarios();
       });
       
       function editarInventario(id) {
-        swal("Próximamente", "La funcionalidad de edición estará disponible pronto", "info");
+        // Cargar datos del inventario
+        $.ajax({
+          url: 'api.php?action=obtener&id=' + id,
+          method: 'GET',
+          dataType: 'json',
+          success: function(response) {
+            if (response.success && response.data) {
+              var inventario = response.data;
+              
+              // Llenar el formulario con los datos
+              $('#edit_id').val(inventario.id);
+              $('#edit_sucursal_id').val(inventario.sucursal_id);
+              $('#edit_producto_id').val(inventario.producto_id);
+              $('#edit_sucursal_nombre').val(inventario.sucursal_nombre);
+              $('#edit_producto_nombre').text(inventario.producto_nombre);
+              $('#edit_material_nombre').text(inventario.material_nombre);
+              $('#edit_categoria_nombre').text(inventario.categoria_nombre || '-');
+              $('#edit_unidad_simbolo').text(inventario.unidad_simbolo);
+              $('#edit_cantidad').val(inventario.cantidad);
+              $('#edit_stock_minimo').val(inventario.stock_minimo);
+              $('#edit_stock_maximo').val(inventario.stock_maximo);
+              $('#edit_estado').val(inventario.estado);
+              
+              // Mostrar el modal
+              $('#modalEditarInventario').modal('show');
+            } else {
+              swal("Error", response.message || "No se pudo cargar el inventario", "error");
+            }
+          },
+          error: function() {
+            swal("Error", "No se pudo cargar el inventario", "error");
+          }
+        });
       }
       
       function eliminarInventario(id) {
