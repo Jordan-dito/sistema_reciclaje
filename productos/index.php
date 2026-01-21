@@ -128,6 +128,63 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
+    <!-- Modal Agregar Producto -->
+    <div class="modal fade" id="modalAgregarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Nuevo Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="formAgregarProducto">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="material_id">Material <span class="text-danger">*</span></label>
+                    <select id="material_id" name="material_id" class="form-control" required>
+                      <option value="">Seleccione un material</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="unidad_id">Unidad <span class="text-danger">*</span></label>
+                    <select id="unidad_id" name="unidad_id" class="form-control" required disabled>
+                      <option value="">Seleccione una unidad</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="descripcion">Descripción <span class="text-danger">*</span></label>
+                    <textarea id="descripcion" name="descripcion" class="form-control" rows="3" required></textarea>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="precio_venta">Precio de Venta ($) <span class="text-danger">*</span></label>
+                    <input type="number" id="precio_venta" name="precio_venta" class="form-control" step="0.01" min="0.01" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="precio_compra">Precio de Compra ($) <span class="text-danger">*</span></label>
+                    <input type="number" id="precio_compra" name="precio_compra" class="form-control" step="0.01" min="0.01" required>
+                  </div>
+                </div>
+                <input type="hidden" id="estado" name="estado" value="activo">
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarProducto">Guardar Producto</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal Editar Producto -->
     <div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
@@ -212,6 +269,9 @@ if (!$auth->isAuthenticated()) {
       include __DIR__ . '/../includes/footer-scripts.php';
     ?>
     <script>
+      var materialesList = [];
+      var productosList = [];
+
       function cargarMateriales() {
         $.ajax({
           url: 'api.php?action=materiales',
@@ -223,20 +283,19 @@ if (!$auth->isAuthenticated()) {
               var selectEdit = $('#edit_material_id');
               selectAdd.html('<option value="">Seleccione un material</option>');
               selectEdit.html('<option value="">Seleccione un material</option>');
+              
+              materialesList = response.data;
               response.data.forEach(function(mat) {
                 selectAdd.append('<option value="' + mat.id + '">' + mat.nombre + '</option>');
                 selectEdit.append('<option value="' + mat.id + '">' + mat.nombre + '</option>');
               });
               
-              // Inicializar Select2 con búsqueda si no está ya inicializado
               if (!selectAdd.hasClass('select2-hidden-accessible')) {
                 selectAdd.select2({
                   placeholder: 'Buscar o seleccionar material',
                   allowClear: true,
                   dropdownParent: $('#modalAgregarProducto')
                 });
-              } else {
-                selectAdd.trigger('change');
               }
               
               if (!selectEdit.hasClass('select2-hidden-accessible')) {
@@ -245,8 +304,6 @@ if (!$auth->isAuthenticated()) {
                   allowClear: true,
                   dropdownParent: $('#modalEditarProducto')
                 });
-              } else {
-                selectEdit.trigger('change');
               }
             }
           }
@@ -274,12 +331,11 @@ if (!$auth->isAuthenticated()) {
         });
       }
 
-        $(document).ready(function() {
+      $(document).ready(function() {
         var table = $('#productosTable').DataTable({
           "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
         });
         
-        var productosList = [];
         var estadoActual = 'activos';
 
         window.cambiarFiltroEstado = function(nuevoEstado) {
@@ -289,10 +345,46 @@ if (!$auth->isAuthenticated()) {
 
         cargarMateriales();
         cargarUnidades();
+
+        $('#material_id').on('change', function() {
+          var selectedMaterialId = $(this).val();
+          var selectUnidad = $('#unidad_id');
+          
+          if (selectedMaterialId) {
+            // 1. Buscar si ya hay un producto ACTIVO (para evitar duplicados)
+            var productoActivo = productosList.find(function(p) {
+              return p.material_id == selectedMaterialId && p.estado === 'activo';
+            });
+
+            if (productoActivo) {
+              swal({
+                title: "Material ya registrado",
+                text: "Este material ya tiene un producto activo (Código: " + productoActivo.nombre + "). No puede registrarlo de nuevo.",
+                icon: "error"
+              });
+              $(this).val(null).trigger('change');
+              selectUnidad.val('').trigger('change').prop('disabled', true);
+              return;
+            }
+
+            // 2. Buscar si el material ya se ha usado antes (para sugerir la unidad)
+            var registroPrevio = productosList.find(function(p) {
+              return p.material_id == selectedMaterialId;
+            });
+
+            if (registroPrevio) {
+              // Si existe un registro previo, autocompletar la unidad y bloquear
+              selectUnidad.val(registroPrevio.unidad_id).trigger('change').prop('disabled', true);
+            } else {
+              // Si es un material totalmente nuevo, permitir elegir unidad
+              selectUnidad.val('').trigger('change').prop('disabled', false);
+            }
+          } else {
+            selectUnidad.val('').trigger('change').prop('disabled', true);
+          }
+        });
         
-        // Inicializar Select2 cuando se abre el modal de agregar
         $('#modalAgregarProducto').on('shown.bs.modal', function() {
-          // Asegurar que Select2 esté inicializado para Material
           if (!$('#material_id').hasClass('select2-hidden-accessible')) {
             $('#material_id').select2({
               placeholder: 'Buscar o seleccionar material',
@@ -300,29 +392,28 @@ if (!$auth->isAuthenticated()) {
               dropdownParent: $('#modalAgregarProducto')
             });
           }
+          $('#unidad_id').prop('disabled', true);
+          $('#material_id').val(null).trigger('change');
         });
         
-        // Limpiar Select2 y validación cuando se cierra el modal de agregar
         $('#modalAgregarProducto').on('hidden.bs.modal', function() {
           $('#material_id').val(null).trigger('change');
-          $('#nombre').removeClass('is-valid is-invalid');
-          $('#nombre').next('.invalid-feedback').remove();
+          $('#unidad_id').val('').trigger('change').prop('disabled', true);
+          $('#formAgregarProducto')[0].reset();
         });
         
-        // Inicializar Select2 cuando se abre el modal de editar
         $('#modalEditarProducto').on('shown.bs.modal', function() {
-          // Asegurar que Select2 esté inicializado para Material (aunque esté deshabilitado)
           if (!$('#edit_material_id').hasClass('select2-hidden-accessible')) {
             $('#edit_material_id').select2({
               placeholder: 'Buscar o seleccionar material',
               allowClear: true,
               dropdownParent: $('#modalEditarProducto'),
-              disabled: true // Select2 también debe estar deshabilitado
+              disabled: true
             });
           } else {
-            // Si ya está inicializado, asegurar que esté deshabilitado
             $('#edit_material_id').prop('disabled', true);
           }
+          $('#edit_unidad_id').prop('disabled', true);
         });
 
         function cargarProductos() {
@@ -332,7 +423,7 @@ if (!$auth->isAuthenticated()) {
             dataType: 'json',
             success: function(response) {
               if (response.success) {
-                productosList = response.data; // Guardar lista para validación
+                productosList = response.data;
                 table.clear();
                 response.data.forEach(function(producto) {
                   var badgeEstado = producto.estado === 'activo' 
@@ -363,41 +454,9 @@ if (!$auth->isAuthenticated()) {
                 });
                 table.draw();
               }
-            },
-            error: function() {
-              swal("Error", "No se pudieron cargar los productos", "error");
             }
           });
         }
-
-        // Validar duplicados en tiempo real (material + unidad)
-        $('#material_id, #unidad_id').on('change', function() {
-          var material_id = $('#material_id').val();
-          var unidad_id = $('#unidad_id').val();
-          
-          if (material_id && unidad_id) {
-            // Verificar si existe combinación
-            var existe = productosList.some(function(prod) {
-              return prod.estado === 'activo' && 
-                     prod.material_id == material_id && 
-                     prod.unidad_id == unidad_id;
-            });
-            
-            if (existe) {
-              var productoExistente = productosList.find(function(prod) {
-                return prod.estado === 'activo' && 
-                       prod.material_id == material_id && 
-                       prod.unidad_id == unidad_id;
-              });
-              
-              swal({
-                title: "Producto Duplicado",
-                text: "Ya existe un producto con este material y unidad (Código: " + productoExistente.nombre + ")",
-                icon: "warning"
-              });
-            }
-          }
-        });
 
         $('#btnGuardarProducto').click(function() {
           var form = $('#formAgregarProducto')[0];
@@ -406,77 +465,38 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
-          // Validar duplicados antes de enviar
           var material_id = $('#material_id').val();
           var unidad_id = $('#unidad_id').val();
-          
-          var existe = productosList.some(function(prod) {
-            return prod.estado === 'activo' && 
-                   prod.material_id == material_id && 
-                   prod.unidad_id == unidad_id;
-          });
-          
-          if (existe) {
-            var productoExistente = productosList.find(function(prod) {
-              return prod.estado === 'activo' && 
-                     prod.material_id == material_id && 
-                     prod.unidad_id == unidad_id;
-            });
-            swal("Error", "Ya existe un producto con este material y unidad (Código: " + productoExistente.nombre + ")", "error");
-            return;
-          }
-          
-          // Validar campos obligatorios adicionales
           var descripcion = $('#descripcion').val().trim();
           var precio_venta = parseFloat($('#precio_venta').val());
           var precio_compra = parseFloat($('#precio_compra').val());
           
-          if (!descripcion) {
-            swal("Error", "La descripción es obligatoria", "error");
-            $('#descripcion').focus();
+          if (!material_id || !unidad_id || !descripcion || isNaN(precio_venta) || precio_venta <= 0 || isNaN(precio_compra) || precio_compra <= 0) {
+            swal("Error", "Todos los campos son obligatorios y los precios deben ser mayores a 0", "error");
             return;
           }
-          
-          if (!precio_venta || precio_venta <= 0) {
-            swal("Error", "El precio de venta es obligatorio y debe ser mayor a 0", "error");
-            $('#precio_venta').focus();
-            return;
-          }
-          
-          if (!precio_compra || precio_compra <= 0) {
-            swal("Error", "El precio de compra es obligatorio y debe ser mayor a 0", "error");
-            $('#precio_compra').focus();
-            return;
-          }
-          
-          var formData = {
-            material_id: material_id,
-            unidad_id: unidad_id,
-            descripcion: descripcion,
-            precio_venta: precio_venta,
-            precio_compra: precio_compra,
-            estado: $('#estado').val(),
-            action: 'crear'
-          };
           
           $.ajax({
             url: 'api.php',
             method: 'POST',
-            data: formData,
+            data: {
+              material_id: material_id,
+              unidad_id: unidad_id,
+              descripcion: descripcion,
+              precio_venta: precio_venta,
+              precio_compra: precio_compra,
+              estado: $('#estado').val(),
+              action: 'crear'
+            },
             dataType: 'json',
             success: function(response) {
               if (response.success) {
                 swal("¡Éxito!", response.message, "success");
                 $('#modalAgregarProducto').modal('hide');
-                $('#formAgregarProducto')[0].reset();
                 cargarProductos();
               } else {
                 swal("Error", response.message, "error");
               }
-            },
-            error: function(xhr) {
-              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar el producto';
-              swal("Error", error, "error");
             }
           });
         });
@@ -488,69 +508,27 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
-          // Validar duplicados antes de actualizar
           var id = $('#edit_id').val();
           var material_id = $('#edit_material_id').val();
           var unidad_id = $('#edit_unidad_id').val();
-          
-          var existe = productosList.some(function(prod) {
-            return prod.estado === 'activo' && 
-                   prod.id != id &&
-                   prod.material_id == material_id && 
-                   prod.unidad_id == unidad_id;
-          });
-          
-          if (existe) {
-            var productoExistente = productosList.find(function(prod) {
-              return prod.estado === 'activo' && 
-                     prod.id != id &&
-                     prod.material_id == material_id && 
-                     prod.unidad_id == unidad_id;
-            });
-            swal("Error", "Ya existe otro producto con este material y unidad (Código: " + productoExistente.nombre + ")", "error");
-            return;
-          }
-          
-          // Validar campos obligatorios adicionales
           var descripcion = $('#edit_descripcion').val().trim();
           var precio_venta = parseFloat($('#edit_precio_venta').val());
           var precio_compra = parseFloat($('#edit_precio_compra').val());
           
-          if (!descripcion) {
-            swal("Error", "La descripción es obligatoria", "error");
-            $('#edit_descripcion').focus();
-            return;
-          }
-          
-          if (!precio_venta || precio_venta <= 0) {
-            swal("Error", "El precio de venta es obligatorio y debe ser mayor a 0", "error");
-            $('#edit_precio_venta').focus();
-            return;
-          }
-          
-          if (!precio_compra || precio_compra <= 0) {
-            swal("Error", "El precio de compra es obligatorio y debe ser mayor a 0", "error");
-            $('#edit_precio_compra').focus();
-            return;
-          }
-          
-          // Obtener valores de campos deshabilitados antes de enviar
-          var formData = {
-            id: id,
-            nombre: $('#edit_nombre').val(), // Campo deshabilitado pero necesario
-            material_id: material_id, // Campo deshabilitado pero necesario
-            unidad_id: unidad_id, // Campo deshabilitado pero necesario
-            descripcion: descripcion,
-            precio_venta: precio_venta,
-            precio_compra: precio_compra,
-            estado: $('#edit_estado').val() || 'activo',
-            action: 'actualizar'
-          };
-          
           $.ajax({
             url: 'api.php',
             method: 'POST',
-            data: formData,
+            data: {
+              id: id,
+              nombre: $('#edit_nombre').val(),
+              material_id: material_id,
+              unidad_id: unidad_id,
+              descripcion: descripcion,
+              precio_venta: precio_venta,
+              precio_compra: precio_compra,
+              estado: $('#edit_estado').val() || 'activo',
+              action: 'actualizar'
+            },
             dataType: 'json',
             success: function(response) {
               if (response.success) {
@@ -560,19 +538,11 @@ if (!$auth->isAuthenticated()) {
               } else {
                 swal("Error", response.message, "error");
               }
-            },
-            error: function(xhr) {
-              var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al actualizar el producto';
-              swal("Error", error, "error");
             }
           });
         });
 
         window.editarProducto = function(id) {
-          // Recargar dropdowns antes de abrir el modal para tener datos actualizados
-          cargarMateriales();
-          cargarUnidades();
-          
           $.ajax({
             url: 'api.php?action=obtener&id=' + id,
             method: 'GET',
@@ -580,36 +550,25 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 var prod = response.data;
+                $('#edit_id').val(prod.id);
+                $('#edit_nombre').val(prod.nombre);
+                $('#edit_material_id').val(prod.material_id).trigger('change');
+                $('#edit_unidad_id').val(prod.unidad_id).trigger('change');
+                $('#edit_descripcion').val(prod.descripcion || '');
+                $('#edit_material_id').prop('disabled', true);
+                $('#edit_unidad_id').prop('disabled', true);
                 
-                // Esperar a que los dropdowns se carguen antes de establecer valores
-                setTimeout(function() {
-                  $('#edit_id').val(prod.id);
-                  $('#edit_nombre').val(prod.nombre);
-                  $('#edit_material_id').val(prod.material_id).trigger('change'); // Actualizar Select2
-                  $('#edit_unidad_id').val(prod.unidad_id);
-                  $('#edit_descripcion').val(prod.descripcion || '');
-                  
-                  // Deshabilitar campos que no se pueden editar (ya están deshabilitados en HTML)
-                  // Los valores se mantienen para enviarlos en el formulario
-                  
-                  // Cargar precios
-                  var precioVenta = 0;
-                  var precioCompra = 0;
-                  if (prod.precios) {
-                    prod.precios.forEach(function(precio) {
-                      if (precio.tipo_precio === 'venta' && precio.estado === 'activo') {
-                        precioVenta = precio.precio_unitario;
-                      }
-                      if (precio.tipo_precio === 'compra' && precio.estado === 'activo') {
-                        precioCompra = precio.precio_unitario;
-                      }
-                    });
-                  }
-                  $('#edit_precio_venta').val(precioVenta);
-                  $('#edit_precio_compra').val(precioCompra);
-                  
-                  $('#modalEditarProducto').modal('show');
-                }, 200); // Pequeño delay para asegurar que los dropdowns se cargaron
+                var precioVenta = 0;
+                var precioCompra = 0;
+                if (prod.precios) {
+                  prod.precios.forEach(function(precio) {
+                    if (precio.tipo_precio === 'venta' && precio.estado === 'activo') precioVenta = precio.precio_unitario;
+                    if (precio.tipo_precio === 'compra' && precio.estado === 'activo') precioCompra = precio.precio_unitario;
+                  });
+                }
+                $('#edit_precio_venta').val(precioVenta);
+                $('#edit_precio_compra').val(precioCompra);
+                $('#modalEditarProducto').modal('show');
               }
             }
           });
@@ -622,8 +581,7 @@ if (!$auth->isAuthenticated()) {
             icon: "warning",
             buttons: true,
             dangerMode: true,
-          })
-          .then((willDelete) => {
+          }).then((willDelete) => {
             if (willDelete) {
               $.ajax({
                 url: 'api.php',
@@ -649,8 +607,7 @@ if (!$auth->isAuthenticated()) {
             text: "El producto volverá a estar disponible",
             icon: "info",
             buttons: true,
-          })
-          .then((willActivate) => {
+          }).then((willActivate) => {
             if (willActivate) {
               $.ajax({
                 url: 'api.php',

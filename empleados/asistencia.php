@@ -285,13 +285,13 @@ for($i = 0; $i < 7; $i++) {
                         <div class="col-md-6">
                             <div class="form-group mb-2">
                                 <label>Alimentación ($)</label>
-                                <input type="number" class="form-control calc-pago" id="pago_alimentacion" step="0.01" value="0">
+                                <input type="number" class="form-control calc-pago" id="pago_alimentacion" step="0.01" value="2.50">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-2">
                                 <label>Pasaje ($)</label>
-                                <input type="number" class="form-control calc-pago" id="pago_pasaje" step="0.01" value="0">
+                                <input type="number" class="form-control calc-pago" id="pago_pasaje" step="0.01" value="1.00">
                             </div>
                         </div>
                     </div>
@@ -625,8 +625,8 @@ for($i = 0; $i < 7; $i++) {
                 $('#btnEliminarPago').hide();
                 // Cargar la tarifa base del empleado
                 $('#pago_sueldo').val(parseFloat(monto).toFixed(2));
-                $('#pago_alimentacion').val('0.00');
-                $('#pago_pasaje').val('0.00');
+                $('#pago_alimentacion').val('2.50');
+                $('#pago_pasaje').val('1.00');
             }
             
             calcularTotalPago();

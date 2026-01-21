@@ -528,8 +528,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           // make all fields editable for creation
           $('#cedula').prop('readonly', false);
           $('#fecha_ingreso').prop('readonly', false);
-          $('#cargo').prop('readonly', false);
-          $('#tipo_contrato').prop('readonly', false);
+          $('#cargo').prop('disabled', false);
+          $('#tipo_contrato').prop('disabled', false);
           $('#nombres').prop('readonly', false);
           $('#apellidos').prop('readonly', false);
           $('#sucursal_id').prop('disabled', false);
@@ -750,8 +750,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           $('#nombres').val(nombres).prop('readonly', false);
           $('#apellidos').val(apellidos).prop('readonly', false);
           $('#fecha_ingreso').val(fecha_ingreso).prop('readonly', true);
-          $('#cargo').val(cargo).prop('readonly', false);
-          $('#tipo_contrato').val(tipo_contrato).prop('readonly', false);
+          $('#cargo').val(cargo).prop('disabled', false);
+          $('#tipo_contrato').val(tipo_contrato).prop('disabled', false);
           $('#estado').val(estado);
           $('#row-estado').show(); // Mostrar estado en modo editar
 
@@ -914,11 +914,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="cargo" class="form-label">Cargo <span class="text-danger">*</span></label>
-                    <input type="text" name="cargo" id="cargo" class="form-control" required placeholder="Operario, Supervisor, etc.">
+                    <select name="cargo" id="cargo" class="form-control form-select" required>
+                      <option value="">Seleccione un cargo</option>
+                      <option value="Administrador">Administrador</option>
+                      <option value="Gerente">Gerente</option>
+                      <option value="Operador">Operador</option>
+                      <option value="Chofer">Chofer</option>
+                      <option value="Mecánico">Mecánico</option>
+                      <option value="Otros">Otros</option>
+                    </select>
                   </div>
                   <div class="col-md-6 mb-3">
                     <label for="tipo_contrato" class="form-label">Tipo de contrato <span class="text-danger">*</span></label>
-                    <input type="text" name="tipo_contrato" id="tipo_contrato" class="form-control" required placeholder="Ej: Indefinido, Fijo, Temporal">
+                    <select name="tipo_contrato" id="tipo_contrato" class="form-control form-select" required>
+                      <option value="">Seleccione un contrato</option>
+                      <option value="Indefinido">Indefinido</option>
+                      <option value="Fijo">Fijo</option>
+                      <option value="Temporal">Temporal</option>
+                    </select>
                   </div>
                 </div>
                 <div class="row" id="row-estado" style="display: none;">
