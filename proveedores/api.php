@@ -81,7 +81,6 @@ try {
                 $email = trim($_POST['email'] ?? '');
                 $contacto = trim($_POST['contacto'] ?? '');
                 $tipo_proveedor = $_POST['tipo_proveedor'] ?? 'recolector';
-                $materiales_suministra = trim($_POST['materiales_suministra'] ?? '');
                 $estado = $_POST['estado'] ?? 'activo';
                 $notas = trim($_POST['notas'] ?? '');
                 
@@ -156,8 +155,8 @@ try {
                 
                 $stmt = $db->prepare("
                     INSERT INTO proveedores 
-                    (nombre, cedula_ruc, tipo_documento, direccion, telefono, email, contacto, tipo_proveedor, materiales_suministra, estado, notas, creado_por) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (nombre, cedula_ruc, tipo_documento, direccion, telefono, email, contacto, tipo_proveedor, estado, notas, creado_por) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 
                 $stmt->execute([
@@ -169,7 +168,6 @@ try {
                     $email ?: null,
                     $contacto ?: null,
                     $tipo_proveedor,
-                    $materiales_suministra ?: null,
                     $estado,
                     $notas ?: null,
                     $usuario_id
@@ -191,7 +189,6 @@ try {
                 $email = trim($_POST['email'] ?? '');
                 $contacto = trim($_POST['contacto'] ?? '');
                 $tipo_proveedor = $_POST['tipo_proveedor'] ?? 'recolector';
-                $materiales_suministra = trim($_POST['materiales_suministra'] ?? '');
                 $notas = trim($_POST['notas'] ?? '');
                 
                 // Validar nombre: no solo espacios
@@ -266,7 +263,7 @@ try {
                 $stmt = $db->prepare("
                     UPDATE proveedores 
                     SET nombre = ?, cedula_ruc = ?, tipo_documento = ?, direccion = ?, telefono = ?, email = ?, 
-                        contacto = ?, tipo_proveedor = ?, materiales_suministra = ?, notas = ?
+                        contacto = ?, tipo_proveedor = ?, notas = ?
                     WHERE id = ?
                 ");
                 
@@ -279,7 +276,6 @@ try {
                     $email ?: null,
                     $contacto ?: null,
                     $tipo_proveedor,
-                    $materiales_suministra ?: null,
                     $notas ?: null,
                     $id
                 ]);
