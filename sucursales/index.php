@@ -110,6 +110,16 @@ if (!$auth->isAuthenticated()) {
                     </div>
                   </div>
                   <div class="card-body">
+                    <!-- Tabs de filtro -->
+                    <ul class="nav nav-pills nav-secondary mb-3" id="pills-tab" role="tablist">
+                      <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="pills-activos-tab" data-bs-toggle="pill" href="#pills-activos" role="tab" aria-controls="pills-activos" aria-selected="true">Activos</a>
+                      </li>
+                      <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="pills-inactivos-tab" data-bs-toggle="pill" href="#pills-inactivos" role="tab" aria-controls="pills-inactivos" aria-selected="false">Inactivos</a>
+                      </li>
+                    </ul>
+                    
                     <div class="table-responsive">
                       <table id="sucursalesTable" class="display table table-striped table-hover">
                         <thead>
@@ -300,6 +310,7 @@ if (!$auth->isAuthenticated()) {
         });
         
         var usuarios = [];
+        var estadoActual = 'activa'; // Por defecto mostrar activos
         
         // Cargar usuarios para el select de responsables
         function cargarUsuarios() {
@@ -332,7 +343,13 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 table.clear();
-                response.data.forEach(function(sucursal) {
+                
+                // Filtrar por estado actual
+                var sucursalesFiltradas = response.data.filter(function(sucursal) {
+                  return sucursal.estado === estadoActual;
+                });
+                
+                sucursalesFiltradas.forEach(function(sucursal) {
                   var badgeEstado = sucursal.estado === 'activa' 
                     ? '<span class="badge badge-success">Activa</span>'
                     : '<span class="badge badge-danger">Inactiva</span>';
@@ -432,6 +449,17 @@ if (!$auth->isAuthenticated()) {
             valor = valor.substring(0, 10);
           }
           $(this).val(valor);
+        });
+        
+        // Event listeners para los tabs
+        $('#pills-activos-tab').on('click', function() {
+          estadoActual = 'activa';
+          cargarSucursales();
+        });
+        
+        $('#pills-inactivos-tab').on('click', function() {
+          estadoActual = 'inactiva';
+          cargarSucursales();
         });
         
         // Cargar datos al iniciar
