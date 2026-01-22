@@ -4,6 +4,11 @@
  * Sistema de Gestión de Reciclaje
  */
 
+header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../config/database.php';
+
 try {
     $auth = new Auth();
     if (!$auth->isAuthenticated()) {
@@ -32,11 +37,23 @@ try {
         }
     }
 
+    // Borrar el encabezado si ya se ha enviado para evitar errores de "headers already sent"
+    if (headers_sent()) {
+        ob_end_clean();
+    } else {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+
+    error_log("DEBUG GASTOS: user_id=" . $currentUser['id'] . " rol=" . $currentUser['rol'] . " userSucursalId=" . ($userSucursalId ?? 'NULL') . " filtroSucursal=" . ($filtroSucursal ?? 'NULL'));
+
     switch ($action) {
         case 'list':
             $mes = $_GET['mes'] ?? date('m');
             $anio = $_GET['anio'] ?? date('Y');
             $filtroSucursal = $_GET['sucursal_id'] ?? null;
+            
+            // Re-log after getting params
+            error_log("DEBUG GASTOS LIST: mes=$mes anio=$anio filtroSucursal=$filtroSucursal");
             
             $sql = "
                 SELECT g.*, s.nombre as sucursal_nombre,
@@ -86,6 +103,8 @@ try {
             // Calcular saldo: Prioridad sucursal asignada, luego filtro seleccionado
             $sucursalParaSaldo = $userSucursalId ?: $filtroSucursal;
             
+            error_log("DEBUG GASTOS SALDO: sucursalParaSaldo=$sucursalParaSaldo");
+
             if (!empty($sucursalParaSaldo)) {
                 $stmtSaldo = $db->prepare("SELECT saldo FROM sucursales WHERE id = ?");
                 $stmtSaldo->execute([$sucursalParaSaldo]);
@@ -96,6 +115,8 @@ try {
                 // Si es admin y ve "Todas", mostrar suma total (opcional, por ahora 0)
                 $saldoSucursal = 0;
             }
+            
+            error_log("DEBUG GASTOS RESULT: saldo=$saldoSucursal count=" . count($gastos));
             
             $response = [
                 'success' => true, 
@@ -135,20 +156,7 @@ try {
             
             if (empty($concepto) || $monto <= 0) throw new Exception('Concepto y monto válido son requeridos');
 
-            // 1. Validar si ya se registró este concepto en el mismo mes y año
-            $mesActual = date('m', strtotime($fecha));
-            $anioActual = date('Y', strtotime($fecha));
-
-            $stmtCheck = $db->prepare("
-                SELECT id FROM gastos_varios 
-                WHERE sucursal_id = ? AND concepto = ? AND MONTH(fecha) = ? AND YEAR(fecha) = ? AND estado != 'cancelado'
-            ");
-            $stmtCheck->execute([$finalSucursalId, $concepto, $mesActual, $anioActual]);
-            if ($stmtCheck->fetch()) {
-                throw new Exception("Ya se ha registrado el gasto de '$concepto' para este mes.");
-            }
-
-            // 2. Validar saldo suficiente
+            // Validar saldo suficiente
             $stmtSaldo = $db->prepare("SELECT saldo, nombre FROM sucursales WHERE id = ?");
             $stmtSaldo->execute([$finalSucursalId]);
             $sucursalData = $stmtSaldo->fetch();

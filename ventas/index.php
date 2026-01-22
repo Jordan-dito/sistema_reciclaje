@@ -82,6 +82,8 @@ if (!$auth->isAuthenticated()) {
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
+            include __DIR__ . '/../includes/modal-foto-perfil.php';
+            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -158,53 +160,8 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
-    <!-- Modal Ver Venta -->
-    <div class="modal fade" id="modalVerVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Detalle de Venta #1</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-              <div class="col-md-6">
-                <p><strong>Fecha:</strong> 2024-11-05</p>
-                <p><strong>Sucursal:</strong> Sucursal Central</p>
-                <p><strong>Categoría:</strong> PET</p>
-                <p><strong>Cantidad:</strong> 50.00 kg</p>
-              </div>
-              <div class="col-md-6">
-                <p><strong>Precio Unitario:</strong> $3.00</p>
-                <p><strong>Total:</strong> $150.00</p>
-                <p><strong>Cliente:</strong> Industrias ABC</p>
-                <p><strong>Estado:</strong> <span class="badge badge-success">Completada</span></p>
-              </div>
-            </div>
-            <div class="row mt-3">
-              <div class="col-md-12">
-                <div class="alert alert-success">
-                  <i class="fas fa-check-circle"></i> 
-                  <strong>Inventario actualizado:</strong> Se restaron 50.00 kg de PET del inventario
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modales Globales -->
-    <?php 
-      include __DIR__ . '/../includes/modal-foto-perfil.php';
-      include __DIR__ . '/../includes/modal-cambiar-password.php';
-    ?>
-
-    <!-- Core JS Files -->
-    <div class="modal fade" id="modalNuevaVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <!-- Modal Nueva Venta -->
+    <div class="modal fade" id="modalNuevaVenta" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -270,7 +227,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" min="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
+                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
                     <small class="form-text text-muted" id="stockDisponible">Stock disponible: -</small>
                   </div>
                 </div>
@@ -283,29 +240,17 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>IVA (%)</label>
-                    <select id="iva" name="iva" class="form-control">
-                      <option value="0">0%</option>
-                      <option value="15">15%</option>
-                    </select>
+                    <label>IVA</label>
+                    <input type="number" step="0.01" id="iva" name="iva" class="form-control" placeholder="0.00" value="0">
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Tipo Descuento</label>
-                    <select id="tipo_descuento" name="tipo_descuento" class="form-control">
-                      <option value="dinero">En $</option>
-                      <option value="porcentaje">En %</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label id="labelDescuento">Descuento ($)</label>
+                    <label>Descuento</label>
                     <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0.00" value="0">
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Método de Pago</label>
                     <select id="metodo_pago" name="metodo_pago" class="form-control" style="background-color: #e9ecef; pointer-events: none;" tabindex="-1">
@@ -313,7 +258,7 @@ if (!$auth->isAuthenticated()) {
                     </select>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Estado</label>
                     <select id="estado" name="estado" class="form-control">
@@ -349,7 +294,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Buscar Inventario -->
-    <div class="modal fade" id="modalBuscarInventario" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal fade" id="modalBuscarInventario" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -397,7 +342,7 @@ if (!$auth->isAuthenticated()) {
     </div>
 
     <!-- Modal Ver Venta -->
-    <div class="modal fade" id="modalVerVenta" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal fade" id="modalVerVenta" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -567,8 +512,6 @@ if (!$auth->isAuthenticated()) {
           $('#inventario_id').val('');
           $('#producto_seleccionado').val('');
           $('#precio_unitario').val('');
-          $('#inventario_id').removeData('cantidad'); // Limpiar datos guardados
-          $('#inventario_id').removeData('unidad');
           $('#stockDisponible').text('Stock disponible: -');
           calcularTotal();
         }
@@ -636,40 +579,12 @@ if (!$auth->isAuthenticated()) {
             $('#inventario_id').data('producto-id', item.producto_id);
             $('#inventario_id').data('precio-id', item.precio_id);
             $('#inventario_id').data('cantidad', item.cantidad);
-            $('#inventario_id').data('unidad', item.unidad); // Guardar unidad
             $('#precio_unitario').val(item.precio_unitario || 0);
-            
-            // Mostrar stock inicial
-            actualizarVisualizacionStock();
-            
+            $('#stockDisponible').text('Stock disponible: ' + item.cantidad + ' ' + item.unidad);
             calcularTotal();
             $('#modalBuscarInventario').modal('hide');
           }
         };
-        
-        function actualizarVisualizacionStock() {
-            var cantidadVenta = parseFloat($('#cantidad').val()) || 0;
-            var stockActual = parseFloat($('#inventario_id').data('cantidad'));
-            var unidad = $('#inventario_id').data('unidad') || '';
-            
-            if (isNaN(stockActual)) {
-                $('#stockDisponible').text('Stock disponible: -');
-                return;
-            }
-            
-            var restante = stockActual - cantidadVenta;
-            
-            if (cantidadVenta > 0) {
-                if (restante < 0) {
-                    $('#stockDisponible').html('<span class="text-danger fw-bold"><i class="fa fa-exclamation-circle"></i> Stock insuficiente (Faltan ' + Math.abs(restante).toFixed(2) + ' ' + unidad + ')</span>');
-                } else {
-                    $('#stockDisponible').html('Stock disponible: ' + stockActual + ' ' + unidad + 
-                                               ' <br><span class="text-success small"><i class="fa fa-calculator"></i> Quedarán: <strong>' + restante.toFixed(2) + ' ' + unidad + '</strong></span>');
-                }
-            } else {
-                $('#stockDisponible').text('Stock disponible: ' + stockActual + ' ' + unidad);
-            }
-        }
 
         $('#modalNuevaVenta').on('show.bs.modal', function() {
           cargarSiguienteNumeroFactura();
@@ -752,42 +667,17 @@ if (!$auth->isAuthenticated()) {
           });
         }
         
-        $('#cantidad, #precio_unitario').on('input', function() {
-          calcularTotal();
-          actualizarVisualizacionStock(); // Actualizar visualización al escribir cantidad
-        });
-        
-        $('#iva, #tipo_descuento, #descuento').on('change input', function() {
-          calcularTotal();
-        });
-        
-        $('#tipo_descuento').on('change', function() {
-          var tipo = $(this).val();
-          if (tipo === 'porcentaje') {
-            $('#labelDescuento').text('Descuento (%)');
-          } else {
-            $('#labelDescuento').text('Descuento ($)');
-          }
+        $('#cantidad, #precio_unitario, #iva, #descuento').on('input', function() {
           calcularTotal();
         });
         
         function calcularTotal() {
           var cantidad = parseFloat($('#cantidad').val()) || 0;
           var precio = parseFloat($('#precio_unitario').val()) || 0;
-          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
-          var valorDescuento = parseFloat($('#descuento').val()) || 0;
-          var tipoDescuento = $('#tipo_descuento').val();
-          
+          var iva = parseFloat($('#iva').val()) || 0;
+          var descuento = parseFloat($('#descuento').val()) || 0;
           var subtotal = cantidad * precio;
-          
-          // Calcular descuento primero
-          var descuentoMonto = (tipoDescuento === 'porcentaje') ? (subtotal * valorDescuento) / 100 : valorDescuento;
-          var subtotalConDescuento = subtotal - descuentoMonto;
-          
-          // Calcular IVA sobre el subtotal con descuento
-          var ivaMonto = (subtotalConDescuento * ivaPorcentaje) / 100;
-          var total = subtotalConDescuento + ivaMonto;
-          
+          var total = subtotal + iva - descuento;
           $('#totalVenta').text('$' + total.toFixed(2));
         }
         
@@ -809,30 +699,11 @@ if (!$auth->isAuthenticated()) {
           var precio_id = inventarioInput.data('precio-id') || null;
           
           var cantidad = parseFloat($('#cantidad').val()) || 0;
-          if (cantidad <= 0) {
-            swal("Error", "La cantidad debe ser mayor a cero", "error");
-            return;
-          }
-          
           var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
-          if (precio_unitario <= 0) {
-            swal("Error", "El precio unitario debe ser mayor a cero", "error");
-            return;
-          }
-          
-          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
-          var valorDescuento = parseFloat($('#descuento').val()) || 0;
-          var tipoDescuento = $('#tipo_descuento').val();
-          
+          var iva = parseFloat($('#iva').val()) || 0;
+          var descuento = parseFloat($('#descuento').val()) || 0;
           var subtotal = cantidad * precio_unitario;
-          
-          // Descuento antes del impuesto
-          var descuento = (tipoDescuento === 'porcentaje') ? (subtotal * valorDescuento) / 100 : valorDescuento;
-          var subtotalConDescuento = subtotal - descuento;
-          
-          // IVA sobre subtotal con descuento
-          var iva = (subtotalConDescuento * ivaPorcentaje) / 100;
-          var total = subtotalConDescuento + iva;
+          var total = subtotal + iva - descuento;
           
           var stockDisponible = parseFloat(inventarioInput.data('cantidad')) || 0;
           if (cantidad > stockDisponible) {
