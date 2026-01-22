@@ -225,11 +225,11 @@ if (!$compra_id) {
                             <th class="text-end" id="subtotalProductos">$0.00</th>
                           </tr>
                           <tr>
-                            <th colspan="7" class="text-end">IVA (%):</th>
+                            <th colspan="7" class="text-end">IVA:</th>
                             <th class="text-end" id="ivaTotal">$0.00</th>
                           </tr>
                           <tr>
-                            <th colspan="7" class="text-end">Descuento ($):</th>
+                            <th colspan="7" class="text-end">Descuento:</th>
                             <th class="text-end" id="descuentoTotal">$0.00</th>
                           </tr>
                           <tr class="table-primary">
@@ -333,10 +333,7 @@ if (!$compra_id) {
               }
               
               // Totales
-              var ivaValor = parseFloat(compra.iva || 0);
-              var subtotalVal = parseFloat(compra.subtotal || 0);
-              var ivaPorcentaje = subtotalVal > 0 ? (ivaValor / subtotalVal * 100) : 0;
-              $('#ivaTotal').text(ivaPorcentaje.toFixed(0) + '%');
+              $('#ivaTotal').text('$' + parseFloat(compra.iva || 0).toFixed(2));
               $('#descuentoTotal').text('$' + parseFloat(compra.descuento || 0).toFixed(2));
               $('#totalFinal').text('$' + parseFloat(compra.total || 0).toFixed(2));
               

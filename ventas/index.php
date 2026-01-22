@@ -779,10 +779,14 @@ if (!$auth->isAuthenticated()) {
           var tipoDescuento = $('#tipo_descuento').val();
           
           var subtotal = cantidad * precio;
-          var ivaMonto = (subtotal * ivaPorcentaje) / 100;
-          var subtotalConIva = subtotal + ivaMonto;
-          var descuentoMonto = (tipoDescuento === 'porcentaje') ? (subtotalConIva * valorDescuento) / 100 : valorDescuento;
-          var total = subtotalConIva - descuentoMonto;
+          
+          // Calcular descuento primero
+          var descuentoMonto = (tipoDescuento === 'porcentaje') ? (subtotal * valorDescuento) / 100 : valorDescuento;
+          var subtotalConDescuento = subtotal - descuentoMonto;
+          
+          // Calcular IVA sobre el subtotal con descuento
+          var ivaMonto = (subtotalConDescuento * ivaPorcentaje) / 100;
+          var total = subtotalConDescuento + ivaMonto;
           
           $('#totalVenta').text('$' + total.toFixed(2));
         }
@@ -821,10 +825,14 @@ if (!$auth->isAuthenticated()) {
           var tipoDescuento = $('#tipo_descuento').val();
           
           var subtotal = cantidad * precio_unitario;
-          var iva = (subtotal * ivaPorcentaje) / 100;
-          var subtotalConIva = subtotal + iva;
-          var descuento = (tipoDescuento === 'porcentaje') ? (subtotalConIva * valorDescuento) / 100 : valorDescuento;
-          var total = subtotalConIva - descuento;
+          
+          // Descuento antes del impuesto
+          var descuento = (tipoDescuento === 'porcentaje') ? (subtotal * valorDescuento) / 100 : valorDescuento;
+          var subtotalConDescuento = subtotal - descuento;
+          
+          // IVA sobre subtotal con descuento
+          var iva = (subtotalConDescuento * ivaPorcentaje) / 100;
+          var total = subtotalConDescuento + iva;
           
           var stockDisponible = parseFloat(inventarioInput.data('cantidad')) || 0;
           if (cantidad > stockDisponible) {
