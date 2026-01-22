@@ -891,6 +891,7 @@ try {
           // Calcular total con IVA (porcentaje) y descuento (cantidad o porcentaje)
           var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
           var ivaMontoCalculado = (subtotalProductos * ivaPorcentaje) / 100;
+          var subtotalConIva = subtotalProductos + ivaMontoCalculado;
           
           // Calcular descuento según el tipo
           var tipoDescuento = $('#tipo_descuento').val();
@@ -898,14 +899,14 @@ try {
           var descuentoMonto = 0;
           
           if (tipoDescuento === 'porcentaje') {
-            descuentoMonto = (subtotalProductos * valorDescuento) / 100;
+            descuentoMonto = (subtotalConIva * valorDescuento) / 100;
             $('#descuentoResumen').text(valorDescuento.toFixed(0) + '%');
           } else {
             descuentoMonto = valorDescuento;
             $('#descuentoResumen').text('$' + descuentoMonto.toFixed(2));
           }
           
-          var total = subtotalProductos + ivaMontoCalculado - descuentoMonto;
+          var total = subtotalConIva - descuentoMonto;
           
           // Actualizar resumen
           $('#ivaResumen').text(ivaPorcentaje.toFixed(0) + '%');
@@ -959,6 +960,7 @@ try {
           // IVA: calcular monto desde porcentaje
           var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
           var ivaMonto = (subtotal * ivaPorcentaje) / 100;
+          var subtotalConIva = subtotal + ivaMonto;
           
           // Descuento: calcular monto según tipo
           var tipoDescuento = $('#tipo_descuento').val();
@@ -966,12 +968,12 @@ try {
           var descuentoMonto = 0;
           
           if (tipoDescuento === 'porcentaje') {
-            descuentoMonto = (subtotal * valorDescuento) / 100;
+            descuentoMonto = (subtotalConIva * valorDescuento) / 100;
           } else {
             descuentoMonto = valorDescuento;
           }
           
-          var total = subtotal + ivaMonto - descuentoMonto;
+          var total = subtotalConIva - descuentoMonto;
           
           // VALIDACIÓN: Verificar si hay saldo suficiente en la sucursal si la compra es completada
           var estado = $('#estado').val();
