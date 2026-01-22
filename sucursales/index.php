@@ -53,6 +53,11 @@ if (!$auth->isAuthenticated()) {
     <link rel="stylesheet" href="../assets/css/plugins.min.css" />
     <link rel="stylesheet" href="../assets/css/kaiadmin.min.css" />
     <link rel="stylesheet" href="../assets/css/demo.css" />
+    <style>
+      .text-required {
+        color: #dc3545;
+      }
+    </style>
   </head>
   <body>
     <div class="wrapper">
@@ -163,50 +168,50 @@ if (!$auth->isAuthenticated()) {
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre de la Sucursal *</label>
+                    <label>Nombre de la Sucursal <span class="text-required">*</span></label>
                     <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Sucursal Este" required>
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Dirección</label>
-                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa"></textarea>
+                    <label>Dirección <span class="text-required">*</span></label>
+                    <textarea id="direccion" name="direccion" class="form-control" rows="2" placeholder="Dirección completa" required></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="0987654321" maxlength="10" pattern="[0-9]{10}">
+                    <label>Teléfono <span class="text-required">*</span></label>
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="0987654321" maxlength="10" pattern="[0-9]{10}" required>
                     <small class="form-text text-muted">Debe tener exactamente 10 dígitos</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="sucursal@email.com">
+                    <label>Email <span class="text-required">*</span></label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="sucursal@email.com" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Responsable</label>
-                    <select id="responsable_id" name="responsable_id" class="form-control">
+                    <label>Responsable <span class="text-required">*</span></label>
+                    <select id="responsable_id" name="responsable_id" class="form-control" required>
                       <option value="">Seleccione un responsable</option>
                     </select>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" style="display: none;">
                   <div class="form-group">
-                    <label>Estado</label>
+                    <label>Estado <span class="text-required">*</span></label>
                     <select id="estado" name="estado" class="form-control">
-                      <option value="activa">Activa</option>
+                      <option value="activa" selected>Activa</option>
                       <option value="inactiva">Inactiva</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Saldo Inicial ($)</label>
-                    <input type="number" id="saldo" name="saldo" class="form-control" placeholder="0.00" step="0.01">
+                    <label>Saldo Inicial ($) <span class="text-required">*</span></label>
+                    <input type="number" id="saldo" name="saldo" class="form-control" placeholder="0.00" step="0.01" value="0" required>
                   </div>
                 </div>
               </div>
@@ -234,41 +239,41 @@ if (!$auth->isAuthenticated()) {
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Nombre de la Sucursal *</label>
+                    <label>Nombre de la Sucursal</label>
                     <input type="text" id="editar_nombre" name="nombre" class="form-control" required readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Dirección</label>
-                    <textarea id="editar_direccion" name="direccion" class="form-control" rows="2"></textarea>
+                    <label>Dirección <span class="text-required">*</span></label>
+                    <textarea id="editar_direccion" name="direccion" class="form-control" rows="2" required></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" id="editar_telefono" name="telefono" class="form-control" maxlength="10" pattern="[0-9]{10}">
+                    <label>Teléfono <span class="text-required">*</span></label>
+                    <input type="tel" id="editar_telefono" name="telefono" class="form-control" maxlength="10" pattern="[0-9]{10}" required>
                     <small class="form-text text-muted">Debe tener exactamente 10 dígitos</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="editar_email" name="email" class="form-control">
+                    <label>Email <span class="text-required">*</span></label>
+                    <input type="email" id="editar_email" name="email" class="form-control" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Responsable</label>
-                    <select id="editar_responsable_id" name="responsable_id" class="form-control">
+                    <label>Responsable <span class="text-required">*</span></label>
+                    <select id="editar_responsable_id" name="responsable_id" class="form-control" required>
                       <option value="">Seleccione un responsable</option>
                     </select>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" style="display: none;">
                   <div class="form-group">
                     <label>Estado</label>
-                    <select id="editar_estado" name="estado" class="form-control" style="background-color: #f8f9fa; cursor: not-allowed; pointer-events: none;" tabindex="-1">
+                    <select id="editar_estado" name="estado" class="form-control">
                       <option value="activa">Activa</option>
                       <option value="inactiva">Inactiva</option>
                     </select>
@@ -422,22 +427,28 @@ if (!$auth->isAuthenticated()) {
         // Validación en tiempo real para teléfono (editar)
         $('#editar_telefono').on('input blur', function() {
           var telefono = $(this).val();
-          if (telefono.trim() !== '') {
-            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
-            if (telefonoLimpio.length !== 10) {
-              $(this).addClass('is-invalid');
-              $(this).removeClass('is-valid');
-              var feedback = $(this).next('.invalid-feedback');
-              if (feedback.length === 0) {
-                $(this).after('<div class="invalid-feedback">El teléfono debe tener exactamente 10 dígitos</div>');
-              }
+          var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+          
+          if (telefonoLimpio.length === 0) {
+            // Si está vacío, mostrar error (es obligatorio)
+            $(this).addClass('is-invalid');
+            $(this).removeClass('is-valid');
+            var feedback = $(this).next('.invalid-feedback');
+            if (feedback.length === 0) {
+              $(this).after('<div class="invalid-feedback">El teléfono es obligatorio y debe tener exactamente 10 dígitos</div>');
+            }
+          } else if (telefonoLimpio.length !== 10) {
+            $(this).addClass('is-invalid');
+            $(this).removeClass('is-valid');
+            var feedback = $(this).next('.invalid-feedback');
+            if (feedback.length === 0) {
+              $(this).after('<div class="invalid-feedback">El teléfono debe tener exactamente 10 dígitos</div>');
             } else {
-              $(this).removeClass('is-invalid');
-              $(this).addClass('is-valid');
-              $(this).next('.invalid-feedback').remove();
+              feedback.text('El teléfono debe tener exactamente 10 dígitos');
             }
           } else {
-            $(this).removeClass('is-invalid is-valid');
+            $(this).removeClass('is-invalid');
+            $(this).addClass('is-valid');
             $(this).next('.invalid-feedback').remove();
           }
         });
@@ -474,15 +485,13 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
-          // Validar teléfono antes de enviar
+          // Validar teléfono - ahora es obligatorio
           var telefono = $('#telefono').val().trim();
-          if (telefono !== '') {
-            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
-            if (telefonoLimpio.length !== 10) {
-              swal("Error", "El teléfono debe tener exactamente 10 dígitos", "error");
-              $('#telefono').focus();
-              return;
-            }
+          var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+          if (telefonoLimpio.length !== 10) {
+            swal("Error", "El teléfono debe tener exactamente 10 dígitos", "error");
+            $('#telefono').focus();
+            return;
           }
           
           var formData = {
@@ -526,15 +535,13 @@ if (!$auth->isAuthenticated()) {
             return;
           }
           
-          // Validar teléfono antes de enviar
+          // Validar teléfono - ahora es obligatorio
           var telefono = $('#editar_telefono').val().trim();
-          if (telefono !== '') {
-            var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
-            if (telefonoLimpio.length !== 10) {
-              swal("Error", "El teléfono debe tener exactamente 10 dígitos", "error");
-              $('#editar_telefono').focus();
-              return;
-            }
+          var telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+          if (telefonoLimpio.length !== 10) {
+            swal("Error", "El teléfono debe tener exactamente 10 dígitos", "error");
+            $('#editar_telefono').focus();
+            return;
           }
           
           var formData = {
