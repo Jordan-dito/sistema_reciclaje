@@ -19,14 +19,18 @@ $db = getDB();
 $currentUser = $auth->getCurrentUser();
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO - DESHABILITADO PARA VER TODOS
-$sucursalId = null; // Mostrar todos los gastos
-// $stmtSuc = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? OR id = (SELECT sucursal_id FROM usuarios WHERE id = ?)");
-// $stmtSuc->execute([$currentUser['id'], $currentUser['id']]);
-// $resSuc = $stmtSuc->fetch();
-// if ($resSuc) {
-//     $sucursalId = $resSuc['id'];
-// }
+// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO
+$userSucursalId = null;
+try {
+    $stmtSuc = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? OR id = (SELECT sucursal_id FROM usuarios WHERE id = ?)");
+    $stmtSuc->execute([$currentUser['id'], $currentUser['id']]);
+    $resSuc = $stmtSuc->fetch();
+    if ($resSuc) {
+        $userSucursalId = $resSuc['id'];
+    }
+} catch (Exception $e) {
+    error_log("Error detectando sucursal: " . $e->getMessage());
+}
 
 try {
     switch ($action) {
@@ -36,7 +40,8 @@ try {
             $filtroSucursal = $_GET['sucursal_id'] ?? null;
             
             $sql = "
-                SELECT g.*, s.nombre as sucursal_nombre
+                SELECT g.*, s.nombre as sucursal_nombre,
+                       DATE_FORMAT(g.fecha, '%M') as mes_nombre
                 FROM gastos_varios g
                 INNER JOIN sucursales s ON g.sucursal_id = s.id
                 WHERE 1=1
@@ -65,6 +70,18 @@ try {
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             $gastos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Mapeo de meses en español
+            $mesesES = [
+                'January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo',
+                'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio',
+                'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre',
+                'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'
+            ];
+
+            foreach ($gastos as &$g) {
+                $g['mes_nombre_es'] = $mesesES[$g['mes_nombre']] ?? $g['mes_nombre'];
+            }
             
             $saldoSucursal = 0;
             // Calcular saldo de la sucursal visible
@@ -100,6 +117,30 @@ try {
             }
             
             if (empty($concepto) || $monto <= 0) throw new Exception('Concepto y monto válido son requeridos');
+
+            // 1. Validar si ya se registró este concepto en el mismo mes y año
+            $mesActual = date('m', strtotime($fecha));
+            $anioActual = date('Y', strtotime($fecha));
+
+            $stmtCheck = $db->prepare("
+                SELECT id FROM gastos_varios 
+                WHERE sucursal_id = ? AND concepto = ? AND MONTH(fecha) = ? AND YEAR(fecha) = ? AND estado != 'cancelado'
+            ");
+            $stmtCheck->execute([$finalSucursalId, $concepto, $mesActual, $anioActual]);
+            if ($stmtCheck->fetch()) {
+                throw new Exception("Ya se ha registrado el gasto de '$concepto' para este mes.");
+            }
+
+            // 2. Validar saldo suficiente
+            $stmtSaldo = $db->prepare("SELECT saldo, nombre FROM sucursales WHERE id = ?");
+            $stmtSaldo->execute([$finalSucursalId]);
+            $sucursalData = $stmtSaldo->fetch();
+            
+            if (!$sucursalData) throw new Exception("Sucursal no encontrada.");
+            
+            if ($sucursalData['saldo'] < $monto) {
+                throw new Exception("Saldo insuficiente en la caja de '{$sucursalData['nombre']}'. Saldo disponible: $" . number_format($sucursalData['saldo'], 2));
+            }
 
             $db->beginTransaction();
             

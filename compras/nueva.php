@@ -112,7 +112,7 @@ try {
             <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
               <div>
                 <h3 class="fw-bold mb-3">Nueva Compra de Material Reciclable</h3>
-                <h6 class="op-7 mb-2">Registra una nueva compra - Actualiza inventario y Kardex (PEPS)</h6>
+                <h6 class="op-7 mb-2">Registra una nueva compra  </h6>
               </div>
               <div class="ms-md-auto py-2 py-md-0">
                 <a href="index.php" class="btn btn-secondary btn-round">
@@ -888,25 +888,25 @@ try {
           $('#subtotalProductos').text('$' + subtotalProductos.toFixed(2));
           $('#subtotalProductosResumen').text('$' + subtotalProductos.toFixed(2));
           
-          // Calcular total con IVA (porcentaje) y descuento (cantidad o porcentaje)
-          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
-          var ivaMontoCalculado = (subtotalProductos * ivaPorcentaje) / 100;
-          var subtotalConIva = subtotalProductos + ivaMontoCalculado;
-          
-          // Calcular descuento según el tipo
+          // Calcular descuento primero (antes del impuesto)
           var tipoDescuento = $('#tipo_descuento').val();
           var valorDescuento = parseFloat($('#descuento').val()) || 0;
           var descuentoMonto = 0;
           
           if (tipoDescuento === 'porcentaje') {
-            descuentoMonto = (subtotalConIva * valorDescuento) / 100;
+            descuentoMonto = (subtotalProductos * valorDescuento) / 100;
             $('#descuentoResumen').text(valorDescuento.toFixed(0) + '%');
           } else {
             descuentoMonto = valorDescuento;
             $('#descuentoResumen').text('$' + descuentoMonto.toFixed(2));
           }
+
+          var subtotalConDescuento = subtotalProductos - descuentoMonto;
           
-          var total = subtotalConIva - descuentoMonto;
+          // Calcular IVA sobre el subtotal con descuento
+          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
+          var ivaMontoCalculado = (subtotalConDescuento * ivaPorcentaje) / 100;
+          var total = subtotalConDescuento + ivaMontoCalculado;
           
           // Actualizar resumen
           $('#ivaResumen').text(ivaPorcentaje.toFixed(0) + '%');
@@ -957,23 +957,23 @@ try {
             subtotal += producto.subtotal;
           });
           
-          // IVA: calcular monto desde porcentaje
-          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
-          var ivaMonto = (subtotal * ivaPorcentaje) / 100;
-          var subtotalConIva = subtotal + ivaMonto;
-          
-          // Descuento: calcular monto según tipo
+          // Descuento antes del impuesto
           var tipoDescuento = $('#tipo_descuento').val();
           var valorDescuento = parseFloat($('#descuento').val()) || 0;
           var descuentoMonto = 0;
           
           if (tipoDescuento === 'porcentaje') {
-            descuentoMonto = (subtotalConIva * valorDescuento) / 100;
+            descuentoMonto = (subtotal * valorDescuento) / 100;
           } else {
             descuentoMonto = valorDescuento;
           }
+
+          var subtotalConDescuento = subtotal - descuentoMonto;
           
-          var total = subtotalConIva - descuentoMonto;
+          // IVA sobre subtotal con descuento
+          var ivaPorcentaje = parseFloat($('#iva').val()) || 0;
+          var ivaMonto = (subtotalConDescuento * ivaPorcentaje) / 100;
+          var total = subtotalConDescuento + ivaMonto;
           
           // VALIDACIÓN: Verificar si hay saldo suficiente en la sucursal si la compra es completada
           var estado = $('#estado').val();
