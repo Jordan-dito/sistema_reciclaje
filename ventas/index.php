@@ -780,8 +780,9 @@ if (!$auth->isAuthenticated()) {
           
           var subtotal = cantidad * precio;
           var ivaMonto = (subtotal * ivaPorcentaje) / 100;
-          var descuentoMonto = (tipoDescuento === 'porcentaje') ? (subtotal * valorDescuento) / 100 : valorDescuento;
-          var total = subtotal + ivaMonto - descuentoMonto;
+          var subtotalConIva = subtotal + ivaMonto;
+          var descuentoMonto = (tipoDescuento === 'porcentaje') ? (subtotalConIva * valorDescuento) / 100 : valorDescuento;
+          var total = subtotalConIva - descuentoMonto;
           
           $('#totalVenta').text('$' + total.toFixed(2));
         }
@@ -821,8 +822,9 @@ if (!$auth->isAuthenticated()) {
           
           var subtotal = cantidad * precio_unitario;
           var iva = (subtotal * ivaPorcentaje) / 100;
-          var descuento = (tipoDescuento === 'porcentaje') ? (subtotal * valorDescuento) / 100 : valorDescuento;
-          var total = subtotal + iva - descuento;
+          var subtotalConIva = subtotal + iva;
+          var descuento = (tipoDescuento === 'porcentaje') ? (subtotalConIva * valorDescuento) / 100 : valorDescuento;
+          var total = subtotalConIva - descuento;
           
           var stockDisponible = parseFloat(inventarioInput.data('cantidad')) || 0;
           if (cantidad > stockDisponible) {

@@ -95,12 +95,12 @@ if (!$auth->isAuthenticated()) {
                                 <option value="11">Noviembre</option><option value="12">Diciembre</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label>Año</label>
                             <input type="number" id="filtroAnio" class="form-control" value="<?php echo date('Y'); ?>">
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
-                            <button class="btn btn-secondary" onclick="cargarGastos()"><i class="fa fa-filter"></i> Filtrar</button>
+                            <button class="btn btn-secondary w-100" onclick="cargarGastos()"><i class="fa fa-filter"></i> Filtrar</button>
                         </div>
                         <div class="col-md-3 d-flex align-items-end justify-content-end">
                             <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#modalGasto">
