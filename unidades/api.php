@@ -80,17 +80,20 @@ try {
                 $nombre = limpiarEspacios($nombre);
                 $simbolo = limpiarEspacios($simbolo);
                 
-                // Verificar que no exista una unidad con el mismo nombre (case-insensitive)
+                // Verificar si ya existe una unidad con el mismo nombre (activa o inactiva)
                 $stmt = $db->prepare("
-                    SELECT id FROM unidades 
-                    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?)) 
-                    AND estado = 'activo'
+                    SELECT id, estado FROM unidades 
+                    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(?))
                 ");
                 $stmt->execute([$nombre]);
                 $unidadExistente = $stmt->fetch();
                 
                 if ($unidadExistente) {
-                    throw new Exception('Ya existe una unidad activa con el nombre "' . $nombre . '"');
+                    if ($unidadExistente['estado'] === 'activo') {
+                        throw new Exception('Ya existe una unidad activa con el nombre "' . $nombre . '"');
+                    } else {
+                        throw new Exception('La unidad "' . $nombre . '" ya existe pero está INACTIVA. Por favor, búscala en la pestaña de "Inactivos" y actívala.');
+                    }
                 }
                 
                 $stmt = $db->prepare("

@@ -573,15 +573,6 @@ if (!empty($usuarioNombre)) {
             }
           });
         }
-                try { parent.remove(); } catch(e) {}
-              } else {
-                el.style.display = 'none';
-                el.style.visibility = 'hidden';
-                try { el.remove(); } catch(e) {}
-              }
-            }
-          });
-        }
       }
     });
     
