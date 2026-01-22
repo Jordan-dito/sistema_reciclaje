@@ -4,35 +4,34 @@
  * Sistema de Gestión de Reciclaje
  */
 
-header('Content-Type: application/json; charset=utf-8');
-
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/database.php';
-
-$auth = new Auth();
-if (!$auth->isAuthenticated()) {
-    echo json_encode(['success' => false, 'message' => 'No autorizado']);
-    exit;
-}
-
-$db = getDB();
-$currentUser = $auth->getCurrentUser();
-$action = $_GET['action'] ?? $_POST['action'] ?? '';
-
-// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO
-$userSucursalId = null;
 try {
-    $stmtSuc = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? OR id = (SELECT sucursal_id FROM usuarios WHERE id = ?)");
-    $stmtSuc->execute([$currentUser['id'], $currentUser['id']]);
-    $resSuc = $stmtSuc->fetch();
-    if ($resSuc) {
-        $userSucursalId = $resSuc['id'];
+    $auth = new Auth();
+    if (!$auth->isAuthenticated()) {
+        echo json_encode(['success' => false, 'message' => 'No autorizado']);
+        exit;
     }
-} catch (Exception $e) {
-    error_log("Error detectando sucursal: " . $e->getMessage());
-}
 
-try {
+    $db = getDB();
+    $currentUser = $auth->getCurrentUser();
+    $action = $_GET['action'] ?? $_POST['action'] ?? '';
+
+    // DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO (Si no es administrador)
+    $userSucursalId = null;
+    $esAdmin = (strtolower($currentUser['rol']) === 'administrador');
+
+    if (!$esAdmin) {
+        try {
+            $stmtSuc = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? OR id = (SELECT sucursal_id FROM usuarios WHERE id = ?)");
+            $stmtSuc->execute([$currentUser['id'], $currentUser['id']]);
+            $resSuc = $stmtSuc->fetch();
+            if ($resSuc) {
+                $userSucursalId = $resSuc['id'];
+            }
+        } catch (Exception $e) {
+            error_log("Error detectando sucursal: " . $e->getMessage());
+        }
+    }
+
     switch ($action) {
         case 'list':
             $mes = $_GET['mes'] ?? date('m');
@@ -49,17 +48,17 @@ try {
             
             $params = [];
             
-            // Si el usuario tiene sucursal asignada, se fuerza el filtro
+            // Si el usuario tiene sucursal asignada (y no es admin), se fuerza el filtro
             if ($userSucursalId) {
                 $sql .= " AND g.sucursal_id = ?";
                 $params[] = $userSucursalId;
-            } elseif ($filtroSucursal) {
-                // Si es admin y seleccionó una sucursal
+            } elseif (!empty($filtroSucursal)) {
+                // Si es admin y seleccionó una sucursal específica
                 $sql .= " AND g.sucursal_id = ?";
                 $params[] = $filtroSucursal;
             }
             
-            if ($mes && $anio) {
+            if (!empty($mes) && !empty($anio)) {
                 $sql .= " AND MONTH(g.fecha) = ? AND YEAR(g.fecha) = ?";
                 $params[] = $mes;
                 $params[] = $anio;
@@ -84,20 +83,38 @@ try {
             }
             
             $saldoSucursal = 0;
-            // Calcular saldo de la sucursal visible
+            // Calcular saldo: Prioridad sucursal asignada, luego filtro seleccionado
             $sucursalParaSaldo = $userSucursalId ?: $filtroSucursal;
             
-            if ($sucursalParaSaldo) {
+            if (!empty($sucursalParaSaldo)) {
                 $stmtSaldo = $db->prepare("SELECT saldo FROM sucursales WHERE id = ?");
                 $stmtSaldo->execute([$sucursalParaSaldo]);
                 $saldoSucursal = $stmtSaldo->fetchColumn();
+                // Asegurar que sea número
+                $saldoSucursal = $saldoSucursal !== false ? floatval($saldoSucursal) : 0;
+            } else if ($esAdmin && empty($filtroSucursal)) {
+                // Si es admin y ve "Todas", mostrar suma total (opcional, por ahora 0)
+                $saldoSucursal = 0;
             }
             
-            echo json_encode([
+            $response = [
                 'success' => true, 
                 'data' => $gastos, 
                 'saldo_sucursal' => $saldoSucursal
-            ]);
+            ];
+
+            if (defined('APP_DEBUG') && APP_DEBUG) {
+                $response['debug'] = [
+                    'user_id' => $currentUser['id'],
+                    'rol' => $currentUser['rol'],
+                    'user_sucursal_id' => $userSucursalId,
+                    'filtro_sucursal' => $filtroSucursal,
+                    'sucursal_para_saldo' => $sucursalParaSaldo,
+                    'params' => $params
+                ];
+            }
+            
+            echo json_encode($response);
             break;
 
         case 'create':
