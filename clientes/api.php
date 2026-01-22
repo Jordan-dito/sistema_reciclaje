@@ -125,11 +125,17 @@ try {
                     throw new Exception($validacionDoc['message']);
                 }
                 
-                // Verificar si ya existe
-                $stmt = $db->prepare("SELECT id FROM clientes WHERE cedula_ruc = ? AND estado = 'activo'");
+                // Verificar si ya existe un cliente con esta cédula/RUC (activo o inactivo)
+                $stmt = $db->prepare("SELECT id, estado FROM clientes WHERE cedula_ruc = ?");
                 $stmt->execute([$cedula_ruc]);
-                if ($stmt->fetch()) {
-                    throw new Exception('La cédula/RUC ya está registrada en otro cliente activo');
+                $clienteExistente = $stmt->fetch();
+                
+                if ($clienteExistente) {
+                    if ($clienteExistente['estado'] === 'activo') {
+                        throw new Exception('La cédula/RUC ya está registrada en otro cliente activo');
+                    } else {
+                        throw new Exception('La cédula/RUC ya está registrada en un cliente INACTIVO. Por favor, búscala en la pestaña de "Inactivos" y actívala.');
+                    }
                 }
                 
                 // Validar email (obligatorio)
@@ -227,11 +233,17 @@ try {
                     throw new Exception($validacionDoc['message']);
                 }
                 
-                // Verificar si ya existe en otro cliente
-                $stmt = $db->prepare("SELECT id FROM clientes WHERE cedula_ruc = ? AND id != ? AND estado = 'activo'");
+                // Verificar si ya existe en otro cliente (activo o inactivo)
+                $stmt = $db->prepare("SELECT id, estado FROM clientes WHERE cedula_ruc = ? AND id != ?");
                 $stmt->execute([$cedula_ruc, $id]);
-                if ($stmt->fetch()) {
-                    throw new Exception('La cédula/RUC ya está registrada en otro cliente activo');
+                $clienteExistente = $stmt->fetch();
+                
+                if ($clienteExistente) {
+                    if ($clienteExistente['estado'] === 'activo') {
+                        throw new Exception('La cédula/RUC ya está registrada en otro cliente activo');
+                    } else {
+                        throw new Exception('La cédula/RUC ya está registrada en un cliente INACTIVO. Por favor, búscala en la pestaña de "Inactivos" para restaurarla o cámbiala.');
+                    }
                 }
                 
                 // Validar email (obligatorio)
