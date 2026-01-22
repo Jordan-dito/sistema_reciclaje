@@ -114,6 +114,7 @@ if (!$auth->isAuthenticated()) {
                         <thead>
                           <tr>
                             <th>Fecha</th>
+                            <th>Mes</th>
                             <th>Concepto</th>
                             <th>Descripción</th>
                             <th>Monto</th>
@@ -285,6 +286,7 @@ if (!$auth->isAuthenticated()) {
 
                 table.row.add([
                   gasto.fecha, 
+                  '<span class="badge bg-info">' + gasto.mes_nombre_es + '</span>',
                   conceptoHtml, 
                   gasto.descripcion || '-',
                   '<strong>$' + parseFloat(gasto.monto).toFixed(2) + '</strong>', 
@@ -336,7 +338,7 @@ if (!$auth->isAuthenticated()) {
                   swal("Cancelado", response.message, "success");
                   cargarGastos();
                 } else {
-                    swal("Error", response.message || "Error al cancelar", "error");
+                  swal("Error", response.message || "Error al cancelar", "error");
                 }
               }
             });
