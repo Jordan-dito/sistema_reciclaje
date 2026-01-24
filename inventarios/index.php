@@ -197,6 +197,63 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
+    <!-- Modal Agregar Inventario -->
+    <div class="modal fade" id="modalAgregarInventario" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <form id="formAgregarInventario">
+            <div class="modal-header">
+              <h5 class="modal-title">Nuevo Registro de Inventario</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label>Sucursales <span class="text-danger">*</span></label>
+                <div id="sucursalesContainer" class="p-2 border rounded" style="max-height:200px; overflow:auto;">
+                  <!-- Checkboxes de sucursales serán inyectados aquí -->
+                </div>
+                <small class="form-text text-muted">Seleccione una o más sucursales</small>
+              </div>
+
+              <div class="mb-3">
+                <label>Productos <span class="text-danger">*</span></label>
+                <div class="d-flex">
+                  <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalBuscarProducto">
+                    <i class="fa fa-search"></i> Buscar Productos
+                  </button>
+                </div>
+
+                <div id="productosSeleccionados" class="mt-3" style="display:none;">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong>Productos Seleccionados (<span id="contadorProductos">0</span>)</strong>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarProductos()">Limpiar</button>
+                  </div>
+                  <div id="listaProductosSeleccionados"></div>
+                </div>
+
+                <input type="hidden" id="productos_ids" name="productos_ids" value="">
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label>Stock Mínimo <span class="text-danger">*</span></label>
+                  <input type="number" id="stock_minimo" name="stock_minimo" class="form-control" value="0" min="0">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label>Stock Máximo <span class="text-danger">*</span></label>
+                  <input type="number" id="stock_maximo" name="stock_maximo" class="form-control" value="0" min="0">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-primary" id="btnGuardarInventario"><i class="fa fa-save"></i> Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Modales Globales -->
     <?php 
       include __DIR__ . '/../includes/modal-foto-perfil.php';
@@ -226,20 +283,29 @@ if (!$auth->isAuthenticated()) {
         
         function cargarSucursales() {
           $.ajax({
-            url: '../sucursales/api.php?action=activas',
+            // Usar 'disponibles' para obtener todas las sucursales activas sin limitar por usuario
+            url: '../sucursales/api.php?action=disponibles',
             method: 'GET',
             dataType: 'json',
             success: function(response) {
               if (response.success) {
                 var filtro = $('#filtroSucursal');
                 var container = $('#sucursalesContainer');
-                
+
                 filtro.empty().append('<option value="">Todas las Sucursales</option>');
                 container.empty();
-                
-                response.data.forEach(function(sucursal) {
+
+                // 'disponibles' devuelve objeto con campos: id, nombre, direccion, telefono, email, estado
+                var sucursales = Array.isArray(response.data) ? response.data : (response.data || []);
+
+                // Mostrar solo sucursales con estado 'activa' por seguridad
+                sucursales = sucursales.filter(function(s) {
+                  return !s.estado || s.estado === 'activa';
+                });
+
+                sucursales.forEach(function(sucursal) {
                   filtro.append('<option value="' + sucursal.id + '">' + sucursal.nombre + '</option>');
-                  
+
                   var checkbox = $('<div class="form-check mb-2">')
                     .append($('<input>')
                       .attr('type', 'checkbox')
@@ -255,10 +321,16 @@ if (!$auth->isAuthenticated()) {
                       .attr('for', 'sucursal_' + sucursal.id)
                       .text(sucursal.nombre)
                     );
-                  
+
                   container.append(checkbox);
                 });
+              } else {
+                // En caso de error mostrar todas las sucursales como opción mínima
+                console.warn('No se pudieron cargar las sucursales:', response.message || response);
               }
+            },
+            error: function(xhr, status, err) {
+              console.error('Error al cargar sucursales:', status, err);
             }
           });
         }
