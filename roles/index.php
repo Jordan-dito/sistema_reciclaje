@@ -86,8 +86,6 @@ $usuario = $auth->getCurrentUser();
           <?php
             $basePath = '..';
             include __DIR__ . '/../includes/user-header.php';
-            include __DIR__ . '/../includes/modal-foto-perfil.php';
-            include __DIR__ . '/../includes/modal-cambiar-password.php';
           ?>
         </div>
 
@@ -261,6 +259,12 @@ $usuario = $auth->getCurrentUser();
         </div>
       </div>
     </div>
+
+    <!-- Modales Globales -->
+    <?php 
+      include __DIR__ . '/../includes/modal-foto-perfil.php';
+      include __DIR__ . '/../includes/modal-cambiar-password.php';
+    ?>
 
     <!-- Core JS Files -->
     <script src="../assets/js/core/jquery-3.7.1.min.js"></script>

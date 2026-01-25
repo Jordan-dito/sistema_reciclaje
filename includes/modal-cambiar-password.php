@@ -106,12 +106,17 @@ window.cerrarModalCambiarPassword = function() {
 window.abrirModalCambiarPassword = function() {
   var modalElement = document.getElementById('modalCambiarPassword');
   if (!modalElement) return;
-  if (typeof jQuery !== 'undefined') { jQuery('.modal').modal('hide'); jQuery('.modal-backdrop').remove(); jQuery('body').removeClass('modal-open'); }
-  setTimeout(function() {
-    var modal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: true });
-    modal.show();
-    setTimeout(function() { var firstInput = document.getElementById('password_actual'); if (firstInput) firstInput.focus(); }, 300);
-  }, 100);
+  if (typeof jQuery !== 'undefined') {
+  // Eliminar force-fully todos los backdrops y clases relacionadas
+  jQuery('.modal').modal('hide');
+  jQuery('.modal-backdrop').remove();
+  jQuery('body').removeClass('modal-open').css({'overflow': '', 'padding-right': ''});
+}
+setTimeout(function() {
+  var modal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: true });
+  modal.show();
+  setTimeout(function() { var firstInput = document.getElementById('password_actual'); if (firstInput) firstInput.focus(); }, 300);
+}, 100);
 };
 
 (function() {
