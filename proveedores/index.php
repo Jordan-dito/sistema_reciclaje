@@ -228,12 +228,6 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
-                    <label>Materiales que Suministra</label>
-                    <textarea id="materiales_suministra" name="materiales_suministra" class="form-control" rows="2" placeholder="Ej: Papel, plástico, vidrio"></textarea>
-                  </div>
-                </div>
-                <div class="col-md-12">
-                  <div class="form-group">
                     <label>Notas</label>
                     <textarea id="notas" name="notas" class="form-control" rows="2" placeholder="Información adicional sobre el proveedor"></textarea>
                   </div>
@@ -443,7 +437,6 @@ if (!$auth->isAuthenticated()) {
             email: $('#email').val(),
             contacto: $('#contacto').val(),
             tipo_proveedor: $('#tipo_proveedor').val(),
-            materiales_suministra: $('#materiales_suministra').val(),
             notas: $('#notas').val(),
             estado: 'activo',
             action: action
@@ -508,7 +501,6 @@ if (!$auth->isAuthenticated()) {
               $('#direccion').val(proveedor.direccion || '');
               $('#contacto').val(proveedor.contacto || '');
               $('#tipo_proveedor').val(proveedor.tipo_proveedor || 'recolector');
-              $('#materiales_suministra').val(proveedor.materiales_suministra || '');
               $('#notas').val(proveedor.notas || '');
               
               // Cambiar título del modal

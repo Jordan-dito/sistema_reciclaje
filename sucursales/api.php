@@ -152,21 +152,44 @@ try {
                 $estado = $_POST['estado'] ?? 'activa';
                 $saldo = floatval($_POST['saldo'] ?? 0);
                 
+                // Validar campos obligatorios
                 if (empty($nombre)) {
                     throw new Exception('El nombre es obligatorio');
                 }
                 
-                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                if (empty($direccion)) {
+                    throw new Exception('La dirección es obligatoria');
+                }
+                
+                if (empty($telefono)) {
+                    throw new Exception('El teléfono es obligatorio');
+                }
+                
+                if (empty($email)) {
+                    throw new Exception('El email es obligatorio');
+                }
+                
+                if (empty($responsable_id)) {
+                    throw new Exception('El responsable es obligatorio');
+                }
+                
+                // Validar formato de email
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     throw new Exception('Email inválido');
                 }
                 
-                // Validar teléfono: debe tener 10 dígitos si se proporciona
-                if (!empty($telefono)) {
-                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
-                    $validacionTelefono = validarTelefono10Digitos($telefono);
-                    if (!$validacionTelefono['valid']) {
-                        throw new Exception($validacionTelefono['message']);
-                    }
+                // Validar teléfono: debe tener 10 dígitos
+                $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
+                $validacionTelefono = validarTelefono10Digitos($telefono);
+                if (!$validacionTelefono['valid']) {
+                    throw new Exception($validacionTelefono['message']);
+                }
+                
+                // Validar que no exista una sucursal con el mismo nombre
+                $stmt = $db->prepare("SELECT id FROM sucursales WHERE LOWER(nombre) = LOWER(?)");
+                $stmt->execute([$nombre]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Ya existe una sucursal con este nombre');
                 }
                 
                 if ($responsable_id) {
@@ -234,21 +257,44 @@ try {
                 $responsable_id = !empty($_POST['responsable_id']) ? intval($_POST['responsable_id']) : null;
                 $estado = $_POST['estado'] ?? 'activa';
                 
+                // Validar campos obligatorios
                 if (empty($nombre)) {
                     throw new Exception('El nombre es obligatorio');
                 }
                 
-                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                if (empty($direccion)) {
+                    throw new Exception('La dirección es obligatoria');
+                }
+                
+                if (empty($telefono)) {
+                    throw new Exception('El teléfono es obligatorio');
+                }
+                
+                if (empty($email)) {
+                    throw new Exception('El email es obligatorio');
+                }
+                
+                if (empty($responsable_id)) {
+                    throw new Exception('El responsable es obligatorio');
+                }
+                
+                // Validar que no exista otra sucursal con el mismo nombre (excepto la actual)
+                $stmt = $db->prepare("SELECT id FROM sucursales WHERE LOWER(nombre) = LOWER(?) AND id != ?");
+                $stmt->execute([$nombre, $id]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Ya existe otra sucursal con este nombre');
+                }
+                
+                // Validar formato de email
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     throw new Exception('Email inválido');
                 }
                 
-                // Validar teléfono: debe tener 10 dígitos si se proporciona
-                if (!empty($telefono)) {
-                    $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
-                    $validacionTelefono = validarTelefono10Digitos($telefono);
-                    if (!$validacionTelefono['valid']) {
-                        throw new Exception($validacionTelefono['message']);
-                    }
+                // Validar teléfono: debe tener 10 dígitos
+                $telefono = preg_replace('/[^0-9]/', '', $telefono); // Solo números
+                $validacionTelefono = validarTelefono10Digitos($telefono);
+                if (!$validacionTelefono['valid']) {
+                    throw new Exception($validacionTelefono['message']);
                 }
                 
                 if ($responsable_id) {
