@@ -296,18 +296,29 @@ if (!$auth->isAuthenticated()) {
         });
         
         var estadoActual = 'activos';
+        var fechaFiltro = '';
 
         window.cambiarFiltroEstado = function(nuevoEstado) {
           estadoActual = nuevoEstado;
           cargarCompras();
         };
 
+        // Listener para el input de fecha
+        $('#filtroFecha').on('change', function() {
+          fechaFiltro = $(this).val();
+          cargarCompras();
+        });
+
         window.cargarCompras = cargarCompras;
         
         // Cargar compras
         function cargarCompras() {
+          var url = 'api.php?action=listar&estado=' + estadoActual;
+          if (fechaFiltro) {
+            url += '&fecha=' + encodeURIComponent(fechaFiltro);
+          }
           $.ajax({
-            url: 'api.php?action=listar&estado=' + estadoActual,
+            url: url,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
