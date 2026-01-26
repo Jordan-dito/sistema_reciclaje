@@ -130,7 +130,11 @@ try {
                         <div class="col-md-6">
                           <div class="form-group">
                             <label>Fecha de Compra <span class="text-danger">*</span></label>
-                            <input type="date" id="fecha_compra" name="fecha_compra" class="form-control" required>
+                            <div class="d-flex gap-2">
+                              <input type="text" class="form-control" style="max-width: 60px;" value="<?php echo date('d'); ?>" readonly placeholder="Día">
+                              <input type="text" class="form-control" style="max-width: 80px;" value="<?php echo date('m'); ?>" readonly placeholder="Mes">
+                              <input type="text" class="form-control" style="max-width: 90px;" value="<?php echo date('Y'); ?>" readonly placeholder="Año">
+                            </div>
                           </div>
                         </div>
                         <div class="col-md-6">
@@ -160,8 +164,8 @@ try {
                         <div class="col-md-6">
                           <div class="form-group">
                             <label>Tipo de Comprobante</label>
-                            <input type="text" class="form-control" value="Factura" readonly style="background-color: #f5f5f5;">
-                            <input type="hidden" id="tipo_comprobante" name="tipo_comprobante" value="factura">
+                            <input type="text" class="form-control" value="Comprobante de factura" readonly style="background-color: #f5f5f5;">
+                            <input type="hidden" id="tipo_comprobante" name="tipo_comprobante" value="comprobante_factura">
                           </div>
                         </div>
                         <div class="col-md-12">
@@ -393,6 +397,7 @@ try {
         
         // Cargar siguiente número de factura al iniciar
         cargarSiguienteNumeroFactura();
+
         
         // Función para cargar el siguiente número de factura desde la base de datos
         function cargarSiguienteNumeroFactura() {

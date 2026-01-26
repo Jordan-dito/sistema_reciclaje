@@ -289,7 +289,17 @@ if (!$compra_id) {
               
               // Llenar información general
               $('#numeroFactura').text(compra.numero_factura || 'N/A');
-              $('#fechaCompra').text(compra.fecha_compra || '-');
+              if (compra.fecha_compra) {
+                var partes = compra.fecha_compra.split('-');
+                if (partes.length === 3) {
+                  var fechaFormateada = partes[2] + '/' + partes[1] + '/' + partes[0];
+                  $('#fechaCompra').text(fechaFormateada);
+                } else {
+                  $('#fechaCompra').text(compra.fecha_compra);
+                }
+              } else {
+                $('#fechaCompra').text('-');
+              }
               $('#proveedorNombre').text(compra.proveedor_nombre || '-');
               $('#sucursalNombre').text(compra.sucursal_nombre || '-');
               
