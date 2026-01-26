@@ -30,6 +30,8 @@ try {
     $fechaDesde = $_GET['fecha_desde'] ?? '';
     $fechaHasta = $_GET['fecha_hasta'] ?? '';
     $rolId = $_GET['rol_id'] ?? '';
+    $sucursalIdFiltro = $_GET['sucursal_id'] ?? $sucursalId;
+    $material = $_GET['material'] ?? '';
     
     if (empty($tipo)) {
         throw new Exception('Tipo de reporte no especificado');
@@ -55,25 +57,25 @@ try {
     // Generar contenido según el tipo
     switch ($tipo) {
         case 'inventarios':
-            generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId);
+            generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
             break;
         case 'compras':
-            generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId);
+            generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
             break;
         case 'ventas':
-            generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId);
+            generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
             break;
         case 'productos':
-            generarPDFProductos($db, $sucursalId);
+            generarPDFProductos($db, $sucursalIdFiltro, $material);
             break;
         case 'materiales':
             generarPDFMateriales($db);
             break;
         case 'sucursales':
-            generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalId);
+            generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro);
             break;
         case 'usuarios':
-            generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId, $sucursalId);
+            generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId, $sucursalIdFiltro);
             break;
         default:
             throw new Exception('Tipo de reporte no válido');
@@ -253,7 +255,7 @@ function generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '', $sucursa
 /**
  * Genera PDF para reporte de inventarios
  */
-function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
+function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
     try {
         $db->query("SELECT 1 FROM inventarios LIMIT 1");
     } catch (Exception $e) {
@@ -284,6 +286,11 @@ function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null
     if ($sucursalId) {
         $sql .= " AND i.sucursal_id = ?";
         $params[] = $sucursalId;
+    }
+
+    if ($material) {
+        $sql .= " AND m.nombre = ?";
+        $params[] = $material;
     }
     
     $sql .= " ORDER BY s.nombre, p.nombre";
@@ -343,7 +350,7 @@ function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null
 /**
  * Genera PDF para reporte de compras
  */
-function generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
+function generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
     // Verificar existencia de tablas
     $tablaDetalleExiste = false;
     $tablaSucursalesExiste = false;
@@ -383,14 +390,25 @@ function generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
             LEFT JOIN sucursales s ON c.sucursal_id = s.id
             LEFT JOIN proveedores pr ON c.proveedor_id = pr.id
             LEFT JOIN usuarios u ON c.creado_por = u.id
-            LEFT JOIN compras_detalle cd ON c.id = cd.compra_id
-            WHERE DATE(c.fecha_compra) BETWEEN ? AND ?";
+            LEFT JOIN compras_detalle cd ON c.id = cd.compra_id";
+        
+        if ($material) {
+            $sql .= " LEFT JOIN productos p ON cd.producto_id = p.id 
+                      LEFT JOIN materiales m ON p.material_id = m.id";
+        }
+
+        $sql .= " WHERE DATE(c.fecha_compra) BETWEEN ? AND ?";
         
         $params = [$fechaDesde, $fechaHasta];
         
         if ($sucursalId) {
             $sql .= " AND c.sucursal_id = ?";
             $params[] = $sucursalId;
+        }
+
+        if ($material) {
+            $sql .= " AND m.nombre = ?";
+            $params[] = $material;
         }
         
         $sql .= " GROUP BY c.id ORDER BY c.fecha_compra DESC";
@@ -472,7 +490,7 @@ function generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
 /**
  * Genera PDF para reporte de ventas
  */
-function generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
+function generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
     // Verificar si las tablas existen
     $tablaDetalleExiste = false;
     $tablaSucursalesExiste = false;
@@ -502,14 +520,25 @@ function generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
             FROM ventas v
             LEFT JOIN sucursales s ON v.sucursal_id = s.id
             LEFT JOIN usuarios u ON v.creado_por = u.id
-            LEFT JOIN ventas_detalle vd ON v.id = vd.venta_id
-            WHERE DATE(v.fecha_venta) BETWEEN ? AND ?";
+            LEFT JOIN ventas_detalle vd ON v.id = vd.venta_id";
+
+        if ($material) {
+            $sql .= " LEFT JOIN productos p ON vd.producto_id = p.id 
+                      LEFT JOIN materiales m ON p.material_id = m.id";
+        }
+
+        $sql .= " WHERE DATE(v.fecha_venta) BETWEEN ? AND ?";
         
         $params = [$fechaDesde, $fechaHasta];
         
         if ($sucursalId) {
             $sql .= " AND v.sucursal_id = ?";
             $params[] = $sucursalId;
+        }
+
+        if ($material) {
+            $sql .= " AND m.nombre = ?";
+            $params[] = $material;
         }
         
         $sql .= " GROUP BY v.id ORDER BY v.fecha_venta DESC";
@@ -590,7 +619,7 @@ function generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
 /**
  * Genera PDF para reporte de productos
  */
-function generarPDFProductos($db, $sucursalId = null) {
+function generarPDFProductos($db, $sucursalId = null, $material = '') {
     $sql = "
         SELECT 
             p.*,
@@ -605,11 +634,23 @@ function generarPDFProductos($db, $sucursalId = null) {
         LEFT JOIN categorias c ON m.categoria_id = c.id
         LEFT JOIN unidades u ON p.unidad_id = u.id";
     
+    $params = [];
+    $where = ["p.estado = 'activo'"];
+
     if ($sucursalId) {
-        $sql .= " INNER JOIN inventarios i ON p.id = i.producto_id AND i.sucursal_id = ?";
+        $sql .= " INNER JOIN inventarios i ON p.id = i.producto_id";
+        $where[] = "i.sucursal_id = ?";
+        $params[] = $sucursalId;
+    }
+
+    if ($material) {
+        $where[] = "m.nombre = ?";
+        $params[] = $material;
     }
     
-    $sql .= " WHERE p.estado = 'activo'";
+    if (!empty($where)) {
+        $sql .= " WHERE " . implode(" AND ", $where);
+    }
     
     if ($sucursalId) {
         $sql .= " GROUP BY p.id";
@@ -618,12 +659,7 @@ function generarPDFProductos($db, $sucursalId = null) {
     $sql .= " ORDER BY c.nombre, m.nombre, p.nombre";
     
     $stmt = $db->prepare($sql);
-    
-    if ($sucursalId) {
-        $stmt->execute([$sucursalId]);
-    } else {
-        $stmt->execute();
-    }
+    $stmt->execute($params);
     
     $productos = $stmt->fetchAll();
     

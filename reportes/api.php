@@ -38,6 +38,8 @@ try {
         $fechaDesde = $_GET['fecha_desde'] ?? '';
         $fechaHasta = $_GET['fecha_hasta'] ?? '';
         $rolId = $_GET['rol_id'] ?? '';
+        $sucursalIdFiltro = $_GET['sucursal_id'] ?? $sucursalId; // Si no viene filtro, usar la del usuario
+        $material = $_GET['material'] ?? '';
         
         if (empty($tipo)) {
             throw new Exception('Tipo de reporte no especificado');
@@ -67,25 +69,25 @@ try {
         
         switch ($tipo) {
             case 'inventarios':
-                $resultado = generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta, $sucursalId);
+                $resultado = generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
                 break;
             case 'compras':
-                $resultado = generarVistaPreviaCompras($db, $fechaDesde, $fechaHasta, $sucursalId);
+                $resultado = generarVistaPreviaCompras($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
                 break;
             case 'ventas':
-                $resultado = generarVistaPreviaVentas($db, $fechaDesde, $fechaHasta, $sucursalId);
+                $resultado = generarVistaPreviaVentas($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
                 break;
             case 'productos':
-                $resultado = generarVistaPreviaProductos($db, $sucursalId);
+                $resultado = generarVistaPreviaProductos($db, $sucursalIdFiltro, $material);
                 break;
             case 'materiales':
                 $resultado = generarVistaPreviaMateriales($db);
                 break;
             case 'sucursales':
-                $resultado = generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta, $sucursalId);
+                $resultado = generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro);
                 break;
             case 'usuarios':
-                $resultado = generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId, $sucursalId);
+                $resultado = generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId, $sucursalIdFiltro);
                 break;
             default:
                 throw new Exception('Tipo de reporte no válido');
@@ -392,7 +394,7 @@ function generarVistaPreviaUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '', 
 /**
  * Genera vista previa HTML para reporte de inventarios
  */
-function generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
+function generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
     // Verificar existencia de tablas principales
     try {
         $db->query("SELECT 1 FROM inventarios LIMIT 1");
@@ -424,6 +426,11 @@ function generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta, $sucursalI
     if ($sucursalId) {
         $sql .= " AND i.sucursal_id = ?";
         $params[] = $sucursalId;
+    }
+
+    if ($material) {
+        $sql .= " AND m.nombre = ?";
+        $params[] = $material;
     }
     
     $sql .= " ORDER BY s.nombre, p.nombre";
@@ -487,7 +494,7 @@ function generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta, $sucursalI
 /**
  * Genera vista previa HTML para reporte de compras
  */
-function generarVistaPreviaCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
+function generarVistaPreviaCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
     // Verificar existencia de tablas
     $tablaDetalleExiste = false;
     $tablaSucursalesExiste = false;
@@ -527,14 +534,25 @@ function generarVistaPreviaCompras($db, $fechaDesde, $fechaHasta, $sucursalId = 
             LEFT JOIN sucursales s ON c.sucursal_id = s.id
             LEFT JOIN proveedores pr ON c.proveedor_id = pr.id
             LEFT JOIN usuarios u ON c.creado_por = u.id
-            LEFT JOIN compras_detalle cd ON c.id = cd.compra_id
-            WHERE DATE(c.fecha_compra) BETWEEN ? AND ?";
+            LEFT JOIN compras_detalle cd ON c.id = cd.compra_id";
+        
+        if ($material) {
+            $sql .= " LEFT JOIN productos p ON cd.producto_id = p.id 
+                      LEFT JOIN materiales m ON p.material_id = m.id";
+        }
+
+        $sql .= " WHERE DATE(c.fecha_compra) BETWEEN ? AND ?";
         
         $params = [$fechaDesde, $fechaHasta];
         
         if ($sucursalId) {
             $sql .= " AND c.sucursal_id = ?";
             $params[] = $sucursalId;
+        }
+
+        if ($material) {
+            $sql .= " AND m.nombre = ?";
+            $params[] = $material;
         }
         
         $sql .= " GROUP BY c.id ORDER BY c.fecha_compra DESC";
@@ -619,7 +637,7 @@ function generarVistaPreviaCompras($db, $fechaDesde, $fechaHasta, $sucursalId = 
 /**
  * Genera vista previa HTML para reporte de ventas
  */
-function generarVistaPreviaVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
+function generarVistaPreviaVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
     // Verificar si la tabla ventas_detalle existe
     $tablaDetalleExiste = false;
     try {
@@ -649,14 +667,25 @@ function generarVistaPreviaVentas($db, $fechaDesde, $fechaHasta, $sucursalId = n
             FROM ventas v
             LEFT JOIN sucursales s ON v.sucursal_id = s.id
             LEFT JOIN usuarios u ON v.creado_por = u.id
-            LEFT JOIN ventas_detalle vd ON v.id = vd.venta_id
-            WHERE DATE(v.fecha_venta) BETWEEN ? AND ?";
+            LEFT JOIN ventas_detalle vd ON v.id = vd.venta_id";
+
+        if ($material) {
+            $sql .= " LEFT JOIN productos p ON vd.producto_id = p.id 
+                      LEFT JOIN materiales m ON p.material_id = m.id";
+        }
+
+        $sql .= " WHERE DATE(v.fecha_venta) BETWEEN ? AND ?";
         
         $params = [$fechaDesde, $fechaHasta];
         
         if ($sucursalId) {
             $sql .= " AND v.sucursal_id = ?";
             $params[] = $sucursalId;
+        }
+
+        if ($material) {
+            $sql .= " AND m.nombre = ?";
+            $params[] = $material;
         }
         
         $sql .= " GROUP BY v.id ORDER BY v.fecha_venta DESC";
@@ -740,7 +769,7 @@ function generarVistaPreviaVentas($db, $fechaDesde, $fechaHasta, $sucursalId = n
 /**
  * Genera vista previa HTML para reporte de productos
  */
-function generarVistaPreviaProductos($db, $sucursalId = null) {
+function generarVistaPreviaProductos($db, $sucursalId = null, $material = '') {
     $sql = "
         SELECT 
             p.*,
@@ -755,13 +784,28 @@ function generarVistaPreviaProductos($db, $sucursalId = null) {
         LEFT JOIN categorias c ON m.categoria_id = c.id
         INNER JOIN unidades u ON p.unidad_id = u.id";
     
+    $params = [];
+    $where = ["p.estado = 'activo'"];
+
     if ($sucursalId) {
-        $sql .= " INNER JOIN inventarios i ON p.id = i.producto_id AND i.sucursal_id = " . intval($sucursalId);
+        $sql .= " INNER JOIN inventarios i ON p.id = i.producto_id";
+        $where[] = "i.sucursal_id = ?";
+        $params[] = $sucursalId;
+    }
+
+    if ($material) {
+        $where[] = "m.nombre = ?";
+        $params[] = $material;
     }
     
-    $sql .= " WHERE p.estado = 'activo' ORDER BY c.nombre, m.nombre, p.nombre";
+    if (!empty($where)) {
+        $sql .= " WHERE " . implode(" AND ", $where);
+    }
+
+    $sql .= " ORDER BY c.nombre, m.nombre, p.nombre";
     
-    $stmt = $db->query($sql);
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
     
     $productos = $stmt->fetchAll();
     

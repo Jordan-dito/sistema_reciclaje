@@ -135,6 +135,22 @@ $basePath = '';
                               <input type="date" id="fecha_hasta" name="fecha_hasta" class="form-control" required>
                             </div>
                           </div>
+                          <div class="col-md-3" id="filtro_sucursal_container">
+                            <div class="form-group">
+                              <label>Sucursal</label>
+                              <select id="sucursal_id_reporte" name="sucursal_id" class="form-control">
+                                <option value="">Todas las Sucursales</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="col-md-3" id="filtro_material_container">
+                            <div class="form-group">
+                              <label>Material</label>
+                              <select id="material_reporte" name="material" class="form-control">
+                                <option value="">Todos los Materiales</option>
+                              </select>
+                            </div>
+                          </div>
                           <div class="col-md-2">
                             <div class="form-group">
                               <label>&nbsp;</label>
@@ -237,6 +253,48 @@ $basePath = '';
         $('#fecha_hasta').val(hoy.toISOString().split('T')[0]);
         $('#fecha_desde').val(haceUnMes.toISOString().split('T')[0]);
         
+        // Cargar Sucursales
+        function cargarSucursalesReporte() {
+          $.ajax({
+            url: '../sucursales/api.php?action=listar',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                var select = $('#sucursal_id_reporte');
+                select.empty().append('<option value="">Todas las Sucursales</option>');
+                response.data.forEach(function(sucursal) {
+                  if (sucursal.estado === 'activa') {
+                    select.append('<option value="' + sucursal.id + '">' + sucursal.nombre + '</option>');
+                  }
+                });
+              }
+            }
+          });
+        }
+        
+        // Cargar Materiales
+        function cargarMaterialesReporte() {
+          $.ajax({
+            url: '../inventarios/api.php?action=productos',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+              if (response.success) {
+                var materiales = [...new Set(response.data.map(p => p.material_nombre).filter(Boolean))];
+                var select = $('#material_reporte');
+                select.empty().append('<option value="">Todos los Materiales</option>');
+                materiales.sort().forEach(function(material) {
+                  select.append('<option value="' + material + '">' + material + '</option>');
+                });
+              }
+            }
+          });
+        }
+        
+        cargarSucursalesReporte();
+        cargarMaterialesReporte();
+        
         // Manejar cambios en el tipo de reporte
         $('#tipo_reporte').change(function() {
           var tipo = $(this).val();
@@ -257,6 +315,19 @@ $basePath = '';
           } else {
             $('#fecha_desde').prop('required', true).closest('.form-group').show();
             $('#fecha_hasta').prop('required', true).closest('.form-group').show();
+          }
+
+          // Controlar visibilidad de filtros según el reporte
+          if (tipo === 'sucursales' || tipo === 'usuarios') {
+            $('#filtro_material_container').hide();
+          } else {
+            $('#filtro_material_container').show();
+          }
+
+          if (tipo === 'materiales') {
+            $('#filtro_sucursal_container').hide();
+          } else {
+            $('#filtro_sucursal_container').show();
           }
         });
         
@@ -304,6 +375,8 @@ $basePath = '';
           var fechaDesde = $('#fecha_desde').val() || '';
           var fechaHasta = $('#fecha_hasta').val() || '';
           var rolId = $('#rol_id').val() || '';
+          var sucursalId = $('#sucursal_id_reporte').val() || '';
+          var material = $('#material_reporte').val() || '';
           
           // Validar fechas solo si son requeridas
           var reportesSinFechas = ['productos', 'materiales'];
@@ -322,7 +395,9 @@ $basePath = '';
           var dataParams = {
             action: 'vista_previa',
             tipo: tipo,
-            rol_id: rolId
+            rol_id: rolId,
+            sucursal_id: sucursalId,
+            material: material
           };
           
           if (fechaDesde) dataParams.fecha_desde = fechaDesde;
@@ -392,6 +467,8 @@ $basePath = '';
           var fechaDesde = $('#fecha_desde').val() || '';
           var fechaHasta = $('#fecha_hasta').val() || '';
           var rolId = $('#rol_id').val() || '';
+          var sucursalId = $('#sucursal_id_reporte').val() || '';
+          var material = $('#material_reporte').val() || '';
           
           // Validar fechas solo si son requeridas
           var reportesSinFechas = ['productos', 'materiales'];
@@ -411,6 +488,8 @@ $basePath = '';
           if (fechaDesde) url += '&fecha_desde=' + fechaDesde;
           if (fechaHasta) url += '&fecha_hasta=' + fechaHasta;
           if (rolId) url += '&rol_id=' + rolId;
+          if (sucursalId) url += '&sucursal_id=' + sucursalId;
+          if (material) url += '&material=' + encodeURIComponent(material);
           
           // Abrir en nueva ventana para descargar PDF
           window.open(url, '_blank');
