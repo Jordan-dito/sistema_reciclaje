@@ -36,6 +36,9 @@ try {
         case 'GET':
             if ($action === 'listar') {
                 $sucursal_id = $_GET['sucursal_id'] ?? null;
+                $material = $_GET['material'] ?? null;
+                $fecha_inicio = $_GET['fecha_inicio'] ?? null;
+                $fecha_fin = $_GET['fecha_fin'] ?? null;
                 
                 $sql = "
                     SELECT i.*, 
@@ -61,7 +64,22 @@ try {
                     $params[] = $sucursal_id;
                 }
                 
-                $sql .= " ORDER BY i.id ASC";
+                if ($material) {
+                    $sql .= " AND m.nombre = ?";
+                    $params[] = $material;
+                }
+
+                if ($fecha_inicio) {
+                    $sql .= " AND DATE(i.fecha_creacion) >= ?";
+                    $params[] = $fecha_inicio;
+                }
+
+                if ($fecha_fin) {
+                    $sql .= " AND DATE(i.fecha_creacion) <= ?";
+                    $params[] = $fecha_fin;
+                }
+                
+                $sql .= " ORDER BY s.nombre ASC, p.nombre ASC";
                 
                 $stmt = $db->prepare($sql);
                 $stmt->execute($params);

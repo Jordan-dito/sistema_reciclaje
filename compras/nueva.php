@@ -75,6 +75,8 @@ try {
     <link rel="stylesheet" href="../assets/css/plugins.min.css" />
     <link rel="stylesheet" href="../assets/css/kaiadmin.min.css" />
     <link rel="stylesheet" href="../assets/css/demo.css" />
+      <!-- Select2 CSS -->
+      <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   </head>
   <body>
     <div class="wrapper">
@@ -386,6 +388,8 @@ try {
     <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
     <script src="../assets/js/kaiadmin.min.js"></script>
     <script src="../assets/js/setting-demo.js"></script>
+      <!-- Select2 JS -->
+      <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
       $(document).ready(function() {
         // Array para almacenar productos seleccionados
@@ -512,6 +516,26 @@ try {
                     select.append('<option value="' + proveedor.id + '">' + proveedor.nombre + '</option>');
                   }
                 });
+                 select.select2({
+                   placeholder: 'Seleccione un proveedor',
+                   allowClear: true,
+                   width: '100%',
+                   language: 'es',
+                   matcher: function(params, data) {
+                     // Si no hay término de búsqueda, mostrar todos
+                     if ($.trim(params.term) === '') {
+                       return data;
+                     }
+                     // Búsqueda insensible a mayúsculas y por cualquier parte del texto
+                     if (typeof data.text === 'undefined') {
+                       return null;
+                     }
+                     if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                       return data;
+                     }
+                     return null;
+                   }
+                 });
               }
             }
           });
