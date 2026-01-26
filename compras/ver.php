@@ -309,8 +309,10 @@ if (!$compra_id) {
                 badgeEstado = '<span class="badge badge-success">Completada</span>';
               } else if (compra.estado === 'pendiente') {
                 badgeEstado = '<span class="badge badge-warning">Pendiente</span>';
+              } else if (compra.estado === 'cancelada') {
+                badgeEstado = '<span class="badge badge-danger">Anulada</span>';
               } else {
-                badgeEstado = '<span class="badge badge-danger">Cancelada</span>';
+                badgeEstado = '<span class="badge badge-danger">' + (compra.estado || 'Anulada') + '</span>';
               }
               $('#estadoCompra').html(badgeEstado);
               

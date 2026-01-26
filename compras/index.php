@@ -90,7 +90,7 @@ if (!$auth->isAuthenticated()) {
             <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
               <div>
                 <h3 class="fw-bold mb-3">Registro de Compras</h3>
-                <h6 class="op-7 mb-2">Registra compras de materiales reciclables - Actualiza inventario y Kardex (PEPS)</h6>
+                <h6 class="op-7 mb-2">Registra compras de materiales reciclables - Actualiza inventario</h6>
               </div>
               <div class="ms-md-auto py-2 py-md-0">
                 <a href="nueva.php" class="btn btn-primary btn-round">
@@ -113,17 +113,17 @@ if (!$auth->isAuthenticated()) {
                   <div class="card-body">
                     <!-- Filtros por estado (Tabs) -->
                     <ul class="nav nav-pills nav-secondary nav-pills-no-bd mb-3" id="pills-tab" role="tablist">
-                      <li class="nav-item">
+                      <!-- <li class="nav-item">
                         <a class="nav-link active" id="tab-activos" data-bs-toggle="pill" href="#pills-activos" role="tab" onclick="cambiarFiltroEstado('activos')">Activos</a>
-                      </li>
+                      </li> -->
                       <li class="nav-item">
-                        <a class="nav-link" id="tab-completadas" data-bs-toggle="pill" href="#pills-completadas" role="tab" onclick="cambiarFiltroEstado('completada')">Completadas</a>
+                        <a class="nav-link active" id="tab-completadas" data-bs-toggle="pill" href="#pills-completadas" role="tab" onclick="cambiarFiltroEstado('completada')">Completadas</a>
                       </li>
                       <li class="nav-item">
                         <a class="nav-link" id="tab-pendientes" data-bs-toggle="pill" href="#pills-pendientes" role="tab" onclick="cambiarFiltroEstado('pendiente')">Pendientes</a>
                       </li>
                       <li class="nav-item">
-                        <a class="nav-link" id="tab-canceladas" data-bs-toggle="pill" href="#pills-canceladas" role="tab" onclick="cambiarFiltroEstado('cancelada')">Inactivos</a>
+                        <a class="nav-link" id="tab-anuladas" data-bs-toggle="pill" href="#pills-anuladas" role="tab" onclick="cambiarFiltroEstado('cancelada')">Anuladas</a>
                       </li>
                     </ul>
 
@@ -295,19 +295,30 @@ if (!$auth->isAuthenticated()) {
           }
         });
         
-        var estadoActual = 'activos';
+        var estadoActual = 'completada';
+        var fechaFiltro = '';
 
         window.cambiarFiltroEstado = function(nuevoEstado) {
           estadoActual = nuevoEstado;
           cargarCompras();
         };
 
+        // Listener para el input de fecha
+        $('#filtroFecha').on('change', function() {
+          fechaFiltro = $(this).val();
+          cargarCompras();
+        });
+
         window.cargarCompras = cargarCompras;
         
         // Cargar compras
         function cargarCompras() {
+          var url = 'api.php?action=listar&estado=' + estadoActual;
+          if (fechaFiltro) {
+            url += '&fecha=' + encodeURIComponent(fechaFiltro);
+          }
           $.ajax({
-            url: 'api.php?action=listar&estado=' + estadoActual,
+            url: url,
             method: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -322,8 +333,10 @@ if (!$auth->isAuthenticated()) {
                     badgeEstado = '<span class="badge badge-success">Completada</span>';
                   } else if (compra.estado === 'pendiente') {
                     badgeEstado = '<span class="badge badge-warning">Pendiente</span>';
+                  } else if (compra.estado === 'cancelada') {
+                    badgeEstado = '<span class="badge badge-danger">Anulada</span>';
                   } else {
-                    badgeEstado = '<span class="badge badge-danger">Inactiva</span>';
+                    badgeEstado = '<span class="badge badge-danger">' + (compra.estado || 'Anulado') + '</span>';
                   }
 
                   var cantTotal = detalles.reduce(function(sum, d) { return sum + parseFloat(d.cantidad || 0); }, 0);
@@ -338,8 +351,8 @@ if (!$auth->isAuthenticated()) {
                     '<strong>$' + parseFloat(compra.total).toFixed(2) + '</strong>',
                     compra.proveedor_nombre,
                     badgeEstado,
-                    '<a href="ver.php?id=' + compra.id + '" class="btn btn-link btn-primary btn-sm" title="Ver factura"><i class="fa fa-eye"></i></a> ' +
-                    '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCompra(' + compra.id + ')" title="Eliminar"><i class="fa fa-times"></i></button>'
+                    '<a href="ver.php?id=' + compra.id + '" class="btn btn-link btn-primary btn-sm" title="Ver factura"><i class="fa fa-eye"></i></a>' +
+                    (compra.estado === 'cancelada' ? '' : ' <button class="btn btn-link btn-danger btn-sm" onclick="eliminarCompra(' + compra.id + ')" title="Eliminar"><i class="fa fa-times"></i></button>')
                   ]).node();
 
                   // Guardamos los datos de la compra en el nodo de la fila para usarlos al expandir
@@ -368,7 +381,7 @@ if (!$auth->isAuthenticated()) {
       function eliminarCompra(id) {
         swal({
           title: "¿Está seguro?",
-          text: "La compra será cancelada",
+          text: "La compra será anulada",
           icon: "warning",
           buttons: true,
           dangerMode: true,
@@ -382,7 +395,7 @@ if (!$auth->isAuthenticated()) {
               dataType: 'json',
               success: function(response) {
                 if (response.success) {
-                  swal("¡Éxito!", response.message, "success");
+                  swal("¡Éxito!", "Compra anulada exitosamente", "success");
                   cargarCompras();
                 } else {
                   swal("Error", response.message, "error");

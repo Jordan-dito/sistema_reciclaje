@@ -57,6 +57,7 @@ try {
                 
                 $sucursal_id = $_GET['sucursal_id'] ?? $sucursal_usuario;
                 $filtro_estado = $_GET['estado'] ?? 'activos'; // Por defecto solo activos
+                $filtro_fecha = $_GET['fecha'] ?? '';
                 
                 $sql = "
                     SELECT c.*, p.nombre as proveedor_nombre, s.nombre as sucursal_nombre 
@@ -78,9 +79,14 @@ try {
                     $sql .= " AND c.estado = ?";
                     $params[] = $filtro_estado;
                 }
+
+                if ($filtro_fecha) {
+                    $sql .= " AND c.fecha_compra = ?";
+                    $params[] = $filtro_fecha;
+                }
                 
                 $sql .= " ORDER BY c.fecha_compra DESC, c.id DESC";
-                
+
                 $stmt = $db->prepare($sql);
                 $stmt->execute($params);
                 $compras = $stmt->fetchAll();
