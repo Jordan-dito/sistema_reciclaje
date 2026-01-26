@@ -256,7 +256,7 @@ try {
                             <select id="estado" name="estado" class="form-control">
                               <option value="pendiente">Pendiente</option>
                               <option value="completada" selected>Completada</option>
-                              <option value="cancelada">Cancelada</option>
+                              <option value="cancelada">Anulada</option>
                             </select>
                           </div>
                         </div>
