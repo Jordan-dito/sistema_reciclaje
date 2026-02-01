@@ -463,6 +463,95 @@ try {
                 
                 ob_end_clean();
                 echo json_encode(['success' => true, 'message' => 'Compra actualizada exitosamente']);
+            } elseif ($action === 'completar') {
+                $id = intval($_POST['id'] ?? 0);
+                
+                if ($id <= 0) {
+                    throw new Exception('ID de compra inválido');
+                }
+                
+                $db->beginTransaction();
+                try {
+                    // Obtener la compra actual
+                    $stmt = $db->prepare("SELECT * FROM compras WHERE id = ?");
+                    $stmt->execute([$id]);
+                    $compra = $stmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if (!$compra) {
+                        throw new Exception('Compra no encontrada');
+                    }
+                    
+                    if ($compra['estado'] === 'completada') {
+                        throw new Exception('La compra ya está completada');
+                    }
+                    
+                    if ($compra['estado'] === 'cancelada') {
+                        throw new Exception('No se puede completar una compra cancelada');
+                    }
+                    
+                    // Verificar saldo suficiente
+                    $stmt = $db->prepare("SELECT saldo FROM sucursales WHERE id = ?");
+                    $stmt->execute([$compra['sucursal_id']]);
+                    $sucursal = $stmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($sucursal && floatval($sucursal['saldo']) < floatval($compra['total'])) {
+                        throw new Exception('La sucursal no tiene saldo suficiente para completar esta compra');
+                    }
+                    
+                    // Actualizar el estado a completada
+                    $stmt = $db->prepare("UPDATE compras SET estado = 'completada' WHERE id = ?");
+                    $stmt->execute([$id]);
+                    
+                    // Descontar del saldo de la sucursal
+                    $stmt = $db->prepare("UPDATE sucursales SET saldo = saldo - ? WHERE id = ?");
+                    $stmt->execute([$compra['total'], $compra['sucursal_id']]);
+                    
+                    // Actualizar inventario: sumar cantidades
+                    $stmt = $db->prepare("SELECT * FROM compras_detalle WHERE compra_id = ?");
+                    $stmt->execute([$id]);
+                    $detalles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    foreach ($detalles as $detalle) {
+                        // Verificar si existe en inventarios
+                        $stmt = $db->prepare("
+                            SELECT id, cantidad FROM inventarios 
+                            WHERE producto_id = ? AND sucursal_id = ?
+                        ");
+                        $stmt->execute([$detalle['producto_id'], $compra['sucursal_id']]);
+                        $inventario = $stmt->fetch(PDO::FETCH_ASSOC);
+                        
+                        if ($inventario) {
+                            // Actualizar cantidad existente
+                            $stmt = $db->prepare("
+                                UPDATE inventarios 
+                                SET cantidad = cantidad + ?, 
+                                    fecha_actualizacion = NOW() 
+                                WHERE id = ?
+                            ");
+                            $stmt->execute([$detalle['cantidad'], $inventario['id']]);
+                        } else {
+                            // Crear nuevo registro en inventario
+                            $stmt = $db->prepare("
+                                INSERT INTO inventarios 
+                                (producto_id, sucursal_id, cantidad, fecha_actualizacion) 
+                                VALUES (?, ?, ?, NOW())
+                            ");
+                            $stmt->execute([
+                                $detalle['producto_id'],
+                                $compra['sucursal_id'],
+                                $detalle['cantidad']
+                            ]);
+                        }
+                    }
+                    
+                    $db->commit();
+                    
+                    ob_end_clean();
+                    echo json_encode(['success' => true, 'message' => 'Compra completada exitosamente']);
+                } catch (Exception $e) {
+                    $db->rollBack();
+                    throw $e;
+                }
             } elseif ($action === 'eliminar') {
                 $id = intval($_POST['id'] ?? 0);
                 
