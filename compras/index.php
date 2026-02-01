@@ -351,8 +351,11 @@ if (!$auth->isAuthenticated()) {
                     '<strong>$' + parseFloat(compra.total).toFixed(2) + '</strong>',
                     compra.proveedor_nombre,
                     badgeEstado,
+                    '<div class="d-flex gap-1 justify-content-center">' +
                     '<a href="ver.php?id=' + compra.id + '" class="btn btn-link btn-primary btn-sm" title="Ver factura"><i class="fa fa-eye"></i></a>' +
-                    (compra.estado === 'cancelada' ? '' : ' <button class="btn btn-link btn-danger btn-sm" onclick="eliminarCompra(' + compra.id + ')" title="Eliminar"><i class="fa fa-times"></i></button>')
+                    (compra.estado === 'cancelada' ? '' : '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarCompra(' + compra.id + ')" title="Eliminar"><i class="fa fa-times"></i></button>') +
+                    (compra.estado === 'pendiente' ? '<button class="btn btn-link btn-success btn-sm" onclick="completarCompra(' + compra.id + ')" title="Completar"><i class="fa fa-check"></i></button>' : '') +
+                    '</div>'
                   ]).node();
 
                   // Guardamos los datos de la compra en el nodo de la fila para usarlos al expandir
@@ -376,6 +379,36 @@ if (!$auth->isAuthenticated()) {
       function verCompra(id) {
         // Redirigir a la página de visualización
         window.location.href = 'ver.php?id=' + id;
+      }
+      
+      function completarCompra(id) {
+        swal({
+          title: "¿Completar compra?",
+          text: "La compra será marcada como completada y se actualizará el inventario",
+          icon: "info",
+          buttons: true,
+        })
+        .then((willComplete) => {
+          if (willComplete) {
+            $.ajax({
+              url: 'api.php',
+              method: 'POST',
+              data: { id: id, action: 'completar' },
+              dataType: 'json',
+              success: function(response) {
+                if (response.success) {
+                  swal("¡Éxito!", "Compra completada exitosamente", "success");
+                  cargarCompras();
+                } else {
+                  swal("Error", response.message, "error");
+                }
+              },
+              error: function() {
+                swal("Error", "No se pudo completar la compra", "error");
+              }
+            });
+          }
+        });
       }
       
       function eliminarCompra(id) {
