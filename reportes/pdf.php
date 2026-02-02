@@ -27,6 +27,7 @@ try {
     }
     
     $tipo = $_GET['tipo'] ?? '';
+    $tituloPersonalizado = $_GET['titulo'] ?? '';
     $fechaDesde = $_GET['fecha_desde'] ?? '';
     $fechaHasta = $_GET['fecha_hasta'] ?? '';
     $rolId = $_GET['rol_id'] ?? '';
@@ -57,25 +58,25 @@ try {
     // Generar contenido según el tipo
     switch ($tipo) {
         case 'inventarios':
-            generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
+            generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material, $tituloPersonalizado);
             break;
         case 'compras':
-            generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
+            generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material, $tituloPersonalizado);
             break;
         case 'ventas':
-            generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material);
+            generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $material, $tituloPersonalizado);
             break;
         case 'productos':
-            generarPDFProductos($db, $sucursalIdFiltro, $material);
+            generarPDFProductos($db, $sucursalIdFiltro, $material, $tituloPersonalizado);
             break;
         case 'materiales':
-            generarPDFMateriales($db);
+            generarPDFMateriales($db, $tituloPersonalizado);
             break;
         case 'sucursales':
-            generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro);
+            generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $tituloPersonalizado);
             break;
         case 'usuarios':
-            generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId, $sucursalIdFiltro);
+            generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId, $sucursalIdFiltro, $tituloPersonalizado);
             break;
         default:
             throw new Exception('Tipo de reporte no válido');
@@ -88,7 +89,7 @@ try {
 /**
  * Genera PDF para reporte de sucursales
  */
-function generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalId = null) {
+function generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalId = null, $tituloPersonalizado = '') {
     $sql = "
         SELECT 
             s.*,
@@ -118,7 +119,7 @@ function generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalId = null)
     $stmt->execute($params);
     $sucursales = $stmt->fetchAll();
     
-    $titulo = "Reporte de Sucursales";
+    $titulo = !empty($tituloPersonalizado) ? $tituloPersonalizado : "Reporte de Sucursales";
     $periodo = date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta));
     
     generarHTMLPDF($titulo, $periodo, function() use ($sucursales) {
@@ -163,7 +164,7 @@ function generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalId = null)
 /**
  * Genera PDF para reporte de usuarios por rol
  */
-function generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '', $sucursalId = null) {
+function generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '', $sucursalId = null, $tituloPersonalizado = '') {
     $sql = "
         SELECT 
             u.*,
@@ -196,7 +197,7 @@ function generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '', $sucursa
     $stmt->execute($params);
     $usuarios = $stmt->fetchAll();
     
-    $titulo = "Reporte de Usuarios por Rol";
+    $titulo = !empty($tituloPersonalizado) ? $tituloPersonalizado : "Reporte de Usuarios por Rol";
     $periodo = date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta));
     
     $filtroRol = '';
@@ -255,7 +256,7 @@ function generarPDFUsuarios($db, $fechaDesde, $fechaHasta, $rolId = '', $sucursa
 /**
  * Genera PDF para reporte de inventarios
  */
-function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
+function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '', $tituloPersonalizado = '') {
     try {
         $db->query("SELECT 1 FROM inventarios LIMIT 1");
     } catch (Exception $e) {
@@ -299,7 +300,7 @@ function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null
     $stmt->execute($params);
     $inventarios = $stmt->fetchAll();
     
-    $titulo = "Reporte de Inventarios";
+    $titulo = !empty($tituloPersonalizado) ? $tituloPersonalizado : "Reporte de Inventarios";
     $periodo = date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta));
     
     generarHTMLPDF($titulo, $periodo, function() use ($inventarios) {
@@ -350,7 +351,7 @@ function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null
 /**
  * Genera PDF para reporte de compras
  */
-function generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
+function generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '', $tituloPersonalizado = '') {
     // Verificar existencia de tablas
     $tablaDetalleExiste = false;
     $tablaSucursalesExiste = false;
@@ -441,7 +442,7 @@ function generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null, $m
     }
     $compras = $stmt->fetchAll();
     
-    $titulo = "Reporte de Compras";
+    $titulo = !empty($tituloPersonalizado) ? $tituloPersonalizado : "Reporte de Compras";
     $periodo = date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta));
     
     generarHTMLPDF($titulo, $periodo, function() use ($compras) {
@@ -490,7 +491,7 @@ function generarPDFCompras($db, $fechaDesde, $fechaHasta, $sucursalId = null, $m
 /**
  * Genera PDF para reporte de ventas
  */
-function generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '') {
+function generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null, $material = '', $tituloPersonalizado = '') {
     // Verificar si las tablas existen
     $tablaDetalleExiste = false;
     $tablaSucursalesExiste = false;
@@ -570,7 +571,7 @@ function generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null, $ma
     }
     $ventas = $stmt->fetchAll();
     
-    $titulo = "Reporte de Ventas";
+    $titulo = !empty($tituloPersonalizado) ? $tituloPersonalizado : "Reporte de Ventas";
     $periodo = date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta));
     
     generarHTMLPDF($titulo, $periodo, function() use ($ventas) {
@@ -619,7 +620,7 @@ function generarPDFVentas($db, $fechaDesde, $fechaHasta, $sucursalId = null, $ma
 /**
  * Genera PDF para reporte de productos
  */
-function generarPDFProductos($db, $sucursalId = null, $material = '') {
+function generarPDFProductos($db, $sucursalId = null, $material = '', $tituloPersonalizado = '') {
     $sql = "
         SELECT 
             p.*,
@@ -663,7 +664,7 @@ function generarPDFProductos($db, $sucursalId = null, $material = '') {
     
     $productos = $stmt->fetchAll();
     
-    $titulo = "Reporte de Productos";
+    $titulo = !empty($tituloPersonalizado) ? $tituloPersonalizado : "Reporte de Productos";
     $periodo = "Todos los productos activos";
     
     generarHTMLPDF($titulo, $periodo, function() use ($productos) {
@@ -707,7 +708,7 @@ function generarPDFProductos($db, $sucursalId = null, $material = '') {
 /**
  * Genera PDF para reporte de materiales por categoría
  */
-function generarPDFMateriales($db) {
+function generarPDFMateriales($db, $tituloPersonalizado = '') {
     $stmt = $db->query("
         SELECT 
             m.*,
@@ -723,7 +724,7 @@ function generarPDFMateriales($db) {
     
     $materiales = $stmt->fetchAll();
     
-    $titulo = "Reporte de Materiales por Categoría";
+    $titulo = !empty($tituloPersonalizado) ? $tituloPersonalizado : "Reporte de Materiales por Categoría";
     $periodo = "Todos los materiales activos";
     
     generarHTMLPDF($titulo, $periodo, function() use ($materiales) {

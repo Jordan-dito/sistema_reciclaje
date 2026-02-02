@@ -108,6 +108,23 @@ $basePath = '';
                     <div class="card-body">
                       <form id="formReporte">
                         <div class="row">
+                          <div class="col-md-12 mb-3">
+                            <div class="form-group">
+                              <label>Título o Descripción del Reporte</label>
+                              <input type="text" 
+                                     id="titulo_reporte" 
+                                     name="titulo_reporte" 
+                                     class="form-control" 
+                                     placeholder="Ej: Reporte mensual de ventas - Enero 2026"
+                                     maxlength="200">
+                              <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> 
+                                Este título aparecerá en el encabezado del reporte PDF (opcional)
+                              </small>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
                           <div class="col-md-4">
                             <div class="form-group">
                               <label>Tipo de Reporte *</label>
@@ -464,6 +481,7 @@ $basePath = '';
           }
           
           var tipo = $('#tipo_reporte').val();
+          var tituloReporte = $('#titulo_reporte').val() || '';
           var fechaDesde = $('#fecha_desde').val() || '';
           var fechaHasta = $('#fecha_hasta').val() || '';
           var rolId = $('#rol_id').val() || '';
@@ -485,6 +503,7 @@ $basePath = '';
           
           // Construir URL para generar PDF
           var url = 'pdf.php?tipo=' + tipo;
+          if (tituloReporte) url += '&titulo=' + encodeURIComponent(tituloReporte);
           if (fechaDesde) url += '&fecha_desde=' + fechaDesde;
           if (fechaHasta) url += '&fecha_hasta=' + fechaHasta;
           if (rolId) url += '&rol_id=' + rolId;
