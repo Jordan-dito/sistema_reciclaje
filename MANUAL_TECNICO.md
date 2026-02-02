@@ -486,3 +486,127 @@ if (!$auth->isAuthenticated()) {
 ### 8.6. CORS (Cross-Origin Resource Sharing)
 
 *   Para permitir que la aplicación móvil (Flutter) acceda a los endpoints de la API, se configuran los encabezados `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods` y `Access-Control-Allow-Headers` en los archivos API relevantes (`config/login.php`, `config/get_user.php`, `sucursales/api.php` para la acción `disponibles`, `reportes/api_graficos.php`, etc.). Esto es esencial para la comunicación entre dominios diferentes.
+
+### 8.7. Principio LIFO (Last In, First Out) en Consultas SQL
+
+El sistema implementa el principio LIFO (Last In, First Out - "Último en Entrar, Primero en Salir") en múltiples consultas SQL para garantizar que los registros más recientes se procesen o muestren primero. Este enfoque mejora la experiencia del usuario y asegura la integridad en la generación de códigos secuenciales.
+
+#### Casos de Uso Principales:
+
+**1. Generación de Códigos Secuenciales**
+
+El sistema utiliza LIFO para obtener el último código generado y así crear el siguiente número en la secuencia:
+
+*   **Productos (`productos/api.php`, línea 136):**
+    ```sql
+    SELECT nombre 
+    FROM productos 
+    WHERE nombre REGEXP '^[0-9]{4}$'
+    ORDER BY CAST(nombre AS UNSIGNED) DESC 
+    LIMIT 1
+    ```
+    Obtiene el último código numérico (formato 0001, 0002, etc.) para generar el siguiente código de producto secuencial.
+
+*   **Facturas de Compra (`compras/api.php`, línea 233):**
+    ```sql
+    SELECT numero_factura 
+    FROM compras 
+    WHERE numero_factura IS NOT NULL AND estado <> 'cancelada'
+    ORDER BY id DESC
+    ```
+    Recupera el último número de factura de compra para generar el consecutivo.
+
+*   **Facturas de Venta (`ventas/api.php`, línea 268):**
+    ```sql
+    SELECT numero_factura 
+    FROM ventas 
+    WHERE numero_factura IS NOT NULL AND estado <> 'cancelada'
+    ORDER BY id DESC
+    ```
+    Recupera el último número de factura de venta para generar el consecutivo.
+
+**2. Listados de Transacciones**
+
+Las transacciones se ordenan mostrando primero las más recientes, utilizando dos criterios de ordenamiento:
+
+*   **Compras (`compras/api.php`, línea 82):**
+    ```sql
+    ORDER BY c.fecha_compra DESC, c.id DESC
+    ```
+    Lista las compras ordenadas por fecha descendente, y en caso de empate, por ID descendente.
+
+*   **Ventas (`ventas/api.php`, línea 125):**
+    ```sql
+    ORDER BY v.fecha_venta DESC, v.id DESC
+    ```
+    Lista las ventas mostrando primero las más recientes.
+
+*   **Gastos Operativos (`empleados/api_gastos.php`, línea 84):**
+    ```sql
+    ORDER BY g.fecha DESC, g.id DESC
+    ```
+    Ordena los gastos del más reciente al más antiguo.
+
+**3. Reportes y Visualizaciones**
+
+*   **Reporte de Compras (`reportes/api.php` y `reportes/pdf.php`):**
+    ```sql
+    ORDER BY c.fecha_compra DESC
+    ```
+    Los reportes de compras muestran las transacciones más recientes al inicio.
+
+*   **Reporte de Ventas (`reportes/api.php` y `reportes/pdf.php`):**
+    ```sql
+    ORDER BY v.fecha_venta DESC
+    ```
+    Los reportes de ventas priorizan la información más actual.
+
+*   **Porcentajes de Categorías (`config/porcentajes_categorias.php`, línea 132):**
+    ```sql
+    ORDER BY cantidad_total DESC
+    ```
+    Ordena las categorías por cantidad total descendente, mostrando primero las de mayor volumen.
+
+#### Tabla Resumen de Implementaciones LIFO:
+
+| Archivo | Línea | Módulo | Propósito | Criterio de Ordenamiento |
+|---------|-------|--------|-----------|-------------------------|
+| `productos/api.php` | 136 | Productos | Generación de códigos | `CAST(nombre AS UNSIGNED) DESC` |
+| `compras/api.php` | 82 | Compras | Listado de compras | `fecha_compra DESC, id DESC` |
+| `compras/api.php` | 233 | Compras | Numeración de facturas | `id DESC` |
+| `ventas/api.php` | 125 | Ventas | Listado de ventas | `fecha_venta DESC, id DESC` |
+| `ventas/api.php` | 268 | Ventas | Numeración de facturas | `id DESC` |
+| `empleados/api_gastos.php` | 84 | Gastos | Listado de gastos | `fecha DESC, id DESC` |
+| `reportes/api.php` | 558 | Reportes | Reporte de compras | `fecha_compra DESC` |
+| `reportes/api.php` | 691 | Reportes | Reporte de ventas | `fecha_venta DESC` |
+| `config/porcentajes_categorias.php` | 132 | Estadísticas | Porcentajes de categorías | `cantidad_total DESC` |
+| `usuarios/test_api.php` | 88 | Usuarios | Listado de usuarios | `id DESC` |
+
+#### Ventajas del Enfoque LIFO:
+
+1. **Experiencia de Usuario Mejorada:**
+   - Los usuarios ven primero la información más relevante y reciente
+   - Reduce el tiempo de búsqueda de transacciones actuales
+   - Facilita el seguimiento de operaciones recientes
+
+2. **Integridad de Datos:**
+   - Garantiza la secuencialidad correcta en códigos de productos
+   - Asegura la numeración consecutiva de facturas
+   - Previene duplicados en la generación de identificadores
+
+3. **Eficiencia en Consultas:**
+   - Combinado con índices en las columnas `id` y `fecha_*`, las consultas son rápidas
+   - La cláusula `LIMIT 1` en generación de códigos optimiza el rendimiento
+   - El ordenamiento descendente aprovecha los índices automáticos de claves primarias
+
+4. **Consistencia del Sistema:**
+   - Todos los módulos principales siguen el mismo patrón de ordenamiento
+   - Facilita el mantenimiento y comprensión del código
+   - Proporciona una experiencia uniforme en toda la aplicación
+
+#### Consideraciones Técnicas:
+
+*   **Índices de Base de Datos:** El rendimiento de LIFO depende de índices adecuados en las columnas `id` (clave primaria, indexada automáticamente) y columnas de fecha (`fecha_compra`, `fecha_venta`, `fecha_creacion`).
+*   **Concurrencia:** En la generación de códigos secuenciales, existe una pequeña ventana de concurrencia. El sistema maneja esto verificando duplicados antes de insertar y usando transacciones de base de datos.
+*   **Paginación:** Para listados grandes, se recomienda implementar paginación en el frontend, manteniendo el ordenamiento LIFO por página.
+ 
