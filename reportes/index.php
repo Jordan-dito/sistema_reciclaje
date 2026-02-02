@@ -56,6 +56,50 @@ $basePath = '';
     <link rel="stylesheet" href="../assets/css/plugins.min.css" />
     <link rel="stylesheet" href="../assets/css/kaiadmin.min.css" />
     <link rel="stylesheet" href="../assets/css/demo.css" />
+    <style>
+      /* Estilos para el campo de material con autocompletado */
+      #material_reporte {
+        transition: all 0.3s ease;
+        position: relative;
+      }
+      
+      #material_reporte:focus {
+        border-color: #1572e8;
+        box-shadow: 0 0 0 0.2rem rgba(21, 114, 232, 0.15);
+      }
+      
+      /* Icono de búsqueda dentro del input */
+      #filtro_material_container {
+        position: relative;
+      }
+      
+      #filtro_material_container::before {
+        content: "\f002"; /* Font Awesome search icon */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        right: 25px;
+        top: 38px;
+        color: #999;
+        pointer-events: none;
+        z-index: 10;
+      }
+      
+      #material_reporte {
+        padding-right: 35px;
+      }
+      
+      /* Animación al escribir */
+      @keyframes pulse-material {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.01); }
+        100% { transform: scale(1); }
+      }
+      
+      #material_reporte.typing {
+        animation: pulse-material 0.3s ease;
+      }
+    </style>
   </head>
   <body>
     <div class="wrapper">
@@ -146,9 +190,20 @@ $basePath = '';
                           <div class="col-md-3" id="filtro_material_container">
                             <div class="form-group">
                               <label>Material</label>
-                              <select id="material_reporte" name="material" class="form-control">
+                              <input type="text" 
+                                     id="material_reporte" 
+                                     name="material" 
+                                     class="form-control" 
+                                     list="materiales_list"
+                                     placeholder="Escribe o selecciona un material"
+                                     autocomplete="off">
+                              <datalist id="materiales_list">
                                 <option value="">Todos los Materiales</option>
-                              </select>
+                              </datalist>
+                              <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> 
+                                Puedes escribir o seleccionar de la lista
+                              </small>
                             </div>
                           </div>
                           <div class="col-md-2">
@@ -282,15 +337,75 @@ $basePath = '';
             success: function(response) {
               if (response.success) {
                 var materiales = [...new Set(response.data.map(p => p.material_nombre).filter(Boolean))];
-                var select = $('#material_reporte');
-                select.empty().append('<option value="">Todos los Materiales</option>');
+                var datalist = $('#materiales_list');
+                datalist.empty().append('<option value="">Todos los Materiales</option>');
                 materiales.sort().forEach(function(material) {
-                  select.append('<option value="' + material + '">' + material + '</option>');
+                  datalist.append('<option value="' + material + '">');
                 });
               }
             }
           });
         }
+        
+        // Autocompletado mejorado para material
+        $('#material_reporte').on('input', function() {
+          var valor = $(this).val();
+          var input = $(this);
+          
+          // Agregar animación de typing
+          input.addClass('typing');
+          setTimeout(function() {
+            input.removeClass('typing');
+          }, 300);
+          
+          // Si está vacío, mostrar placeholder
+          if (valor === '') {
+            input.css('border-color', '');
+            return;
+          }
+          
+          // Verificar si coincide con alguna opción del datalist
+          var opciones = $('#materiales_list option').map(function() {
+            return $(this).val();
+          }).get();
+          
+          // Buscar coincidencias parciales
+          var coincidencias = opciones.filter(function(opcion) {
+            return opcion.toLowerCase().includes(valor.toLowerCase()) && opcion !== '';
+          });
+          
+          var coincideExacto = opciones.some(function(opcion) {
+            return opcion.toLowerCase() === valor.toLowerCase();
+          });
+          
+          // Feedback visual
+          if (coincideExacto) {
+            input.css('border-color', '#1dce6c'); // Verde si coincide exacto
+            input.attr('title', '✓ Material encontrado');
+          } else if (coincidencias.length > 0) {
+            input.css('border-color', '#fdaf4b'); // Naranja si hay coincidencias parciales
+            input.attr('title', coincidencias.length + ' material(es) encontrado(s)');
+          } else if (valor.length > 0) {
+            input.css('border-color', '#f3545d'); // Rojo si no hay coincidencias
+            input.attr('title', '⚠ No se encontró el material');
+          }
+        });
+        
+        // Limpiar estilo al perder foco
+        $('#material_reporte').on('blur', function() {
+          var input = $(this);
+          setTimeout(function() {
+            input.css('border-color', '');
+            input.removeAttr('title');
+          }, 500);
+        });
+        
+        // Limpiar campo con doble click
+        $('#material_reporte').on('dblclick', function() {
+          $(this).val('');
+          $(this).css('border-color', '');
+          $(this).focus();
+        });
         
         cargarSucursalesReporte();
         cargarMaterialesReporte();
