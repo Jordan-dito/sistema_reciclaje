@@ -650,11 +650,15 @@ try {
             var categoria = producto.categoria_nombre || '-';
             var nombreEscapado = $('<div>').text(producto.nombre).html();
             
+            // Verificar si el producto ya está seleccionado
+            var yaSeleccionado = productosSeleccionados.find(function(p) { return p.id === producto.id; });
+            
             var fila = $('<tr>');
             var btnCell = $('<td>');
             var btn = $('<button>')
               .attr('type', 'button')
-              .addClass('btn btn-sm btn-primary')
+              .attr('data-producto-id', producto.id)
+              .addClass('btn btn-sm ' + (yaSeleccionado ? 'btn-success' : 'btn-primary'))
               .html('<i class="fa fa-check"></i>')
               .on('click', function(e) {
                 e.preventDefault();
@@ -721,6 +725,10 @@ try {
           
           productosSeleccionados.push(producto);
           contadorProductos++;
+          
+          // Cambiar el color del botón a verde (éxito)
+          var btn = $('#tablaProductos button[data-producto-id="' + id + '"]');
+          btn.removeClass('btn-primary').addClass('btn-success');
           
           // Renderizar la tabla de productos
           renderizarProductosAgregados();
@@ -848,6 +856,10 @@ try {
             dangerMode: true,
           }).then((willDelete) => {
             if (willDelete) {
+              // Cambiar el botón de vuelta a azul
+              var btn = $('#tablaProductos button[data-producto-id="' + producto.id + '"]');
+              btn.removeClass('btn-success').addClass('btn-primary');
+              
               // Eliminar el producto del array
               productosSeleccionados.splice(index, 1);
               
@@ -875,6 +887,9 @@ try {
             dangerMode: true,
           }).then((willDelete) => {
             if (willDelete) {
+              // Restaurar todos los botones a azul
+              $('#tablaProductos button.btn-success').removeClass('btn-success').addClass('btn-primary');
+              
               productosSeleccionados = [];
               renderizarProductosAgregados();
               calcularTotal();
