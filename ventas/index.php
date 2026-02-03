@@ -174,7 +174,7 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Fecha de Venta <span class="text-danger">*</span></label>
-                    <input type="date" id="fecha_venta" name="fecha_venta" class="form-control" required>
+                    <input type="date" id="fecha_venta" name="fecha_venta" class="form-control" required readonly style="background-color: #f5f5f5;">
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -202,13 +202,8 @@ if (!$auth->isAuthenticated()) {
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Tipo de Comprobante</label>
-                    <select id="tipo_comprobante" name="tipo_comprobante" class="form-control">
-                      <option value="factura">Factura</option>
-                      <option value="boleta">Boleta</option>
-                      <option value="recibo">Recibo</option>
-                      <option value="nota_credito">Nota de Crédito</option>
-                      <option value="otro">Otro</option>
-                    </select>
+                    <input type="text" class="form-control" value="Factura" readonly style="background-color: #f5f5f5;">
+                    <input type="hidden" id="tipo_comprobante" name="tipo_comprobante" value="factura">
                   </div>
                 </div>
                 <div class="col-md-6">
