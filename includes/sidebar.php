@@ -77,11 +77,17 @@ $modulosConfig = [
     'Gestión de Personal' => [
       'ruta' => '#',
       'subitems' => [
-        ['nombre' => 'Gestión de Empleados', 'ruta' => 'empleados/index.php', 'route' => 'gestion_empleados'],
+        ['nombre' => 'Gestión de Empleados', 'ruta' => 'empleados/index.php', 'route' => 'gestion_empleados']
+      ],
+      'routes' => ['gestion_personal', 'personal', 'personal_list', 'gestion_empleados']
+    ],
+    'Gestión Operativa' => [
+      'ruta' => '#',
+      'subitems' => [
         ['nombre' => 'Control de Asistencia', 'ruta' => 'empleados/asistencia.php', 'route' => 'asistencia_personal'],
         ['nombre' => 'Gastos Varios', 'ruta' => 'empleados/gastos_varios.php', 'route' => 'gastos_varios']
       ],
-      'routes' => ['gestion_personal', 'personal', 'personal_list', 'gestion_empleados', 'asistencia_personal', 'gastos_varios']
+      'routes' => ['gestion_operativa', 'asistencia_personal', 'gastos_varios']
     ],
     'Reporte' => [
         'ruta' => 'reportes/index.php',
