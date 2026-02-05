@@ -98,9 +98,10 @@ $modulosConfig = [
         'ruta' => '#',
         'subitems' => [
             ['nombre' => 'Compra', 'ruta' => 'compras/index.php', 'route' => 'compras'],
-            ['nombre' => 'Venta', 'ruta' => 'ventas/index.php', 'route' => 'ventas']
+            ['nombre' => 'Venta', 'ruta' => 'ventas/index.php', 'route' => 'ventas'],
+            ['nombre' => 'Flujo LIFO', 'ruta' => 'lifo/index.php', 'route' => 'lifo']
         ],
-        'routes' => ['compras', 'ventas']
+        'routes' => ['compras', 'ventas', 'lifo']
     ],
     'Relaciones Comerciales' => [
         'ruta' => '#',
