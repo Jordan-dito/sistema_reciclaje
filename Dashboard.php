@@ -566,6 +566,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                       <h5 class="card-title">
                         <i class="fas fa-chart-area"></i>
                         Flujo Diario de Compras y Ventas
+                        <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                         <span class="info-tooltip" title="Comparación diaria de ingresos y egresos">?</span>
                       </h5>
                       <a href="reportes/index.php" class="btn btn-success btn-sm btn-modern">
@@ -589,6 +590,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                     <h5 class="card-title">
                       <i class="fas fa-chart-pie"></i>
                       Compras por Material
+                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                       <span class="info-tooltip" title="Distribución de compras por tipo de material">?</span>
                     </h5>
                   </div>
@@ -603,6 +605,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                     <h5 class="card-title">
                       <i class="fas fa-chart-pie"></i>
                       Ventas por Material
+                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                       <span class="info-tooltip" title="Distribución de ventas por tipo de material">?</span>
                     </h5>
                   </div>
@@ -621,6 +624,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                     <h5 class="card-title">
                       <i class="fas fa-chart-bar"></i>
                       Análisis de Negocio por Sucursal
+                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                       <span class="info-tooltip" title="Comparación de rendimiento entre sucursales">?</span>
                     </h5>
                   </div>
@@ -639,6 +643,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                     <h5 class="card-title">
                       <i class="fas fa-trophy"></i>
                       Top 5 Productos
+                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                       <span class="info-tooltip" title="Productos más vendidos del período">?</span>
                     </h5>
                   </div>
@@ -653,6 +658,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                     <h5 class="card-title">
                       <i class="fas fa-boxes"></i>
                       Inventario
+                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                       <span class="info-tooltip" title="Distribución del inventario por categoría">?</span>
                     </h5>
                   </div>
@@ -667,6 +673,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                     <h5 class="card-title">
                       <i class="fas fa-exchange-alt"></i>
                       Transacciones
+                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                       <span class="info-tooltip" title="Estado de las transacciones del sistema">?</span>
                     </h5>
                   </div>
@@ -825,6 +832,17 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                   text: sucursal.nombre
                 }));
               });
+              
+              // Si solo hay una sucursal (usuario normal), actualizar etiquetas
+              if (response.data.length === 1) {
+                  // Esperar a que el valor se asigne (automático en algunos casos o manual)
+                  // En este caso, si el backend filtra, el select tendrá esa única opción
+                  // Podríamos seleccionarla por defecto
+                  // select.val(response.data[0].id); // Ya suele venir seleccionado si es la única
+              }
+              
+              // Actualizar etiquetas después de cargar sucursales
+              setTimeout(actualizarEtiquetasSucursal, 100);
             }
           }
         });
@@ -840,6 +858,21 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         $('.chart-container canvas').css('opacity', '1');
       }
       
+      // Función para actualizar etiquetas de sucursal
+      function actualizarEtiquetasSucursal() {
+        var nombreSucursal = $('#filtroSucursal option:selected').text();
+        var valorSucursal = $('#filtroSucursal').val();
+        
+        if (!valorSucursal || valorSucursal === "") {
+          nombreSucursal = "Todas las Sucursales";
+        }
+        
+        $('.info-sucursal').text(nombreSucursal);
+        
+        // También actualizar en opciones de ECharts si es necesario
+        // Pero con las etiquetas HTML ya debería ser suficiente visualmente
+      }
+
       // Aplicar filtros
       $('#btnAplicarFiltros').click(function() {
         filtrosActuales = {
@@ -848,6 +881,9 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           material: $('#filtroMaterial').val(),
           sucursal: $('#filtroSucursal').val()
         };
+        
+        // Actualizar etiquetas visuales
+        actualizarEtiquetasSucursal();
         
         // Validar fechas
         if (!filtrosActuales.fechaInicio || !filtrosActuales.fechaFin) {
@@ -882,6 +918,10 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         $('#filtroSucursal').val('');
         filtrosActuales.material = '';
         filtrosActuales.sucursal = '';
+        
+        // Actualizar etiquetas visuales
+        actualizarEtiquetasSucursal();
+        
         cargarTodosLosDatos();
       });
       
@@ -1611,6 +1651,14 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         // Cargar datos iniciales
         setTimeout(function() {
           console.log('Cargando datos del dashboard con ECharts...');
+          
+          // Verificar si hay una sucursal preseleccionada (para usuarios con sucursal fija)
+          var sucursalInicial = $('#filtroSucursal').val();
+          if (sucursalInicial) {
+             filtrosActuales.sucursal = sucursalInicial;
+          }
+          actualizarEtiquetasSucursal();
+          
           cargarTodosLosDatos();
         }, 300);
         

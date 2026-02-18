@@ -685,7 +685,6 @@ if (!$auth->isAuthenticated()) {
                     inventario.unidad_simbolo || inventario.unidad_nombre || '-',
                     precioVenta > 0 ? '$' + precioVenta.toFixed(2) : '-',
                     fechaCreacion,
-                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarInventario(' + inventario.id + ')"><i class="fa fa-edit"></i></button> ' +
                     '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarInventario(' + inventario.id + ')"><i class="fa fa-times"></i></button>'
                   ]);
                 });
