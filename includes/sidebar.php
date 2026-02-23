@@ -95,13 +95,13 @@ $modulosConfig = [
         'routes' => ['reportes']
     ],
     'Gestión de Inventario' => [
-        'ruta' => '#',
-        'subitems' => [
-            ['nombre' => 'Compra', 'ruta' => 'compras/index.php', 'route' => 'compras'],
-            ['nombre' => 'Venta', 'ruta' => 'ventas/index.php', 'route' => 'ventas'],
-            ['nombre' => 'Flujo FIFO', 'ruta' => 'lifo/index.php', 'route' => 'lifo']
-        ],
-        'routes' => ['compras', 'ventas', 'lifo']
+      'ruta' => '#',
+      'subitems' => [
+        ['nombre' => 'Compra', 'ruta' => 'compras/index.php', 'route' => 'compras'],
+        ['nombre' => 'Venta', 'ruta' => 'ventas/index.php', 'route' => 'ventas'],
+        ['nombre' => 'Promedio Ponderado', 'ruta' => 'lifo/index.php', 'route' => 'lifo']
+      ],
+      'routes' => ['compras', 'ventas', 'lifo']
     ],
     'Relaciones Comerciales' => [
         'ruta' => '#',
