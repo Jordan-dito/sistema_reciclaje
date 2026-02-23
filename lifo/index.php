@@ -85,8 +85,8 @@ $basePath = '..';
           <div class="page-inner">
             <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
               <div>
-                <h3 class="fw-bold mb-3">Flujo FIFO de Inventario</h3>
-                <h6 class="op-7 mb-2">Visualiza el flujo de entradas y salidas aplicando el método FIFO (First In, First Out)</h6>
+                <h3 class="fw-bold mb-3">Método del Promedio Ponderado</h3>
+                <h6 class="op-7 mb-2">Visualiza el flujo de entradas y salidas aplicando el método del costo promedio ponderado</h6>
               </div>
             </div>
 
@@ -146,15 +146,13 @@ $basePath = '..';
               </div>
             </div>
 
-            <!-- Información FIFO -->
+            <!-- Información Promedio Ponderado -->
             <div class="row mt-3">
               <div class="col-md-12">
                 <div class="alert alert-info">
-                  <h5><i class="fa fa-info-circle"></i> ¿Qué es FIFO?</h5>
+                  <h5><i class="fa fa-info-circle"></i> ¿Qué es el Método del Promedio Ponderado?</h5>
                   <p class="mb-0">
-                    <strong>FIFO (First In, First Out)</strong> significa "Primero en Entrar, Primero en Salir". 
-                    Este método de valuación de inventario asume que los productos más antiguos (los primeros que ingresaron) 
-                    son los primeros en venderse. Este reporte muestra el flujo cronológico de tus movimientos de inventario.
+                    <strong>Promedio Ponderado</strong> es un método de valuación de inventario que calcula el costo promedio de los productos disponibles después de cada compra. Cada vez que se realiza una compra, el costo promedio se actualiza considerando el nuevo costo y la cantidad adquirida. Las salidas (ventas) se valoran siempre al costo promedio vigente en ese momento.
                   </p>
                 </div>
               </div>
@@ -166,7 +164,7 @@ $basePath = '..';
                 <div class="card card-round">
                   <div class="card-header">
                     <div class="card-head-row">
-                      <div class="card-title">Resultados del Flujo FIFO</div>
+                      <div class="card-title">Resultados del Método Promedio</div>
                     </div>
                   </div>
                   <div class="card-body" id="resultadosContent">
@@ -288,7 +286,7 @@ $basePath = '..';
           }
           
           var params = {
-            action: 'flujo_fifo',
+            action: 'promedio',
             fecha_desde: fechaDesde,
             fecha_hasta: fechaHasta,
             sucursal_id: $('#sucursal_id').val(),

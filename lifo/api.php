@@ -19,7 +19,7 @@ try {
     $db = getDB();
     $action = $_GET['action'] ?? '';
     
-    if ($action === 'flujo_fifo') {
+    if ($action === 'promedio') {
         $fechaDesde = $_GET['fecha_desde'] ?? '';
         $fechaHasta = $_GET['fecha_hasta'] ?? '';
         $sucursalId = $_GET['sucursal_id'] ?? '';
@@ -29,7 +29,7 @@ try {
             throw new Exception('Las fechas son obligatorias');
         }
         
-        $resultado = generarFlujoFIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material);
+        $resultado = generarPromedioPonderado($db, $fechaDesde, $fechaHasta, $sucursalId, $material);
         echo json_encode($resultado);
     } else {
         throw new Exception('Acción no válida');
@@ -42,89 +42,54 @@ try {
     ]);
 }
 
+
 /**
- * Genera el flujo FIFO de inventario
+ * Genera el reporte de inventario usando el método del promedio ponderado
  */
-function generarFlujoFIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material) {
-    // Consulta para obtener movimientos de inventario (compras y ventas)
+function generarPromedioPonderado($db, $fechaDesde, $fechaHasta, $sucursalId, $material) {
+    // Obtener todos los movimientos (compras y ventas) ordenados cronológicamente
     $sql = "
-        SELECT 
-            'COMPRA' as tipo_movimiento,
-            c.id as movimiento_id,
-            c.fecha_compra as fecha,
-            cd.producto_id,
-            p.nombre as producto_nombre,
-            m.nombre as material_nombre,
-            cd.cantidad,
-            cd.subtotal as monto,
-            s.nombre as sucursal_nombre,
-            prov.nombre as tercero,
-            c.numero_factura
+        SELECT 'COMPRA' as tipo_movimiento, c.fecha_compra as fecha, cd.producto_id, p.nombre as producto_nombre, m.nombre as material_nombre, cd.cantidad, cd.subtotal as monto, s.nombre as sucursal_nombre, prov.nombre as tercero, c.numero_factura
         FROM compras c
         INNER JOIN compras_detalle cd ON c.id = cd.compra_id
         INNER JOIN productos p ON cd.producto_id = p.id
         LEFT JOIN materiales m ON p.material_id = m.id
         INNER JOIN sucursales s ON c.sucursal_id = s.id
         LEFT JOIN proveedores prov ON c.proveedor_id = prov.id
-        WHERE c.estado = 'completada'
-        AND c.fecha_compra BETWEEN ? AND ?
+        WHERE c.estado = 'completada' AND c.fecha_compra BETWEEN ? AND ?
     ";
-    
     $params = [$fechaDesde, $fechaHasta];
-    
     if (!empty($sucursalId)) {
         $sql .= " AND c.sucursal_id = ?";
         $params[] = $sucursalId;
     }
-    
     if (!empty($material)) {
         $sql .= " AND m.nombre = ?";
         $params[] = $material;
     }
-    
     $sql .= "
         UNION ALL
-        
-        SELECT 
-            'VENTA' as tipo_movimiento,
-            v.id as movimiento_id,
-            v.fecha_venta as fecha,
-            vd.producto_id,
-            p.nombre as producto_nombre,
-            m.nombre as material_nombre,
-            vd.cantidad,
-            vd.subtotal as monto,
-            s.nombre as sucursal_nombre,
-            v.cliente_nombre as tercero,
-            v.numero_factura
+        SELECT 'VENTA' as tipo_movimiento, v.fecha_venta as fecha, vd.producto_id, p.nombre as producto_nombre, m.nombre as material_nombre, vd.cantidad, vd.subtotal as monto, s.nombre as sucursal_nombre, v.cliente_nombre as tercero, v.numero_factura
         FROM ventas v
         INNER JOIN ventas_detalle vd ON v.id = vd.venta_id
         INNER JOIN productos p ON vd.producto_id = p.id
         LEFT JOIN materiales m ON p.material_id = m.id
         INNER JOIN sucursales s ON v.sucursal_id = s.id
-        WHERE v.estado = 'completada'
-        AND v.fecha_venta BETWEEN ? AND ?
+        WHERE v.estado = 'completada' AND v.fecha_venta BETWEEN ? AND ?
     ";
-    
     $params = array_merge($params, [$fechaDesde, $fechaHasta]);
-    
     if (!empty($sucursalId)) {
         $sql .= " AND v.sucursal_id = ?";
         $params[] = $sucursalId;
     }
-    
     if (!empty($material)) {
         $sql .= " AND m.nombre = ?";
         $params[] = $material;
     }
-    
     $sql .= " ORDER BY producto_nombre, fecha ASC, tipo_movimiento DESC";
-    
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
-    
     $movimientos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
     if (empty($movimientos)) {
         return [
             'success' => true,
@@ -132,7 +97,6 @@ function generarFlujoFIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material)
             'datos' => []
         ];
     }
-    
     // Agrupar por producto
     $porProducto = [];
     foreach ($movimientos as $mov) {
@@ -146,14 +110,81 @@ function generarFlujoFIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material)
         }
         $porProducto[$prodId]['movimientos'][] = $mov;
     }
-    
-    $html = generarHTMLFlujoFIFO($porProducto, $fechaDesde, $fechaHasta, $sucursalId, $material, $db);
-    
+    $html = generarHTMLPromedioPonderado($porProducto, $fechaDesde, $fechaHasta, $sucursalId, $material, $db);
     return [
         'success' => true,
         'html' => $html,
         'datos' => $movimientos
     ];
+}
+
+function generarHTMLPromedioPonderado($porProducto, $fechaDesde, $fechaHasta, $sucursalId, $material, $db) {
+    $html = '<div class="mb-3">';
+    $html .= '<p><strong>Período:</strong> ' . date('d/m/Y', strtotime($fechaDesde)) . ' al ' . date('d/m/Y', strtotime($fechaHasta)) . '</p>';
+    if (!empty($sucursalId)) {
+        $stmt = $db->prepare("SELECT nombre FROM sucursales WHERE id = ?");
+        $stmt->execute([$sucursalId]);
+        $suc = $stmt->fetch();
+        if ($suc) {
+            $html .= '<p><strong>Sucursal:</strong> ' . htmlspecialchars($suc['nombre']) . '</p>';
+        }
+    }
+    if (!empty($material)) {
+        $html .= '<p><strong>Material:</strong> ' . htmlspecialchars($material) . '</p>';
+    }
+    $html .= '</div>';
+    foreach ($porProducto as $prodId => $producto) {
+        $html .= '<div class="mb-4">';
+        $html .= '<h5 style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #1572e8;">';
+        $html .= '<i class="fa fa-box"></i> ' . htmlspecialchars($producto['nombre']);
+        if ($producto['material']) {
+            $html .= ' <small class="text-muted">(' . htmlspecialchars($producto['material']) . ')</small>';
+        }
+        $html .= '</h5>';
+        $html .= '<div class="table-responsive">';
+        $html .= '<table class="table table-bordered table-hover table-sm">';
+        $html .= '<thead class="thead-light"><tr>';
+        $html .= '<th style="width: 80px;">Tipo</th>';
+        $html .= '<th style="width: 100px;">Fecha</th>';
+        $html .= '<th>Sucursal</th>';
+        $html .= '<th>Tercero</th>';
+        $html .= '<th>Factura</th>';
+        $html .= '<th style="width: 100px;" class="text-right">Cantidad</th>';
+        $html .= '<th style="width: 100px;" class="text-right">Monto</th>';
+        $html .= '<th style="width: 120px;" class="text-right">Costo Promedio</th>';
+        $html .= '</tr></thead><tbody>';
+        $stock = 0;
+        $costoTotal = 0;
+        $costoPromedio = 0;
+        foreach ($producto['movimientos'] as $mov) {
+            $esCompra = $mov['tipo_movimiento'] === 'COMPRA';
+            $colorFila = $esCompra ? 'table-success' : 'table-danger';
+            $iconoTipo = $esCompra ? '<i class="fa fa-arrow-down text-success"></i>' : '<i class="fa fa-arrow-up text-danger"></i>';
+            if ($esCompra) {
+                $stock += $mov['cantidad'];
+                $costoTotal += $mov['monto'];
+                $costoPromedio = $stock > 0 ? $costoTotal / $stock : 0;
+            } else {
+                $stock -= $mov['cantidad'];
+                // El costo promedio se mantiene igual para la salida
+            }
+            $html .= '<tr class="' . $colorFila . '">';
+            $html .= '<td><strong>' . $iconoTipo . ' ' . $mov['tipo_movimiento'] . '</strong></td>';
+            $html .= '<td>' . date('d/m/Y', strtotime($mov['fecha'])) . '</td>';
+            $html .= '<td>' . htmlspecialchars($mov['sucursal_nombre']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($mov['tercero'] ?? '-') . '</td>';
+            $html .= '<td>' . htmlspecialchars($mov['numero_factura'] ?? '-') . '</td>';
+            $html .= '<td class="text-right"><strong>' . number_format($mov['cantidad'], 2) . '</strong></td>';
+            $html .= '<td class="text-right">$' . number_format($mov['monto'], 2) . '</td>';
+            $html .= '<td class="text-right">$' . number_format($costoPromedio, 2) . '</td>';
+            $html .= '</tr>';
+        }
+        $html .= '</tbody></table>';
+        $html .= '</div>';
+        $html .= '</div>';
+    }
+    $html .= '</div>';
+    return $html;
 }
 
 /**
