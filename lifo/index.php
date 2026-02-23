@@ -20,7 +20,7 @@ $basePath = '..';
 <html lang="es">
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Flujo LIFO - Sistema de Reciclaje</title>
+    <title>Flujo FIFO - Sistema de Reciclaje</title>
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
     <link rel="icon" href="../assets/img/logo.jpg" type="image/jpeg" />
 
@@ -85,8 +85,8 @@ $basePath = '..';
           <div class="page-inner">
             <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
               <div>
-                <h3 class="fw-bold mb-3">Flujo LIFO de Inventario</h3>
-                <h6 class="op-7 mb-2">Visualiza el flujo de entradas y salidas aplicando el método LIFO (Last In, First Out)</h6>
+                <h3 class="fw-bold mb-3">Flujo FIFO de Inventario</h3>
+                <h6 class="op-7 mb-2">Visualiza el flujo de entradas y salidas aplicando el método FIFO (First In, First Out)</h6>
               </div>
             </div>
 
@@ -146,15 +146,15 @@ $basePath = '..';
               </div>
             </div>
 
-            <!-- Información LIFO -->
+            <!-- Información FIFO -->
             <div class="row mt-3">
               <div class="col-md-12">
                 <div class="alert alert-info">
-                  <h5><i class="fa fa-info-circle"></i> ¿Qué es LIFO?</h5>
+                  <h5><i class="fa fa-info-circle"></i> ¿Qué es FIFO?</h5>
                   <p class="mb-0">
-                    <strong>LIFO (Last In, First Out)</strong> significa "Último en Entrar, Primero en Salir". 
-                    Este método de valuación de inventario asume que los productos más recientes que ingresan al inventario 
-                    son los primeros en venderse. Este reporte muestra cómo se aplica este método en tus movimientos de inventario.
+                    <strong>FIFO (First In, First Out)</strong> significa "Primero en Entrar, Primero en Salir". 
+                    Este método de valuación de inventario asume que los productos más antiguos (los primeros que ingresaron) 
+                    son los primeros en venderse. Este reporte muestra el flujo cronológico de tus movimientos de inventario.
                   </p>
                 </div>
               </div>
@@ -166,7 +166,7 @@ $basePath = '..';
                 <div class="card card-round">
                   <div class="card-header">
                     <div class="card-head-row">
-                      <div class="card-title">Resultados del Flujo LIFO</div>
+                      <div class="card-title">Resultados del Flujo FIFO</div>
                     </div>
                   </div>
                   <div class="card-body" id="resultadosContent">
@@ -228,7 +228,7 @@ $basePath = '..';
         
         // Evento buscar
         $('#btnBuscar').click(function() {
-          buscarFlujoLIFO();
+          buscarFlujoFIFO();
         });
         
         // Evento exportar
@@ -272,7 +272,7 @@ $basePath = '..';
           });
         }
         
-        function buscarFlujoLIFO() {
+        function buscarFlujoFIFO() {
           var form = $('#formFiltros')[0];
           if (!form.checkValidity()) {
             form.reportValidity();
@@ -288,7 +288,7 @@ $basePath = '..';
           }
           
           var params = {
-            action: 'flujo_lifo',
+            action: 'flujo_fifo',
             fecha_desde: fechaDesde,
             fecha_hasta: fechaHasta,
             sucursal_id: $('#sucursal_id').val(),

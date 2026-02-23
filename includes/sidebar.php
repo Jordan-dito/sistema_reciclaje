@@ -99,7 +99,7 @@ $modulosConfig = [
         'subitems' => [
             ['nombre' => 'Compra', 'ruta' => 'compras/index.php', 'route' => 'compras'],
             ['nombre' => 'Venta', 'ruta' => 'ventas/index.php', 'route' => 'ventas'],
-            ['nombre' => 'Flujo LIFO', 'ruta' => 'lifo/index.php', 'route' => 'lifo']
+            ['nombre' => 'Flujo FIFO', 'ruta' => 'lifo/index.php', 'route' => 'lifo']
         ],
         'routes' => ['compras', 'ventas', 'lifo']
     ],

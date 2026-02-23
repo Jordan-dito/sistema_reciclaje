@@ -87,41 +87,14 @@ if (!$auth->isAuthenticated()) {
                   <div class="card-header">
                     <div class="card-head-row">
                       <div class="card-title">Lista de Inventarios</div>
+                      <div class="card-tools">
+                        <select class="form-control form-control-sm" id="filtroSucursal" style="width: 200px; display: inline-block;">
+                          <option value="">Todas las Sucursales</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                   <div class="card-body">
-                    <!-- Filtros de búsqueda -->
-                    <div class="row mb-4">
-                      <div class="col-md-4">
-                        <div class="form-group p-0">
-                          <label class="form-label">Filtrar por Sucursal</label>
-                          <select class="form-control" id="filtroSucursal">
-                            <option value="">Todas las Sucursales</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="form-group p-0">
-                          <label class="form-label">Filtrar por Material</label>
-                          <select class="form-control" id="filtroMaterialTabla">
-                            <option value="">Todos los Materiales</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="form-group p-0">
-                          <label class="form-label">Fecha Inicio</label>
-                          <input type="date" class="form-control" id="filtroFechaInicio">
-                        </div>
-                      </div>
-                      <div class="col-md-3">
-                        <div class="form-group p-0">
-                          <label class="form-label">Fecha Fin</label>
-                          <input type="date" class="form-control" id="filtroFechaFin">
-                        </div>
-                      </div>
-                    </div>
-
                     <div class="table-responsive">
                       <table id="inventariosTable" class="display table table-striped table-hover">
                         <thead>
@@ -133,7 +106,6 @@ if (!$auth->isAuthenticated()) {
                             <th>Peso</th>
                             <th>Unidad</th>
                             <th>Precio Venta</th>
-                            <th>Fecha Registro</th>
                             <th>Acciones</th>
                           </tr>
                         </thead>
@@ -406,17 +378,12 @@ if (!$auth->isAuthenticated()) {
             success: function(response) {
               if (response.success) {
                 todosLosProductos = response.data;
-                // Cargar materiales únicos para el filtro del modal
+                // Cargar materiales únicos para el filtro
                 var materiales = [...new Set(response.data.map(p => p.material_nombre).filter(Boolean))];
                 var selectMaterial = $('#filtroMaterial');
-                var selectMaterialTabla = $('#filtroMaterialTabla');
-                
                 selectMaterial.empty().append('<option value="">Todos los materiales</option>');
-                selectMaterialTabla.empty().append('<option value="">Todos los Materiales</option>');
-                
                 materiales.sort().forEach(function(material) {
                   selectMaterial.append('<option value="' + material + '">' + material + '</option>');
-                  selectMaterialTabla.append('<option value="' + material + '">' + material + '</option>');
                 });
                 
                 // Cargar categorías únicas para el filtro
@@ -653,17 +620,11 @@ if (!$auth->isAuthenticated()) {
         });
         
         
-        window.cargarInventarios = function() {
-          var sucursal_id = $('#filtroSucursal').val();
-          var material = $('#filtroMaterialTabla').val();
-          var fecha_inicio = $('#filtroFechaInicio').val();
-          var fecha_fin = $('#filtroFechaFin').val();
-          
+        window.cargarInventarios = function(sucursal_id = null) {
           var url = 'api.php?action=listar';
-          if (sucursal_id) url += '&sucursal_id=' + sucursal_id;
-          if (material) url += '&material=' + encodeURIComponent(material);
-          if (fecha_inicio) url += '&fecha_inicio=' + fecha_inicio;
-          if (fecha_fin) url += '&fecha_fin=' + fecha_fin;
+          if (sucursal_id) {
+            url += '&sucursal_id=' + sucursal_id;
+          }
           
           $.ajax({
             url: url,
@@ -674,7 +635,6 @@ if (!$auth->isAuthenticated()) {
                 table.clear();
                 response.data.forEach(function(inventario) {
                   var precioVenta = parseFloat(inventario.precio_venta) || 0;
-                  var fechaCreacion = inventario.fecha_creacion ? new Date(inventario.fecha_creacion).toLocaleDateString() : '-';
                   
                   table.row.add([
                     inventario.sucursal_nombre,
@@ -684,7 +644,7 @@ if (!$auth->isAuthenticated()) {
                     inventario.cantidad,
                     inventario.unidad_simbolo || inventario.unidad_nombre || '-',
                     precioVenta > 0 ? '$' + precioVenta.toFixed(2) : '-',
-                    fechaCreacion,
+                    '<button class="btn btn-link btn-primary btn-sm" onclick="editarInventario(' + inventario.id + ')"><i class="fa fa-edit"></i></button> ' +
                     '<button class="btn btn-link btn-danger btn-sm" onclick="eliminarInventario(' + inventario.id + ')"><i class="fa fa-times"></i></button>'
                   ]);
                 });
@@ -697,8 +657,8 @@ if (!$auth->isAuthenticated()) {
           });
         };
         
-        $('#filtroSucursal, #filtroMaterialTabla, #filtroFechaInicio, #filtroFechaFin').change(function() {
-          cargarInventarios();
+        $('#filtroSucursal').change(function() {
+          cargarInventarios($(this).val() || null);
         });
         
         $('#btnGuardarInventario').click(function() {

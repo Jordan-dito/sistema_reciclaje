@@ -1,6 +1,6 @@
 <?php
 /**
- * API para Flujo LIFO de Inventario
+ * API para Flujo FIFO de Inventario
  * Sistema de Gestión de Reciclaje
  */
 
@@ -19,7 +19,7 @@ try {
     $db = getDB();
     $action = $_GET['action'] ?? '';
     
-    if ($action === 'flujo_lifo') {
+    if ($action === 'flujo_fifo') {
         $fechaDesde = $_GET['fecha_desde'] ?? '';
         $fechaHasta = $_GET['fecha_hasta'] ?? '';
         $sucursalId = $_GET['sucursal_id'] ?? '';
@@ -29,7 +29,7 @@ try {
             throw new Exception('Las fechas son obligatorias');
         }
         
-        $resultado = generarFlujoLIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material);
+        $resultado = generarFlujoFIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material);
         echo json_encode($resultado);
     } else {
         throw new Exception('Acción no válida');
@@ -43,9 +43,9 @@ try {
 }
 
 /**
- * Genera el flujo LIFO de inventario
+ * Genera el flujo FIFO de inventario
  */
-function generarFlujoLIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material) {
+function generarFlujoFIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material) {
     // Consulta para obtener movimientos de inventario (compras y ventas)
     $sql = "
         SELECT 
@@ -118,7 +118,7 @@ function generarFlujoLIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material)
         $params[] = $material;
     }
     
-    $sql .= " ORDER BY producto_nombre, fecha DESC, tipo_movimiento DESC";
+    $sql .= " ORDER BY producto_nombre, fecha ASC, tipo_movimiento DESC";
     
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -147,7 +147,7 @@ function generarFlujoLIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material)
         $porProducto[$prodId]['movimientos'][] = $mov;
     }
     
-    $html = generarHTMLFlujoLIFO($porProducto, $fechaDesde, $fechaHasta, $sucursalId, $material, $db);
+    $html = generarHTMLFlujoFIFO($porProducto, $fechaDesde, $fechaHasta, $sucursalId, $material, $db);
     
     return [
         'success' => true,
@@ -157,9 +157,9 @@ function generarFlujoLIFO($db, $fechaDesde, $fechaHasta, $sucursalId, $material)
 }
 
 /**
- * Genera el HTML para mostrar el flujo LIFO
+ * Genera el HTML para mostrar el flujo FIFO
  */
-function generarHTMLFlujoLIFO($porProducto, $fechaDesde, $fechaHasta, $sucursalId, $material, $db) {
+function generarHTMLFlujoFIFO($porProducto, $fechaDesde, $fechaHasta, $sucursalId, $material, $db) {
     $html = '<div class="mb-3">';
     $html .= '<p><strong>Período:</strong> ' . date('d/m/Y', strtotime($fechaDesde)) . ' al ' . date('d/m/Y', strtotime($fechaHasta)) . '</p>';
     

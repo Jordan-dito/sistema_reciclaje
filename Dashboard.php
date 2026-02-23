@@ -462,7 +462,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                         <label for="filtroMaterial">
                           <i class="fas fa-recycle me-1"></i>Material
                         </label>
-                        <select class="form-control" id="filtroMaterial">
+                        <select class="form-control" id="filtroMaterial" disabled>
                           <option value="">Todos los materiales</option>
                         </select>
                       </div>
@@ -560,7 +560,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
             <!-- Gráfico: Flujo Diario de Compras y Ventas -->
             <div class="row animate-in" style="animation-delay: 0.5s">
               <div class="col-md-12">
-                <div class="chart-card">
+                <div class="chart-card" id="card-flujoDiario">
                   <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
                       <h5 class="card-title">
@@ -569,10 +569,12 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                         <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                         <span class="info-tooltip" title="Comparación diaria de ingresos y egresos">?</span>
                       </h5>
-                      <a href="reportes/index.php" class="btn btn-success btn-sm btn-modern">
-                        <i class="fa fa-file-pdf me-2"></i>
-                        Exportar PDF
-                      </a>
+                      <div class="d-flex align-items-center gap-2">
+                        <a href="reportes/index.php" class="btn btn-success btn-sm btn-modern">
+                          <i class="fa fa-file-pdf me-2"></i>
+                          Exportar PDF
+                        </a>
+                      </div>
                     </div>
                   </div>
                   <div class="card-body">
@@ -582,35 +584,57 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
               </div>
             </div>
 
-            <!-- Análisis Comparativo -->
+            <!-- Fila de Distribución: Compras, Ventas e Inventario -->
             <div class="row g-4 animate-in" style="animation-delay: 0.6s">
-              <div class="col-md-6">
-                <div class="chart-card">
+              <!-- Compras por Material -->
+              <div class="col-md-4">
+                <div class="chart-card" id="card-comprasMaterial">
                   <div class="card-header">
-                    <h5 class="card-title">
-                      <i class="fas fa-chart-pie"></i>
-                      Compras por Material
-                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
-                      <span class="info-tooltip" title="Distribución de compras por tipo de material">?</span>
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h5 class="card-title" style="font-size: 1rem;">
+                        <i class="fas fa-chart-pie"></i>
+                        Compras
+                        <span class="info-tooltip" title="Distribución de compras por tipo de material">?</span>
+                        <span class="filter-badge" style="display:none;">Filtrado</span>
+                      </h5>
+                      <button class="btn btn-sm btn-light chart-filter-toggle" title="Opciones de Visualización">
+                        <i class="fas fa-cog text-secondary"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="chart-filter-panel" style="display:none;">
+                    <!-- Filtros individuales eliminados -->
                   </div>
                   <div class="card-body">
-                    <div id="comprasMaterialChart" style="width: 100%; height: 400px;"></div>
+                    <div id="comprasMaterialChart" style="width: 100%; height: 350px;"></div>
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="chart-card">
+
+              <!-- Ventas por Material -->
+              <!-- Gráfico de Ventas por Material eliminado -->
+
+              <!-- Inventario -->
+              <div class="col-md-4">
+                <div class="chart-card" id="card-inventario">
                   <div class="card-header">
-                    <h5 class="card-title">
-                      <i class="fas fa-chart-pie"></i>
-                      Ventas por Material
-                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
-                      <span class="info-tooltip" title="Distribución de ventas por tipo de material">?</span>
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h5 class="card-title" style="font-size: 1rem;">
+                        <i class="fas fa-boxes"></i>
+                        Inventario
+                        <span class="info-tooltip" title="Distribución del inventario por categoría">?</span>
+                        <span class="filter-badge" style="display:none;">Filtrado</span>
+                      </h5>
+                      <button class="btn btn-sm btn-light chart-filter-toggle" title="Filtros Avanzados">
+                        <i class="fas fa-filter text-secondary"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="chart-filter-panel" style="display:none;">
+                    <!-- Filtros individuales eliminados -->
                   </div>
                   <div class="card-body">
-                    <div id="ventasMaterialChart" style="width: 100%; height: 400px;"></div>
+                    <div id="inventarioChart" style="width: 100%; height: 350px;"></div>
                   </div>
                 </div>
               </div>
@@ -619,66 +643,16 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
             <!-- Análisis por Sucursal -->
             <div class="row animate-in" style="animation-delay: 0.7s">
               <div class="col-md-12">
-                <div class="chart-card">
+                <div class="chart-card" id="card-analisisSucursal">
                   <div class="card-header">
                     <h5 class="card-title">
                       <i class="fas fa-chart-bar"></i>
                       Análisis de Negocio por Sucursal
-                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
                       <span class="info-tooltip" title="Comparación de rendimiento entre sucursales">?</span>
                     </h5>
                   </div>
                   <div class="card-body">
                     <div id="analisisSucursalChart" style="width: 100%; height: 450px;"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Gráficos adicionales (3 columnas) -->
-            <div class="row g-4 animate-in" style="animation-delay: 0.8s">
-              <div class="col-md-4">
-                <div class="chart-card">
-                  <div class="card-header">
-                    <h5 class="card-title">
-                      <i class="fas fa-trophy"></i>
-                      Top 5 Productos
-                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
-                      <span class="info-tooltip" title="Productos más vendidos del período">?</span>
-                    </h5>
-                  </div>
-                  <div class="card-body">
-                    <div id="topProductosChart" style="width: 100%; height: 350px;"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="chart-card">
-                  <div class="card-header">
-                    <h5 class="card-title">
-                      <i class="fas fa-boxes"></i>
-                      Inventario
-                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
-                      <span class="info-tooltip" title="Distribución del inventario por categoría">?</span>
-                    </h5>
-                  </div>
-                  <div class="card-body">
-                    <div id="inventarioChart" style="width: 100%; height: 350px;"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="chart-card">
-                  <div class="card-header">
-                    <h5 class="card-title">
-                      <i class="fas fa-exchange-alt"></i>
-                      Transacciones
-                      <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
-                      <span class="info-tooltip" title="Estado de las transacciones del sistema">?</span>
-                    </h5>
-                  </div>
-                  <div class="card-body">
-                    <div id="estadoTransaccionesChart" style="width: 100%; height: 350px;"></div>
                   </div>
                 </div>
               </div>
@@ -784,6 +758,13 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         sucursal: ''
       };
       
+      // Filtros locales por gráfico (sub-filtros opcionales)
+      var filtrosLocales = {
+        'card-comprasMaterial': { fechaInicio: '', fechaFin: '', sucursal: '', metrica: 'monto' },
+        'card-ventasMaterial': { fechaInicio: '', fechaFin: '', sucursal: '', metrica: 'monto' },
+        'card-inventario': { fechaInicio: '', fechaFin: '', sucursal: '' }
+      };
+      
       // Inicializar fechas por defecto (último mes)
       function inicializarFechas() {
         var hoy = new Date();
@@ -806,12 +787,16 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           success: function(response) {
             if (response.success && response.data) {
               var select = $('#filtroMaterial');
+              // Forzar opción por defecto al recargar listado
+              select.empty().append('<option value="">Todos los materiales</option>');
               response.data.forEach(function(material) {
                 select.append($('<option>', {
                   value: material.nombre,
                   text: material.nombre
                 }));
               });
+              // Mantener "Todos los materiales" como valor inicial
+              select.val('');
             }
           }
         });
@@ -826,22 +811,19 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           success: function(response) {
             if (response.success && response.data) {
               var select = $('#filtroSucursal');
+              var selectsLocales = $('.chart-card .filter-sucursal');
+              
               response.data.forEach(function(sucursal) {
-                select.append($('<option>', {
+                var option = $('<option>', {
                   value: sucursal.id,
                   text: sucursal.nombre
-                }));
+                });
+                select.append(option);
+                selectsLocales.each(function() {
+                  $(this).append(option.clone());
+                });
               });
               
-              // Si solo hay una sucursal (usuario normal), actualizar etiquetas
-              if (response.data.length === 1) {
-                  // Esperar a que el valor se asigne (automático en algunos casos o manual)
-                  // En este caso, si el backend filtra, el select tendrá esa única opción
-                  // Podríamos seleccionarla por defecto
-                  // select.val(response.data[0].id); // Ya suele venir seleccionado si es la única
-              }
-              
-              // Actualizar etiquetas después de cargar sucursales
               setTimeout(actualizarEtiquetasSucursal, 100);
             }
           }
@@ -878,7 +860,8 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         filtrosActuales = {
           fechaInicio: $('#filtroFechaInicio').val(),
           fechaFin: $('#filtroFechaFin').val(),
-          material: $('#filtroMaterial').val(),
+          // Material queda bloqueado en "Todos los materiales"
+          material: '',
           sucursal: $('#filtroSucursal').val()
         };
         
@@ -919,35 +902,94 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         filtrosActuales.material = '';
         filtrosActuales.sucursal = '';
         
+        filtrosLocales['card-comprasMaterial'] = { fechaInicio: '', fechaFin: '', sucursal: '', metrica: 'monto' };
+        filtrosLocales['card-ventasMaterial'] = { fechaInicio: '', fechaFin: '', sucursal: '', metrica: 'monto' };
+        filtrosLocales['card-inventario'] = { fechaInicio: '', fechaFin: '', sucursal: '' };
+        
+        $('#card-comprasMaterial .filter-fecha-inicio, #card-comprasMaterial .filter-fecha-fin').val('');
+        $('#card-ventasMaterial .filter-fecha-inicio, #card-ventasMaterial .filter-fecha-fin').val('');
+        $('#card-inventario .filter-fecha-inicio, #card-inventario .filter-fecha-fin, #card-inventario .filter-sucursal').val('');
+        $('#mc-monto, #mv-monto').prop('checked', true);
+        $('.filter-badge').hide();
+        
         // Actualizar etiquetas visuales
         actualizarEtiquetasSucursal();
         
         cargarTodosLosDatos();
       });
       
-      // Construir parámetros de URL
-      function buildQueryParams() {
+      // Actualizar indicador visual de sub-filtro aplicado
+      function actualizarBadgeFiltro(cardId) {
+        var card = $('#' + cardId);
+        var badge = card.find('.filter-badge');
+        var local = filtrosLocales[cardId] || {};
+        var tieneFiltro = Boolean(local.fechaInicio || local.fechaFin || local.sucursal || (local.metrica && local.metrica !== 'monto'));
+        badge.toggle(tieneFiltro);
+      }
+      
+      // Toggle panel de sub-filtros por gráfico
+      $(document).on('click', '.chart-filter-toggle', function() {
+        $(this).closest('.chart-card').find('.chart-filter-panel').first().slideToggle(160);
+      });
+      
+      // Filtros individuales eliminados
+      
+      // Construir parámetros de URL (globales + sub-filtros locales)
+      function buildQueryParams(cardIdOrExclude) {
         var params = [];
-        if (filtrosActuales.fechaInicio) params.push('fecha_desde=' + filtrosActuales.fechaInicio);
-        if (filtrosActuales.fechaFin) params.push('fecha_hasta=' + filtrosActuales.fechaFin);
-        if (filtrosActuales.material) params.push('material=' + encodeURIComponent(filtrosActuales.material));
-        if (filtrosActuales.sucursal) params.push('sucursal_id=' + filtrosActuales.sucursal);
+        var cardId = null;
+        var excludeMaterial = false;
+        
+        if (typeof cardIdOrExclude === 'boolean') {
+          excludeMaterial = cardIdOrExclude;
+        } else if (typeof cardIdOrExclude === 'string') {
+          cardId = cardIdOrExclude;
+        }
+        
+        var f = Object.assign({}, filtrosActuales);
+        // Solo usar filtros globales
+        if (f.fechaInicio) params.push('fecha_desde=' + f.fechaInicio);
+        if (f.fechaFin) params.push('fecha_hasta=' + f.fechaFin);
+        if (f.material) params.push('material=' + encodeURIComponent(f.material));
+        if (f.sucursal) params.push('sucursal_id=' + f.sucursal);
         return params.length > 0 ? '&' + params.join('&') : '';
       }
       
+      // Función para recargar un gráfico específico
+      function recargarGrafico(cardId) {
+          mostrarLoadingCard(cardId);
+          switch(cardId) {
+              case 'card-flujoDiario': cargarFlujoDiario(); break;
+              case 'card-comprasMaterial': cargarComprasPorMaterial(); break;
+              case 'card-ventasMaterial': cargarVentasPorMaterial(); break;
+              case 'card-analisisSucursal': cargarAnalisisPorSucursal(); break;
+              case 'card-inventario': cargarInventarioPorCategoria(); break;
+              // case 'card-topProductos': cargarTopProductos(); break;
+              // case 'card-transacciones': cargarEstadoTransacciones(); break;
+          }
+          setTimeout(function() { ocultarLoadingCard(cardId); }, 500);
+      }
+      
+      function mostrarLoadingCard(cardId) {
+          $('#' + cardId).find('.card-body').css('opacity', '0.5');
+      }
+      
+      function ocultarLoadingCard(cardId) {
+          $('#' + cardId).find('.card-body').css('opacity', '1');
+      }
+
       // Función principal para cargar todos los datos
       function cargarTodosLosDatos() {
         cargarEstadisticas();
         cargarFlujoDiario();
         cargarComprasPorMaterial();
-        cargarVentasPorMaterial();
         cargarAnalisisPorSucursal();
-        cargarTopProductos();
         cargarInventarioPorCategoria();
-        cargarEstadoTransacciones();
+        // cargarTopProductos(); // Deshabilitado para simplificar vista
+        // cargarEstadoTransacciones(); // Deshabilitado para simplificar vista
       }
       
-      // Función para formatear números con separadores de miles
+      // Función para formatear números
       function formatearMoneda(valor) {
         return '$' + valor.toLocaleString('es-ES', {
           minimumFractionDigits: 2,
@@ -955,17 +997,17 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         });
       }
       
-      // Cargar estadísticas (tarjetas superiores)
+      // Cargar estadísticas globales (sin ID de card específico, usan filtros globales)
       function cargarEstadisticas() {
         var params = buildQueryParams();
-        
+
         // Cargar compras
         $.ajax({
           url: 'compras/api.php?action=listar' + params,
           method: 'GET',
           dataType: 'json',
           success: function(response) {
-            if (response.success && response.data) {
+            if (response.success && response.data && response.data.length > 0) {
               var totalCompras = 0;
               response.data.forEach(function(compra) {
                 if (compra.estado !== 'cancelada') {
@@ -973,23 +1015,22 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                 }
               });
               $('#statTotalCompras').text(formatearMoneda(totalCompras));
-              $('#statTotalCompras').data('valor', totalCompras); // Guardar valor numérico
+              $('#statTotalCompras').data('valor', totalCompras);
             } else {
-              $('#statTotalCompras').text('$0.00');
+              $('#statTotalCompras').text('Sin datos');
+              $('#statTotalCompras').data('valor', 0);
             }
           },
-          error: function() {
-            $('#statTotalCompras').text('$0.00');
-          }
+          error: function() { $('#statTotalCompras').text('Sin datos'); $('#statTotalCompras').data('valor', 0); }
         });
-        
-        // Cargar ventas
+
+        // Cargar ventas y calcular margen
         $.ajax({
           url: 'ventas/api.php?action=listar' + params,
           method: 'GET',
           dataType: 'json',
           success: function(response) {
-            if (response.success && response.data) {
+            if (response.success && response.data && response.data.length > 0) {
               var totalVentas = 0;
               response.data.forEach(function(venta) {
                 if (venta.estado !== 'cancelada') {
@@ -997,44 +1038,41 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                 }
               });
               $('#statTotalVentas').text(formatearMoneda(totalVentas));
-              $('#statTotalVentas').data('valor', totalVentas); // Guardar valor numérico
-              
-              // Calcular ganancia y margen
               var totalCompras = $('#statTotalCompras').data('valor') || 0;
               var ganancia = totalVentas - totalCompras;
               var margen = totalVentas > 0 ? ((ganancia / totalVentas) * 100) : 0;
-              
               $('#statGanancia').text(formatearMoneda(ganancia));
               $('#statMargen').text(margen.toFixed(1) + '%');
-              
-              // Actualizar badge de margen
               var badgeMargen = $('#badgeMargen');
+              badgeMargen.removeClass('bg-success bg-warning bg-danger');
               if (margen >= 30) {
-                badgeMargen.removeClass('bg-warning bg-danger').addClass('bg-success').text('Excelente').show();
+                badgeMargen.addClass('bg-success').text('Excelente').show();
               } else if (margen >= 15) {
-                badgeMargen.removeClass('bg-success bg-danger').addClass('bg-warning').text('Bueno').show();
+                badgeMargen.addClass('bg-warning').text('Bueno').show();
               } else if (margen > 0) {
-                badgeMargen.removeClass('bg-success bg-warning').addClass('bg-danger').text('Bajo').show();
+                badgeMargen.addClass('bg-danger').text('Bajo').show();
               } else {
                 badgeMargen.hide();
               }
             } else {
-              $('#statTotalVentas').text('$0.00');
-              $('#statGanancia').text('$0.00');
-              $('#statMargen').text('0%');
+              $('#statTotalVentas').text('Sin datos');
+              $('#statGanancia').text('Sin datos');
+              $('#statMargen').text('Sin datos');
+              $('#badgeMargen').hide();
             }
           },
           error: function() {
-            $('#statTotalVentas').text('$0.00');
-            $('#statGanancia').text('$0.00');
-            $('#statMargen').text('0%');
+            $('#statTotalVentas').text('Sin datos');
+            $('#statGanancia').text('Sin datos');
+            $('#statMargen').text('Sin datos');
+            $('#badgeMargen').hide();
           }
         });
       }
-      
+
       // Gráfico 1: Flujo Diario de Compras y Ventas con ECharts
       function cargarFlujoDiario() {
-        var params = buildQueryParams();
+        var params = buildQueryParams(false); // Aplica filtro material
         
         Promise.all([
           $.ajax({ url: 'compras/api.php?action=listar' + params, method: 'GET', dataType: 'json' }),
@@ -1559,12 +1597,13 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
               
               var ctx = document.getElementById('inventarioChart').getContext('2d');
               chartInventario = new Chart(ctx, {
-                type: 'pie',
+                type: 'pie', // Cambio a pie para consistencia con compras/ventas
                 data: {
                   labels: labels,
                   datasets: [{
                     data: valores,
-                    backgroundColor: colores.slice(0, labels.length)
+                    backgroundColor: coloresProfesionales.slice(0, labels.length),
+                    borderWidth: 2
                   }]
                 },
                 options: {
@@ -1577,6 +1616,17 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                         padding: 10,
                         usePointStyle: true
                       }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.label || '';
+                                var value = context.parsed;
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = ((value / total) * 100).toFixed(1) + "%";
+                                return label + ': ' + value + ' (' + percentage + ')';
+                            }
+                        }
                     }
                   }
                 }
@@ -1668,9 +1718,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           if (chartComprasMaterial) chartComprasMaterial.resize();
           if (chartVentasMaterial) chartVentasMaterial.resize();
           if (chartAnalisisSucursal) chartAnalisisSucursal.resize();
-          if (chartTopProductos) chartTopProductos.resize();
           if (chartInventario) chartInventario.resize();
-          if (chartEstadoTransacciones) chartEstadoTransacciones.resize();
         });
       });
     </script>

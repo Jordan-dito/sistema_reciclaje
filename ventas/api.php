@@ -58,6 +58,8 @@ try {
                 
                 $sucursal_id = $_GET['sucursal_id'] ?? $sucursal_usuario;
                 $filtro_estado = $_GET['estado'] ?? 'activos'; // Por defecto solo activos
+                $fecha_desde = $_GET['fecha_desde'] ?? null;
+                $fecha_hasta = $_GET['fecha_hasta'] ?? null;
                 
                 // Verificar que la tabla ventas existe
                 try {
@@ -121,7 +123,16 @@ try {
                     $sql .= " AND v.estado = ?";
                     $params[] = $filtro_estado;
                 }
-                
+
+                if ($fecha_desde) {
+                    $sql .= " AND v.fecha_venta >= ?";
+                    $params[] = $fecha_desde;
+                }
+                if ($fecha_hasta) {
+                    $sql .= " AND v.fecha_venta <= ?";
+                    $params[] = $fecha_hasta;
+                }
+
                 $sql .= " ORDER BY v.fecha_venta DESC, v.id DESC";
                 
                 $stmt = $db->prepare($sql);

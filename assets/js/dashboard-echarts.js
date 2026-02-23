@@ -5,7 +5,8 @@
 
 // Gráfico 2: Compras por Material (Doughnut)
 function cargarComprasPorMaterial() {
-  var params = buildQueryParams();
+  var params = typeof buildQueryParams === 'function' ? buildQueryParams() : '';
+  var esPeso = false; // Solo dinero, ya que no hay filtro individual
   
   $.ajax({
     url: 'compras/api.php?action=listar' + params,
@@ -14,16 +15,15 @@ function cargarComprasPorMaterial() {
     success: function(response) {
       if (response.success && response.data) {
         var datosPorMaterial = {};
-        
         response.data.forEach(function(compra) {
           if (compra.estado !== 'cancelada' && compra.detalles) {
             compra.detalles.forEach(function(detalle) {
               var material = detalle.material_nombre || 'Sin especificar';
-              datosPorMaterial[material] = (datosPorMaterial[material] || 0) + parseFloat(detalle.subtotal || 0);
+              var valor = esPeso ? parseFloat(detalle.cantidad || 0) : parseFloat(detalle.subtotal || 0);
+              datosPorMaterial[material] = (datosPorMaterial[material] || 0) + valor;
             });
           }
         });
-        
         var data = Object.keys(datosPorMaterial).map(function(key, index) {
           return {
             name: key,
@@ -33,111 +33,17 @@ function cargarComprasPorMaterial() {
             }
           };
         });
-        
-        if (!chartComprasMaterial) {
-          chartComprasMaterial = echarts.init(document.getElementById('comprasMaterialChart'));
+        // Si solo hay un dato y es 'Sin especificar', ocultar el gráfico
+        if (data.length === 0 || (data.length === 1 && data[0].name === 'Sin especificar')) {
+          $('#comprasMaterialChart').html('<div style="text-align:center;color:#888;padding:60px 0;">Sin datos para los filtros seleccionados</div>');
+          if (chartVentasMaterial) { chartVentasMaterial.clear(); }
+          return;
+        } else {
+          $('#comprasMaterialChart').html('');
         }
-        
-        var option = {
-          tooltip: {
-            trigger: 'item',
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            borderWidth: 0,
-            textStyle: {
-              color: '#fff',
-              fontSize: 13
-            },
-            formatter: function(params) {
-              return params.marker + ' ' + params.name + '<br/>' +
-                     '$' + params.value.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) +
-                     ' (' + params.percent + '%)';
-            }
-          },
-          legend: {
-            orient: 'horizontal',
-            bottom: 10,
-            textStyle: {
-              fontSize: 12
-            },
-            itemWidth: 12,
-            itemHeight: 12
-          },
-          series: [
-            {
-              name: 'Compras',
-              type: 'pie',
-              radius: ['45%', '70%'],
-              center: ['50%', '45%'],
-              avoidLabelOverlap: true,
-              itemStyle: {
-                borderRadius: 8,
-                borderColor: '#fff',
-                borderWidth: 3
-              },
-              label: {
-                show: false
-              },
-              emphasis: {
-                label: {
-                  show: true,
-                  fontSize: 14,
-                  fontWeight: 'bold'
-                },
-                itemStyle: {
-                  shadowBlur: 15,
-                  shadowOffsetX: 0,
-                  shadowColor: 'rgba(0, 0, 0, 0.3)'
-                }
-              },
-              labelLine: {
-                show: false
-              },
-              data: data
-            }
-          ]
-        };
-        
-        chartComprasMaterial.setOption(option);
-      }
-    }
-  });
-}
-
-// Gráfico 3: Ventas por Material (Doughnut)
-function cargarVentasPorMaterial() {
-  var params = buildQueryParams();
-  
-  $.ajax({
-    url: 'ventas/api.php?action=listar' + params,
-    method: 'GET',
-    dataType: 'json',
-    success: function(response) {
-      if (response.success && response.data) {
-        var datosPorMaterial = {};
-        
-        response.data.forEach(function(venta) {
-          if (venta.estado !== 'cancelada' && venta.detalles) {
-            venta.detalles.forEach(function(detalle) {
-              var material = detalle.material_nombre || 'Sin especificar';
-              datosPorMaterial[material] = (datosPorMaterial[material] || 0) + parseFloat(detalle.subtotal || 0);
-            });
-          }
-        });
-        
-        var data = Object.keys(datosPorMaterial).map(function(key, index) {
-          return {
-            name: key,
-            value: datosPorMaterial[key],
-            itemStyle: {
-              color: coloresProfesionales[index % coloresProfesionales.length]
-            }
-          };
-        });
-        
         if (!chartVentasMaterial) {
-          chartVentasMaterial = echarts.init(document.getElementById('ventasMaterialChart'));
+          chartVentasMaterial = echarts.init(document.getElementById('comprasMaterialChart'));
         }
-        
         var option = {
           tooltip: {
             trigger: 'item',
@@ -148,8 +54,11 @@ function cargarVentasPorMaterial() {
               fontSize: 13
             },
             formatter: function(params) {
+              var valorFormateado = esPeso
+                ? params.value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kg'
+                : '$' + params.value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
               return params.marker + ' ' + params.name + '<br/>' +
-                     '$' + params.value.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) +
+                     valorFormateado +
                      ' (' + params.percent + '%)';
             }
           },
@@ -164,7 +73,7 @@ function cargarVentasPorMaterial() {
           },
           series: [
             {
-              name: 'Ventas',
+              name: esPeso ? 'Ventas (Kg)' : 'Ventas ($)',
               type: 'pie',
               radius: ['45%', '70%'],
               center: ['50%', '45%'],
@@ -196,7 +105,6 @@ function cargarVentasPorMaterial() {
             }
           ]
         };
-        
         chartVentasMaterial.setOption(option);
       }
     }
@@ -205,7 +113,7 @@ function cargarVentasPorMaterial() {
 
 // Gráfico 4: Análisis por Sucursal (Bar)
 function cargarAnalisisPorSucursal() {
-  var params = buildQueryParams();
+  var params = typeof buildQueryParams === 'function' ? buildQueryParams(false) : '';
   
   Promise.all([
     $.ajax({ url: 'compras/api.php?action=listar' + params, method: 'GET', dataType: 'json' }),
@@ -399,7 +307,7 @@ function cargarAnalisisPorSucursal() {
 
 // Gráfico 5: Top 5 Productos (Horizontal Bar)
 function cargarTopProductos() {
-  var params = buildQueryParams();
+  var params = typeof buildQueryParams === 'function' ? buildQueryParams(false) : '';
   
   $.ajax({
     url: 'ventas/api.php?action=listar' + params,
@@ -534,19 +442,20 @@ function cargarTopProductos() {
 
 // Gráfico 6: Inventario por Categoría (Pie)
 function cargarInventarioPorCategoria() {
+  // Excluye material global, pero admite sub-filtros locales (fecha/sucursal)
+  var params = typeof buildQueryParams === 'function' ? buildQueryParams() : '';
+  
   $.ajax({
-    url: 'inventarios/api.php?action=listar',
+    url: 'inventarios/api.php?action=listar' + params,
     method: 'GET',
     dataType: 'json',
     success: function(response) {
       if (response.success && response.data) {
         var datosPorCategoria = {};
-        
         response.data.forEach(function(inventario) {
           var categoria = inventario.categoria_nombre || 'Sin categoría';
           datosPorCategoria[categoria] = (datosPorCategoria[categoria] || 0) + parseFloat(inventario.cantidad || 0);
         });
-        
         var data = Object.keys(datosPorCategoria).map(function(key, index) {
           return {
             name: key,
@@ -556,11 +465,16 @@ function cargarInventarioPorCategoria() {
             }
           };
         });
-        
+        if (data.length === 0) {
+          $('#inventarioChart').html('<div style="text-align:center;color:#888;padding:60px 0;">Sin datos para los filtros seleccionados</div>');
+          if (chartInventario) { chartInventario.clear(); }
+          return;
+        } else {
+          $('#inventarioChart').html('');
+        }
         if (!chartInventario) {
           chartInventario = echarts.init(document.getElementById('inventarioChart'));
         }
-        
         var option = {
           tooltip: {
             trigger: 'item',
@@ -615,7 +529,6 @@ function cargarInventarioPorCategoria() {
             }
           ]
         };
-        
         chartInventario.setOption(option);
       }
     }
@@ -624,7 +537,7 @@ function cargarInventarioPorCategoria() {
 
 // Gráfico 7: Estado de Transacciones (Doughnut)
 function cargarEstadoTransacciones() {
-  var params = buildQueryParams();
+  var params = typeof buildQueryParams === 'function' ? buildQueryParams(false) : '';
   
   Promise.all([
     $.ajax({ url: 'compras/api.php?action=listar&estado=todos' + params, method: 'GET', dataType: 'json' }),
