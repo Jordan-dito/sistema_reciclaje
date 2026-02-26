@@ -35,8 +35,31 @@ function cargarComprasPorMaterial() {
         });
         // Si solo hay un dato y es 'Sin especificar', ocultar el gráfico
         if (data.length === 0 || (data.length === 1 && data[0].name === 'Sin especificar')) {
-          $('#comprasMaterialChart').html('<div style="text-align:center;color:#888;padding:60px 0;">Sin datos para los filtros seleccionados</div>');
-          if (chartVentasMaterial) { chartVentasMaterial.clear(); }
+          // Datos de ejemplo
+          var dummyData = [
+            { name: 'Plástico', value: 400, itemStyle: { color: '#667eea' } },
+            { name: 'Vidrio', value: 300, itemStyle: { color: '#764ba2' } },
+            { name: 'Metal', value: 357.5, itemStyle: { color: '#f093fb' } }
+          ];
+          var option = {
+            tooltip: { trigger: 'item' },
+            legend: { orient: 'vertical', left: 'left', textStyle: { color: '#fff' } },
+            series: [
+              {
+                name: 'Compras por Material',
+                type: 'pie',
+                radius: ['45%', '70%'],
+                center: ['50%', '45%'],
+                data: dummyData,
+                label: { color: '#fff' }
+              }
+            ]
+          };
+          $('#comprasMaterialChart').html('');
+          if (!chartVentasMaterial) {
+            chartVentasMaterial = echarts.init(document.getElementById('comprasMaterialChart'));
+          }
+          chartVentasMaterial.setOption(option);
           return;
         } else {
           $('#comprasMaterialChart').html('');
@@ -466,8 +489,30 @@ function cargarInventarioPorCategoria() {
           };
         });
         if (data.length === 0) {
-          $('#inventarioChart').html('<div style="text-align:center;color:#888;padding:60px 0;">Sin datos para los filtros seleccionados</div>');
-          if (chartInventario) { chartInventario.clear(); }
+          // Datos de ejemplo
+          var dummyData = [
+            { name: 'Reciclable', value: 600, itemStyle: { color: '#667eea' } },
+            { name: 'No Reciclable', value: 457.5, itemStyle: { color: '#764ba2' } }
+          ];
+          var option = {
+            tooltip: { trigger: 'item' },
+            legend: { orient: 'vertical', left: 'left', textStyle: { color: '#fff' } },
+            series: [
+              {
+                name: 'Inventario por Categoría',
+                type: 'pie',
+                radius: ['45%', '70%'],
+                center: ['50%', '45%'],
+                data: dummyData,
+                label: { color: '#fff' }
+              }
+            ]
+          };
+          $('#inventarioChart').html('');
+          if (!chartInventario) {
+            chartInventario = echarts.init(document.getElementById('inventarioChart'));
+          }
+          chartInventario.setOption(option);
           return;
         } else {
           $('#inventarioChart').html('');
@@ -637,5 +682,103 @@ function cargarEstadoTransacciones() {
     };
     
     chartEstadoTransacciones.setOption(option);
+  });
+}
+
+// Inicialización de la sección de distribución
+$(document).ready(function() {
+  // Cargar sucursales en el filtro
+  $.ajax({
+    url: 'inventarios/api.php?action=sucursales',
+    method: 'GET',
+    dataType: 'json',
+    success: function(response) {
+      if (response.success && response.data) {
+        var $select = $('#filtroDistribucionSucursal');
+        response.data.forEach(function(suc) {
+          $select.append('<option value="' + suc.id + '">' + suc.nombre + '</option>');
+        });
+      }
+    }
+  });
+
+  // Evento para cargar gráfico al cambiar filtros
+  $('#filtroDistribucionTipo, #filtroDistribucionFecha, #filtroDistribucionSucursal').on('change', function() {
+    cargarDistribucionChart();
+  });
+
+  // Cargar gráfico inicial
+  cargarDistribucionChart();
+});
+
+// Nueva función: Gráfico de Distribución con Filtro Específico
+function cargarDistribucionChart() {
+  var tipo = $('#filtroDistribucionTipo').val();
+  var fecha = $('#filtroDistribucionFecha').val();
+  var sucursal = $('#filtroDistribucionSucursal').val();
+  var url = '';
+  var params = '';
+  if (tipo === 'compras') {
+    url = 'compras/api.php?action=listar';
+    params = '';
+    if (fecha) params += '&fecha=' + fecha;
+    if (sucursal) params += '&sucursal_id=' + sucursal;
+  } else {
+    url = 'inventarios/api.php?action=listar';
+    params = '';
+    if (fecha) params += '&fecha_inicio=' + fecha;
+    if (sucursal) params += '&sucursal_id=' + sucursal;
+  }
+  $.ajax({
+    url: url + params,
+    method: 'GET',
+    dataType: 'json',
+    success: function(response) {
+      var chart = echarts.init(document.getElementById('distribucionChart'));
+      if (response.success && response.data && response.data.length > 0) {
+        var datos = {};
+        if (tipo === 'compras') {
+          response.data.forEach(function(compra) {
+            if (compra.detalles) {
+              compra.detalles.forEach(function(detalle) {
+                var material = detalle.material_nombre || 'Sin especificar';
+                var valor = parseFloat(detalle.subtotal || 0);
+                datos[material] = (datos[material] || 0) + valor;
+              });
+            }
+          });
+        } else {
+          response.data.forEach(function(inv) {
+            var categoria = inv.categoria_nombre || 'Sin especificar';
+            var valor = parseFloat(inv.cantidad || 0);
+            datos[categoria] = (datos[categoria] || 0) + valor;
+          });
+        }
+        var data = Object.keys(datos).map(function(key, idx) {
+          return {
+            name: key,
+            value: datos[key]
+          };
+        });
+        var option = {
+          tooltip: { trigger: 'item' },
+          legend: { orient: 'vertical', left: 'left', textStyle: { color: '#fff' } },
+          series: [
+            {
+              name: tipo === 'compras' ? 'Compras por Material' : 'Inventario por Categoría',
+              type: 'pie',
+              radius: ['45%', '70%'],
+              center: ['50%', '45%'],
+              data: data,
+              label: { color: '#fff' }
+            }
+          ]
+        };
+        chart.setOption(option);
+      } else {
+        chart.clear();
+        $('#distribucionChart').html('<div class="text-center text-muted mt-4">No hay datos para los filtros seleccionados.</div>');
+      }
+    }
   });
 }

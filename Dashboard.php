@@ -67,315 +67,68 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
     <link rel="stylesheet" href="assets/css/demo.css" />
     
     <style>
-      /* ===== ESTILOS PROFESIONALES DASHBOARD ===== */
-      
-      /* Animaciones suaves */
-      * {
-        transition: all 0.3s ease;
+      body {
+        background: #23272f !important;
+        color: #f1f3f7;
+        font-family: 'Public Sans', 'Inter', Arial, sans-serif;
       }
-      
-      /* Panel de filtros mejorado */
-      .filter-panel {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        margin-bottom: 30px;
-      }
-      
-      .filter-panel .card-title {
-        color: white;
-        font-weight: 600;
-        font-size: 1.3rem;
-      }
-      
-      .filter-panel .form-control,
-      .filter-panel .form-select {
-        border-radius: 10px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        background: rgba(255, 255, 255, 0.95);
-        padding: 12px 15px;
-        font-size: 0.95rem;
-      }
-      
-      .filter-panel .form-control:focus,
-      .filter-panel .form-select:focus {
-        border-color: white;
-        box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
-        background: white;
-      }
-      
-      .filter-panel label {
-        color: white;
-        font-weight: 500;
-        margin-bottom: 8px;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      
-      /* Tarjetas de estadísticas mejoradas */
-      .stat-card {
-        border-radius: 20px;
+      .bg-dark-card {
+        background: #2c313a !important;
+        color: #f1f3f7 !important;
         border: none;
-        overflow: hidden;
-        position: relative;
-        height: 100%;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.25);
       }
-      
-      .stat-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      .card-header.bg-primary,
+      .card-header.bg-success,
+      .card-header.bg-warning,
+      .card-header.bg-info {
+        background: #23272f !important;
+        color: #f1f3f7 !important;
+        border-bottom: 1px solid #343a40;
       }
-      
-      .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      .card-header i {
+        color: #a3a8b8 !important;
       }
-      
-      .stat-card.primary {
-        --gradient-start: #667eea;
-        --gradient-end: #764ba2;
+      .navbar, .main-header {
+        background: #23272f !important;
+        color: #f1f3f7 !important;
       }
-      
-      .stat-card.success {
-        --gradient-start: #11998e;
-        --gradient-end: #38ef7d;
+      .sidebar {
+        background: #1a1d23 !important;
       }
-      
-      .stat-card.warning {
-        --gradient-start: #f2994a;
-        --gradient-end: #f2c94c;
-      }
-      
-      .stat-card.info {
-        --gradient-start: #00d2ff;
-        --gradient-end: #3a7bd5;
-      }
-      
-      .stat-card .stat-icon {
-        width: 70px;
-        height: 70px;
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-        color: white;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-      }
-      
-      .stat-card .stat-content {
-        flex: 1;
-        padding-left: 20px;
-      }
-      
-      .stat-card .stat-label {
-        font-size: 0.85rem;
-        color: #8e8e93;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 5px;
-      }
-      
-      .stat-card .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1a1a1a;
-        line-height: 1;
-        margin: 0;
-      }
-      
-      .stat-card .stat-change {
-        font-size: 0.8rem;
-        margin-top: 8px;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 4px 10px;
-        border-radius: 20px;
-      }
-      
-      .stat-change.positive {
-        background: #d4edda;
-        color: #155724;
-      }
-      
-      .stat-change.negative {
-        background: #f8d7da;
-        color: #721c24;
-      }
-      
-      /* Tarjetas de gráficos mejoradas */
-      .chart-card {
-        border-radius: 20px;
+      .btn, .btn-modern {
+        background: #343a40 !important;
+        color: #f1f3f7 !important;
         border: none;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
-        margin-bottom: 30px;
-        background: white;
       }
-      
-      .chart-card .card-header {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        border-bottom: none;
-        padding: 20px 25px;
+      .btn:hover, .btn-modern:hover {
+        background: #495057 !important;
+        color: #fff !important;
       }
-      
-      .chart-card .card-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: #2c3e50;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+      .form-control, .form-select {
+        background: #23272f !important;
+        color: #f1f3f7 !important;
+        border: 1px solid #343a40;
       }
-      
-      .chart-card .card-title i {
-        font-size: 1.3rem;
-        color: #667eea;
+      .form-control:focus, .form-select:focus {
+        background: #2c313a !important;
+        color: #fff !important;
+        border-color: #495057;
       }
-      
-      .chart-card .card-body {
-        padding: 25px;
-      }
-      
-      /* Botones mejorados */
-      .btn-modern {
-        border-radius: 12px;
-        padding: 12px 30px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.85rem;
-        border: none;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-      }
-      
-      .btn-modern:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      }
-      
-      .btn-modern.btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      }
-      
-      .btn-modern.btn-secondary {
-        background: linear-gradient(135deg, #868f96 0%, #596164 100%);
-      }
-      
-      /* Loading skeleton */
-      .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 8px;
-      }
-      
-      @keyframes loading {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
-      }
-      
-      /* Badges mejorados */
-      .badge-modern {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      
-      /* Tooltips personalizados */
       .info-tooltip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: #667eea;
-        color: white;
-        font-size: 0.7rem;
-        cursor: help;
-        margin-left: 5px;
+        background: #343a40 !important;
+        color: #f1f3f7 !important;
       }
-      
-      /* Responsive mejoras */
-      @media (max-width: 768px) {
-        .stat-card .stat-value {
-          font-size: 1.5rem;
-        }
-        
-        .stat-card .stat-icon {
-          width: 50px;
-          height: 50px;
-          font-size: 1.5rem;
-        }
-        
-        .filter-panel {
-          padding: 20px 15px;
-        }
+      .badge {
+        background: #495057 !important;
+        color: #fff !important;
       }
-      
-      /* Animación de entrada */
-      @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+      .table {
+        background: #2c313a !important;
+        color: #f1f3f7 !important;
       }
-      
-      .animate-in {
-        animation: fadeInUp 0.6s ease forwards;
-      }
-      
-      /* Efecto de brillo en hover */
-      .shine-effect {
-        position: relative;
-        overflow: hidden;
-      }
-      
-      .shine-effect::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-          45deg,
-          transparent 30%,
-          rgba(255, 255, 255, 0.3) 50%,
-          transparent 70%
-        );
-        transform: translateX(-100%);
-        transition: transform 0.6s;
-      }
-      
-      .shine-effect:hover::after {
-        transform: translateX(100%);
+      .table th, .table td {
+        border-color: #343a40 !important;
       }
     </style>
   </head>
@@ -558,101 +311,65 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
               </div>
             </div>
             <!-- Gráfico: Flujo Diario de Compras y Ventas -->
-            <div class="row animate-in" style="animation-delay: 0.5s">
+            <div class="row mb-4">
               <div class="col-md-12">
-                <div class="chart-card" id="card-flujoDiario">
-                  <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <h5 class="card-title">
-                        <i class="fas fa-chart-area"></i>
-                        Flujo Diario de Compras y Ventas
-                        <span class="badge bg-primary ms-2 info-sucursal" style="font-size: 0.7em;">Todas las Sucursales</span>
-                        <span class="info-tooltip" title="Comparación diaria de ingresos y egresos">?</span>
-                      </h5>
-                      <div class="d-flex align-items-center gap-2">
-                        <a href="reportes/index.php" class="btn btn-success btn-sm btn-modern">
-                          <i class="fa fa-file-pdf me-2"></i>
-                          Exportar PDF
-                        </a>
-                      </div>
-                    </div>
+                <div class="card border-0 shadow-lg bg-dark-card rounded">
+                  <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <i class="fas fa-chart-line me-2"></i>
+                    <h5 class="mb-0">Flujo Diario de Compras y Ventas</h5>
                   </div>
                   <div class="card-body">
-                    <div id="flujoDiarioChart" style="width: 100%; height: 450px;"></div>
+                    <div id="flujoDiarioChart" style="height: 350px;"></div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Fila de Distribución: Compras, Ventas e Inventario -->
-            <div class="row g-4 animate-in" style="animation-delay: 0.6s">
-              <!-- Compras por Material -->
-              <div class="col-md-4">
-                <div class="chart-card" id="card-comprasMaterial">
-                  <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <h5 class="card-title" style="font-size: 1rem;">
-                        <i class="fas fa-chart-pie"></i>
-                        Compras
-                        <span class="info-tooltip" title="Distribución de compras por tipo de material">?</span>
-                        <span class="filter-badge" style="display:none;">Filtrado</span>
-                      </h5>
-                      <button class="btn btn-sm btn-light chart-filter-toggle" title="Opciones de Visualización">
-                        <i class="fas fa-cog text-secondary"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="chart-filter-panel" style="display:none;">
-                    <!-- Filtros individuales eliminados -->
+            <!-- Fila de Distribución: Compras e Inventario -->
+            <!-- Sección de Distribución con Filtro Específico -->
+            <div class="row mb-4">
+              <div class="col-md-12">
+                <div class="card border-0 shadow bg-dark-card rounded">
+                  <div class="card-header bg-secondary text-white d-flex align-items-center">
+                    <i class="fas fa-filter me-2"></i>
+                    <h5 class="mb-0">Distribución de Datos (Filtro Específico)</h5>
                   </div>
                   <div class="card-body">
-                    <div id="comprasMaterialChart" style="width: 100%; height: 350px;"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Ventas por Material -->
-              <!-- Gráfico de Ventas por Material eliminado -->
-
-              <!-- Inventario -->
-              <div class="col-md-4">
-                <div class="chart-card" id="card-inventario">
-                  <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <h5 class="card-title" style="font-size: 1rem;">
-                        <i class="fas fa-boxes"></i>
-                        Inventario
-                        <span class="info-tooltip" title="Distribución del inventario por categoría">?</span>
-                        <span class="filter-badge" style="display:none;">Filtrado</span>
-                      </h5>
-                      <button class="btn btn-sm btn-light chart-filter-toggle" title="Filtros Avanzados">
-                        <i class="fas fa-filter text-secondary"></i>
-                      </button>
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label for="filtroDistribucionTipo" class="form-label">Tipo de Distribución</label>
+                        <select class="form-control" id="filtroDistribucionTipo">
+                          <option value="compras">Compras por Material</option>
+                          <option value="inventario">Inventario por Categoría</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="filtroDistribucionFecha" class="form-label">Fecha</label>
+                        <input type="date" class="form-control" id="filtroDistribucionFecha" />
+                      </div>
+                      <div class="col-md-4">
+                        <label for="filtroDistribucionSucursal" class="form-label">Sucursal</label>
+                        <select class="form-control" id="filtroDistribucionSucursal">
+                          <option value="">Todas las sucursales</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                  <div class="chart-filter-panel" style="display:none;">
-                    <!-- Filtros individuales eliminados -->
-                  </div>
-                  <div class="card-body">
-                    <div id="inventarioChart" style="width: 100%; height: 350px;"></div>
+                    <div id="distribucionChart" style="height: 300px;"></div>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Análisis por Sucursal -->
-            <div class="row animate-in" style="animation-delay: 0.7s">
+            <div class="row mb-4">
               <div class="col-md-12">
-                <div class="chart-card" id="card-analisisSucursal">
-                  <div class="card-header">
-                    <h5 class="card-title">
-                      <i class="fas fa-chart-bar"></i>
-                      Análisis de Negocio por Sucursal
-                      <span class="info-tooltip" title="Comparación de rendimiento entre sucursales">?</span>
-                    </h5>
+                <div class="card border-0 shadow bg-dark-card rounded">
+                  <div class="card-header bg-info text-white d-flex align-items-center">
+                    <i class="fas fa-store-alt me-2"></i>
+                    <h5 class="mb-0">Análisis por Sucursal</h5>
                   </div>
                   <div class="card-body">
-                    <div id="analisisSucursalChart" style="width: 100%; height: 450px;"></div>
+                    <div id="analisisSucursalChart" style="height: 350px;"></div>
                   </div>
                 </div>
               </div>
@@ -860,8 +577,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         filtrosActuales = {
           fechaInicio: $('#filtroFechaInicio').val(),
           fechaFin: $('#filtroFechaFin').val(),
-          // Material queda bloqueado en "Todos los materiales"
-          material: '',
+          material: $('#filtroMaterial').val(),
           sucursal: $('#filtroSucursal').val()
         };
         
