@@ -302,7 +302,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                         <i class="fas fa-shopping-cart"></i>
                       </div>
                       <div class="stat-content">
-                        <div class="stat-label">Total Compras</div>
+                        <div class="stat-label">Total Costos</div>
                         <h4 class="stat-value" id="statTotalCompras">$0.00</h4>
                         <span class="stat-change positive" id="changeCompras" style="display: none;">
                           <i class="fas fa-arrow-up"></i> <span>0%</span>
@@ -320,7 +320,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                         <i class="fas fa-dollar-sign"></i>
                       </div>
                       <div class="stat-content">
-                        <div class="stat-label">Total Ventas</div>
+                        <div class="stat-label">Total Ingresos</div>
                         <h4 class="stat-value" id="statTotalVentas">$0.00</h4>
                         <span class="stat-change positive" id="changeVentas" style="display: none;">
                           <i class="fas fa-arrow-up"></i> <span>0%</span>
@@ -472,7 +472,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                 <div class="card border-0 shadow-lg bg-dark-card rounded dashboard-panel">
                   <div class="card-header bg-primary text-white d-flex align-items-center">
                     <i class="fas fa-chart-line me-2"></i>
-                    <h5 class="mb-0">Flujo Diario de Compras y Ventas</h5>
+                    <h5 class="mb-0">Flujo Diario de Ingresos y Costos</h5>
                   </div>
                   <div class="card-body">
                     <div id="flujoDiarioChart" style="height: 350px;"></div>
@@ -720,7 +720,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
               var option = {
                 tooltip: { trigger: 'axis' },
                 legend: {
-                  data: ['Ventas', 'Ingresos'],
+                  data: ['Ingresos', 'Costos'],
                   bottom: 0
                 },
                 grid: {
@@ -743,7 +743,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                 },
                 series: [
                   {
-                    name: 'Ventas',
+                    name: 'Ingresos',
                     type: 'line',
                     data: ventas,
                     smooth: true,
@@ -760,7 +760,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                     }
                   },
                   {
-                    name: 'Ingresos', // En realidad costos/compras en BD, pero etiquetado como se pida
+                    name: 'Costos', // Datos de compras
                     type: 'line',
                     data: compras,
                     smooth: true,
