@@ -148,14 +148,7 @@ $basePath = '..';
 
             <!-- Información Promedio Ponderado -->
             <div class="row mt-3">
-              <div class="col-md-12">
-                <div class="alert alert-info">
-                  <h5><i class="fa fa-info-circle"></i> ¿Qué es el Método del Promedio Ponderado?</h5>
-                  <p class="mb-0">
-                    <strong>Promedio Ponderado</strong> es un método de valuación de inventario que calcula el costo promedio de los productos disponibles después de cada compra. Cada vez que se realiza una compra, el costo promedio se actualiza considerando el nuevo costo y la cantidad adquirida. Las salidas (ventas) se valoran siempre al costo promedio vigente en ese momento.
-                  </p>
-                </div>
-              </div>
+              <!-- Sección informativa eliminada por solicitud -->
             </div>
 
             <!-- Resultados -->

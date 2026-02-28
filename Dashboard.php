@@ -68,67 +68,124 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
     
     <style>
       body {
-        background: #23272f !important;
-        color: #f1f3f7;
+        background: #f8f9fa !important;
+        color: #23272f;
         font-family: 'Public Sans', 'Inter', Arial, sans-serif;
       }
       .bg-dark-card {
-        background: #2c313a !important;
-        color: #f1f3f7 !important;
-        border: none;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        background: #fff !important;
+        color: #23272f !important;
+        border: 1px solid #e3e6ea;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.08);
       }
       .card-header.bg-primary,
       .card-header.bg-success,
       .card-header.bg-warning,
       .card-header.bg-info {
-        background: #23272f !important;
-        color: #f1f3f7 !important;
-        border-bottom: 1px solid #343a40;
+        background: #f8f9fa !important;
+        color: #23272f !important;
+        border-bottom: 1px solid #e3e6ea;
       }
       .card-header i {
-        color: #a3a8b8 !important;
+        color: #495057 !important;
       }
       .navbar, .main-header {
-        background: #23272f !important;
-        color: #f1f3f7 !important;
+        background: #fff !important;
+        color: #23272f !important;
       }
       .sidebar {
-        background: #1a1d23 !important;
+        background: #f8f9fa !important;
       }
       .btn, .btn-modern {
-        background: #343a40 !important;
-        color: #f1f3f7 !important;
+        background: #e3e6ea !important;
+        color: #23272f !important;
         border: none;
       }
       .btn:hover, .btn-modern:hover {
-        background: #495057 !important;
-        color: #fff !important;
+        background: #dee2e6 !important;
+        color: #23272f !important;
       }
       .form-control, .form-select {
-        background: #23272f !important;
-        color: #f1f3f7 !important;
-        border: 1px solid #343a40;
+        background: #fff !important;
+        color: #23272f !important;
+        border: 1px solid #e3e6ea;
       }
       .form-control:focus, .form-select:focus {
-        background: #2c313a !important;
-        color: #fff !important;
-        border-color: #495057;
+        background: #f8f9fa !important;
+        color: #23272f !important;
+        border-color: #adb5bd;
       }
       .info-tooltip {
-        background: #343a40 !important;
-        color: #f1f3f7 !important;
+        background: #e3e6ea !important;
+        color: #23272f !important;
       }
       .badge {
-        background: #495057 !important;
+        background: #adb5bd !important;
         color: #fff !important;
       }
       .table {
-        background: #2c313a !important;
-        color: #f1f3f7 !important;
+        background: #fff !important;
+        color: #23272f !important;
       }
       .table th, .table td {
-        border-color: #343a40 !important;
+        border-color: #e3e6ea !important;
+      }
+      .dashboard-panel {
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 14px !important;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      }
+      .dashboard-panel .card-body {
+        padding: 1.25rem;
+      }
+      .kpi-mini-card {
+        background: #fff;
+        border: 1px solid #eef2f6;
+        border-radius: 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      }
+      .kpi-mini-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(102, 126, 234, 0.3);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+      }
+      .kpi-mini-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(102, 126, 234, 0.1);
+        color: #5c7cfa;
+        font-size: 0.95rem;
+      }
+      .kpi-mini-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: #6c757d;
+        font-weight: 600;
+      }
+      .kpi-mini-value {
+        margin: 0;
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #212529;
+        line-height: 1.1;
+      }
+      .section-title {
+        color: #495057;
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.45px;
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+        padding-left: 0.25rem;
+        margin-top: 1.5rem;
       }
     </style>
   </head>
@@ -310,10 +367,109 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                 </div>
               </div>
             </div>
+
+            <div class="section-title animate-in" style="animation-delay: 0.45s;">Indicadores del sistema</div>
+            <!-- Indicadores fijos (no dependen de filtros) -->
+            <div class="row g-3 mb-4 animate-in" style="animation-delay: 0.5s;">
+              <div class="col-sm-6 col-lg-3">
+                <div class="card kpi-mini-card h-100">
+                  <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="kpi-mini-label">Usuarios registrados</div>
+                      <span class="kpi-mini-icon"><i class="fas fa-users"></i></span>
+                    </div>
+                    <h4 class="kpi-mini-value" id="statUsuariosRegistrados">0</h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="card kpi-mini-card h-100">
+                  <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="kpi-mini-label">Usuarios activos</div>
+                      <span class="kpi-mini-icon"><i class="fas fa-user-check"></i></span>
+                    </div>
+                    <h4 class="kpi-mini-value text-success" id="statUsuariosActivos">0</h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="card kpi-mini-card h-100">
+                  <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="kpi-mini-label">Sucursales activas</div>
+                      <span class="kpi-mini-icon"><i class="fas fa-store"></i></span>
+                    </div>
+                    <h4 class="kpi-mini-value text-info" id="statSucursalesActivas">0</h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="card kpi-mini-card h-100">
+                  <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="kpi-mini-label">Usuarios con sucursal</div>
+                      <span class="kpi-mini-icon"><i class="fas fa-user-tag"></i></span>
+                    </div>
+                    <h4 class="kpi-mini-value text-warning" id="statUsuariosConSucursal">0</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-title animate-in" style="animation-delay: 0.55s;">Analítica</div>
+            <!-- Gráfico: Ingresos y Costos por Año -->
+            <div class="row mb-4">
+              <div class="col-md-12">
+                <div class="card border-0 shadow-lg bg-dark-card rounded dashboard-panel">
+                  <div class="card-header bg-warning text-dark d-flex align-items-center">
+                    <i class="fas fa-chart-area me-2"></i>
+                    <h5 class="mb-0">Ingresos y Costos</h5>
+                  </div>
+                  <div class="card-body">
+                    <!-- Filtros para el gráfico de ingresos y costos (Independientes) -->
+                    <div class="row g-2 align-items-end mb-3">
+                      <div class="col-md-4">
+                        <label for="filtroSucursalIC" class="form-label mb-0">Sucursal</label>
+                        <select id="filtroSucursalIC" class="form-select">
+                          <option value="">Todas</option>
+                        </select>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="filtroAnioIC" class="form-label mb-0">Año</label>
+                        <select id="filtroAnioIC" class="form-select">
+                          <option value="">Todos</option>
+                        </select>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="filtroMesIC" class="form-label mb-0">Mes</label>
+                        <select id="filtroMesIC" class="form-select">
+                          <option value="">Todos</option>
+                          <option value="1">Enero</option>
+                          <option value="2">Febrero</option>
+                          <option value="3">Marzo</option>
+                          <option value="4">Abril</option>
+                          <option value="5">Mayo</option>
+                          <option value="6">Junio</option>
+                          <option value="7">Julio</option>
+                          <option value="8">Agosto</option>
+                          <option value="9">Septiembre</option>
+                          <option value="10">Octubre</option>
+                          <option value="11">Noviembre</option>
+                          <option value="12">Diciembre</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div id="ingresosCostosAnioChart" style="height: 350px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Gráfico: Flujo Diario de Compras y Ventas -->
             <div class="row mb-4">
               <div class="col-md-12">
-                <div class="card border-0 shadow-lg bg-dark-card rounded">
+                <div class="card border-0 shadow-lg bg-dark-card rounded dashboard-panel">
                   <div class="card-header bg-primary text-white d-flex align-items-center">
                     <i class="fas fa-chart-line me-2"></i>
                     <h5 class="mb-0">Flujo Diario de Compras y Ventas</h5>
@@ -325,45 +481,10 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
               </div>
             </div>
 
-            <!-- Fila de Distribución: Compras e Inventario -->
-            <!-- Sección de Distribución con Filtro Específico -->
-            <div class="row mb-4">
-              <div class="col-md-12">
-                <div class="card border-0 shadow bg-dark-card rounded">
-                  <div class="card-header bg-secondary text-white d-flex align-items-center">
-                    <i class="fas fa-filter me-2"></i>
-                    <h5 class="mb-0">Distribución de Datos (Filtro Específico)</h5>
-                  </div>
-                  <div class="card-body">
-                    <div class="row mb-3">
-                      <div class="col-md-4">
-                        <label for="filtroDistribucionTipo" class="form-label">Tipo de Distribución</label>
-                        <select class="form-control" id="filtroDistribucionTipo">
-                          <option value="compras">Compras por Material</option>
-                          <option value="inventario">Inventario por Categoría</option>
-                        </select>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="filtroDistribucionFecha" class="form-label">Fecha</label>
-                        <input type="date" class="form-control" id="filtroDistribucionFecha" />
-                      </div>
-                      <div class="col-md-4">
-                        <label for="filtroDistribucionSucursal" class="form-label">Sucursal</label>
-                        <select class="form-control" id="filtroDistribucionSucursal">
-                          <option value="">Todas las sucursales</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div id="distribucionChart" style="height: 300px;"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Análisis por Sucursal -->
             <div class="row mb-4">
               <div class="col-md-12">
-                <div class="card border-0 shadow bg-dark-card rounded">
+                <div class="card border-0 shadow bg-dark-card rounded dashboard-panel">
                   <div class="card-header bg-info text-white d-flex align-items-center">
                     <i class="fas fa-store-alt me-2"></i>
                     <h5 class="mb-0">Análisis por Sucursal</h5>
@@ -406,19 +527,12 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
     <!-- Bootstrap Notify -->
     <script src="assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
 
-    <!-- jQuery Vector Maps - COMENTADO: Causa conflictos -->
-    <!-- <script src="assets/js/plugin/jsvectormap/jsvectormap.min.js"></script> -->
-    <!-- <script src="assets/js/plugin/jsvectormap/world.js"></script> -->
-
     <!-- Sweet Alert -->
     <script src="assets/js/plugin/sweetalert/sweetalert.min.js"></script>
 
     <!-- Kaiadmin JS -->
     <script src="assets/js/kaiadmin.min.js"></script>
 
-    <!-- Kaiadmin DEMO methods - COMENTADO: No necesario en producción -->
-    <!-- <script src="assets/js/setting-demo.js"></script> -->
-    <!-- <script src="assets/js/demo.js"></script> -->
     <?php
       $basePath = '';
       include __DIR__ . '/includes/footer-scripts.php';
@@ -426,12 +540,13 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
     <script>
       // Variables globales para los gráficos ECharts
       var chartFlujoDiario = null;
-      var chartComprasMaterial = null;
+      var chartComprasMaterial = null; // Mantenido pero no usado en UI
       var chartVentasMaterial = null;
       var chartAnalisisSucursal = null;
       var chartTopProductos = null;
       var chartInventario = null;
       var chartEstadoTransacciones = null;
+      var chartIngresosCostos = null; // Para el gráfico de ingresos/costos
       
       // Paleta de colores profesional y moderna
       var coloresProfesionales = [
@@ -441,33 +556,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         '#f38181', '#aa96da', '#fcbad3', '#ffffd2'
       ];
       
-      // Tema personalizado para ECharts
-      var temaElegante = {
-        color: coloresProfesionales,
-        backgroundColor: 'transparent',
-        textStyle: {
-          fontFamily: "'Public Sans', sans-serif",
-          fontSize: 13,
-          color: '#666'
-        },
-        title: {
-          textStyle: {
-            color: '#2c3e50',
-            fontWeight: 600
-          }
-        },
-        legend: {
-          textStyle: {
-            color: '#666'
-          }
-        },
-        grid: {
-          borderWidth: 0,
-          borderColor: 'transparent'
-        }
-      };
-      
-      // Filtros actuales
+      // Filtros actuales (Globales)
       var filtrosActuales = {
         fechaInicio: '',
         fechaFin: '',
@@ -477,7 +566,6 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
       
       // Filtros locales por gráfico (sub-filtros opcionales)
       var filtrosLocales = {
-        'card-comprasMaterial': { fechaInicio: '', fechaFin: '', sucursal: '', metrica: 'monto' },
         'card-ventasMaterial': { fechaInicio: '', fechaFin: '', sucursal: '', metrica: 'monto' },
         'card-inventario': { fechaInicio: '', fechaFin: '', sucursal: '' }
       };
@@ -495,7 +583,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         filtrosActuales.fechaFin = hoy.toISOString().split('T')[0];
       }
       
-      // Cargar materiales para el filtro
+      // Cargar materiales para el filtro global
       function cargarMaterialesFiltro() {
         $.ajax({
           url: 'materiales/api.php?action=listar&estado=activos',
@@ -504,7 +592,6 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           success: function(response) {
             if (response.success && response.data) {
               var select = $('#filtroMaterial');
-              // Forzar opción por defecto al recargar listado
               select.empty().append('<option value="">Todos los materiales</option>');
               response.data.forEach(function(material) {
                 select.append($('<option>', {
@@ -512,14 +599,13 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                   text: material.nombre
                 }));
               });
-              // Mantener "Todos los materiales" como valor inicial
               select.val('');
             }
           }
         });
       }
       
-      // Cargar sucursales para el filtro
+      // Cargar sucursales para el filtro global
       function cargarSucursalesFiltro() {
         $.ajax({
           url: 'sucursales/api.php?action=activas',
@@ -528,24 +614,190 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           success: function(response) {
             if (response.success && response.data) {
               var select = $('#filtroSucursal');
-              var selectsLocales = $('.chart-card .filter-sucursal');
-              
+              select.empty().append('<option value="">Todas las sucursales</option>');
               response.data.forEach(function(sucursal) {
-                var option = $('<option>', {
+                select.append($('<option>', {
                   value: sucursal.id,
                   text: sucursal.nombre
-                });
-                select.append(option);
-                selectsLocales.each(function() {
-                  $(this).append(option.clone());
-                });
+                }));
               });
-              
               setTimeout(actualizarEtiquetasSucursal, 100);
             }
           }
         });
       }
+      
+      // Funciones para gráfico Ingresos y Costos (INDEPENDIENTE)
+      function cargarSucursalesFiltroIC() {
+        $.ajax({
+          url: 'sucursales/api.php?action=activas',
+          method: 'GET',
+          dataType: 'json',
+          success: function(response) {
+            if (response.success && response.data) {
+              var select = $('#filtroSucursalIC');
+              select.empty().append('<option value="">Todas</option>');
+              response.data.forEach(function(sucursal) {
+                select.append($('<option>', {
+                  value: sucursal.id,
+                  text: sucursal.nombre
+                }));
+              });
+            }
+          }
+        });
+      }
+
+      function cargarAniosFiltroIC() {
+        $.ajax({
+            url: 'dashboard/api_ingresos_costos.php',
+          method: 'GET',
+          dataType: 'json',
+          success: function(response) {
+            if (response.success && response.data) {
+              var anios = [];
+              response.data.forEach(function(d) {
+                if (d.periodo && (!response.labelType || response.labelType === 'anio')) anios.push(d.periodo);
+              });
+              // Si no hay datos, al menos poner el año actual
+              if (anios.length === 0) anios.push(new Date().getFullYear());
+              
+              anios = [...new Set(anios)];
+              var select = $('#filtroAnioIC');
+              select.empty().append('<option value="">Todos</option>');
+              anios.forEach(function(anio) {
+                select.append($('<option>', { value: anio, text: anio }));
+              });
+            }
+          }
+        });
+      }
+
+      function cargarIngresosCostosAnio() {
+        var sucursal = $('#filtroSucursalIC').val();
+        var anio = $('#filtroAnioIC').val();
+        var mes = $('#filtroMesIC').val();
+        
+        // Mostrar estado de carga
+        if (chartIngresosCostos) {
+            chartIngresosCostos.showLoading();
+        }
+        
+        $.ajax({
+            url: 'dashboard/api_ingresos_costos.php',
+          method: 'GET',
+          data: { sucursal_id: sucursal, anio: anio, mes: mes },
+          dataType: 'json',
+          success: function(response) {
+            var dom = document.getElementById('ingresosCostosAnioChart');
+            if (!dom) return;
+            
+            if (!chartIngresosCostos) {
+              chartIngresosCostos = echarts.init(dom);
+            }
+            chartIngresosCostos.hideLoading();
+            
+            if (response.success && response.data) {
+              var labelType = response.labelType;
+              var labels = response.data.map(d => {
+                if (d.periodo) return d.periodo;
+                return '';
+              });
+              
+              if (labelType === 'mes') {
+                labels = labels.map(function(m) {
+                  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                  return meses[m-1] || m;
+                });
+              }
+              if (labelType === 'dia') {
+                labels = labels.map(d => 'Día ' + d);
+              }
+              
+              var ventas = response.data.map(d => d.ventas);
+              var compras = response.data.map(d => d.compras);
+
+              var option = {
+                tooltip: { trigger: 'axis' },
+                legend: {
+                  data: ['Ventas', 'Ingresos'],
+                  bottom: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                  type: 'category',
+                  data: labels
+                },
+                yAxis: {
+                  type: 'value',
+                  axisLabel: {
+                    formatter: function(value) {
+                      return '$' + value;
+                    }
+                  }
+                },
+                series: [
+                  {
+                    name: 'Ventas',
+                    type: 'line',
+                    data: ventas,
+                    smooth: true,
+                    lineStyle: { color: '#1dce6c', width: 3 },
+                    itemStyle: { color: '#1dce6c' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                            offset: 0,
+                            color: 'rgba(29, 206, 108, 0.3)'
+                        }, {
+                            offset: 1,
+                            color: 'rgba(29, 206, 108, 0.01)'
+                        }])
+                    }
+                  },
+                  {
+                    name: 'Ingresos', // En realidad costos/compras en BD, pero etiquetado como se pida
+                    type: 'line',
+                    data: compras,
+                    smooth: true,
+                    lineStyle: { color: '#f3545d', width: 3 },
+                    itemStyle: { color: '#f3545d' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                            offset: 0,
+                            color: 'rgba(243, 84, 93, 0.3)'
+                        }, {
+                            offset: 1,
+                            color: 'rgba(243, 84, 93, 0.01)'
+                        }])
+                    }
+                  }
+                ]
+              };
+              chartIngresosCostos.setOption(option, true);
+            }
+          },
+          error: function() {
+              if (chartIngresosCostos) chartIngresosCostos.hideLoading();
+          }
+        });
+      }
+
+      // Listeners para filtros independientes de Ingresos/Costos
+      $(document).on('change', '#filtroSucursalIC, #filtroAnioIC, #filtroMesIC', function() {
+        var anio = $('#filtroAnioIC').val();
+        var mes = $('#filtroMesIC').val();
+        if (!anio && mes) {
+          $('#filtroMesIC').val('');
+          swal('Advertencia', 'Debe seleccionar un año antes de elegir un mes.', 'warning');
+          return;
+        }
+        cargarIngresosCostosAnio();
+      });
       
       // Función para mostrar loading en tarjetas
       function mostrarLoading() {
@@ -557,7 +809,7 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         $('.chart-container canvas').css('opacity', '1');
       }
       
-      // Función para actualizar etiquetas de sucursal
+      // Función para actualizar etiquetas de sucursal (Filtro Global)
       function actualizarEtiquetasSucursal() {
         var nombreSucursal = $('#filtroSucursal option:selected').text();
         var valorSucursal = $('#filtroSucursal').val();
@@ -565,14 +817,10 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         if (!valorSucursal || valorSucursal === "") {
           nombreSucursal = "Todas las Sucursales";
         }
-        
         $('.info-sucursal').text(nombreSucursal);
-        
-        // También actualizar en opciones de ECharts si es necesario
-        // Pero con las etiquetas HTML ya debería ser suficiente visualmente
       }
 
-      // Aplicar filtros
+      // Aplicar filtros GLOBALES
       $('#btnAplicarFiltros').click(function() {
         filtrosActuales = {
           fechaInicio: $('#filtroFechaInicio').val(),
@@ -581,10 +829,8 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           sucursal: $('#filtroSucursal').val()
         };
         
-        // Actualizar etiquetas visuales
         actualizarEtiquetasSucursal();
         
-        // Validar fechas
         if (!filtrosActuales.fechaInicio || !filtrosActuales.fechaFin) {
           swal('Error', 'Debe seleccionar fecha de inicio y fin', 'error');
           return;
@@ -595,847 +841,107 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           return;
         }
         
-        // Mostrar feedback visual
         var btn = $(this);
         btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Cargando...').prop('disabled', true);
         mostrarLoading();
         
-        // Cargar datos
         cargarTodosLosDatos();
         
-        // Restaurar botón
         setTimeout(() => {
           btn.html('<i class="fas fa-search me-2"></i>Aplicar').prop('disabled', false);
           ocultarLoading();
         }, 1000);
       });
       
-      // Limpiar filtros
+      // Limpiar filtros GLOBALES
       $('#btnLimpiarFiltros').click(function() {
         inicializarFechas();
         $('#filtroMaterial').val('');
         $('#filtroSucursal').val('');
+        
         filtrosActuales.material = '';
         filtrosActuales.sucursal = '';
         
-        filtrosLocales['card-comprasMaterial'] = { fechaInicio: '', fechaFin: '', sucursal: '', metrica: 'monto' };
+        // Resetear locales
         filtrosLocales['card-ventasMaterial'] = { fechaInicio: '', fechaFin: '', sucursal: '', metrica: 'monto' };
         filtrosLocales['card-inventario'] = { fechaInicio: '', fechaFin: '', sucursal: '' };
         
-        $('#card-comprasMaterial .filter-fecha-inicio, #card-comprasMaterial .filter-fecha-fin').val('');
         $('#card-ventasMaterial .filter-fecha-inicio, #card-ventasMaterial .filter-fecha-fin').val('');
         $('#card-inventario .filter-fecha-inicio, #card-inventario .filter-fecha-fin, #card-inventario .filter-sucursal').val('');
-        $('#mc-monto, #mv-monto').prop('checked', true);
         $('.filter-badge').hide();
         
-        // Actualizar etiquetas visuales
         actualizarEtiquetasSucursal();
-        
         cargarTodosLosDatos();
       });
       
-      // Actualizar indicador visual de sub-filtro aplicado
-      function actualizarBadgeFiltro(cardId) {
-        var card = $('#' + cardId);
-        var badge = card.find('.filter-badge');
-        var local = filtrosLocales[cardId] || {};
-        var tieneFiltro = Boolean(local.fechaInicio || local.fechaFin || local.sucursal || (local.metrica && local.metrica !== 'monto'));
-        badge.toggle(tieneFiltro);
-      }
-      
-      // Toggle panel de sub-filtros por gráfico
-      $(document).on('click', '.chart-filter-toggle', function() {
-        $(this).closest('.chart-card').find('.chart-filter-panel').first().slideToggle(160);
-      });
-      
-      // Filtros individuales eliminados
-      
-      // Construir parámetros de URL (globales + sub-filtros locales)
-      function buildQueryParams(cardIdOrExclude) {
-        var params = [];
-        var cardId = null;
-        var excludeMaterial = false;
-        
-        if (typeof cardIdOrExclude === 'boolean') {
-          excludeMaterial = cardIdOrExclude;
-        } else if (typeof cardIdOrExclude === 'string') {
-          cardId = cardIdOrExclude;
-        }
-        
-        var f = Object.assign({}, filtrosActuales);
-        // Solo usar filtros globales
-        if (f.fechaInicio) params.push('fecha_desde=' + f.fechaInicio);
-        if (f.fechaFin) params.push('fecha_hasta=' + f.fechaFin);
-        if (f.material) params.push('material=' + encodeURIComponent(f.material));
-        if (f.sucursal) params.push('sucursal_id=' + f.sucursal);
-        return params.length > 0 ? '&' + params.join('&') : '';
-      }
-      
-      // Función para recargar un gráfico específico
-      function recargarGrafico(cardId) {
-          mostrarLoadingCard(cardId);
-          switch(cardId) {
-              case 'card-flujoDiario': cargarFlujoDiario(); break;
-              case 'card-comprasMaterial': cargarComprasPorMaterial(); break;
-              case 'card-ventasMaterial': cargarVentasPorMaterial(); break;
-              case 'card-analisisSucursal': cargarAnalisisPorSucursal(); break;
-              case 'card-inventario': cargarInventarioPorCategoria(); break;
-              // case 'card-topProductos': cargarTopProductos(); break;
-              // case 'card-transacciones': cargarEstadoTransacciones(); break;
-          }
-          setTimeout(function() { ocultarLoadingCard(cardId); }, 500);
-      }
-      
-      function mostrarLoadingCard(cardId) {
-          $('#' + cardId).find('.card-body').css('opacity', '0.5');
-      }
-      
-      function ocultarLoadingCard(cardId) {
-          $('#' + cardId).find('.card-body').css('opacity', '1');
+      // Indicadores generales del sistema (sin filtros)
+      function cargarIndicadoresSistema() {
+        Promise.all([
+          $.ajax({ url: 'usuarios/api.php?action=listar', method: 'GET', dataType: 'json' }),
+          $.ajax({ url: 'sucursales/api.php?action=listar', method: 'GET', dataType: 'json' })
+        ]).then(function([usuariosResp, sucursalesResp]) {
+          var usuarios = (usuariosResp && usuariosResp.success && Array.isArray(usuariosResp.data)) ? usuariosResp.data : [];
+          var sucursales = (sucursalesResp && sucursalesResp.success && Array.isArray(sucursalesResp.data)) ? sucursalesResp.data : [];
+
+          var usuariosRegistrados = usuarios.length;
+          var usuariosActivos = usuarios.filter(function(u) {
+            return String(u.estado || '').toLowerCase() === 'activo';
+          }).length;
+          var usuariosConSucursal = usuarios.filter(function(u) {
+            return u.sucursal_id !== null && u.sucursal_id !== undefined && String(u.sucursal_id) !== '';
+          }).length;
+          var sucursalesActivas = sucursales.filter(function(s) {
+            return String(s.estado || '').toLowerCase() === 'activa';
+          }).length;
+
+          $('#statUsuariosRegistrados').text(usuariosRegistrados.toLocaleString('es-ES'));
+          $('#statUsuariosActivos').text(usuariosActivos.toLocaleString('es-ES'));
+          $('#statUsuariosConSucursal').text(usuariosConSucursal.toLocaleString('es-ES'));
+          $('#statSucursalesActivas').text(sucursalesActivas.toLocaleString('es-ES'));
+        }).catch(function() {
+          $('#statUsuariosRegistrados, #statUsuariosActivos, #statUsuariosConSucursal, #statSucursalesActivas').text('0');
+        });
       }
 
-      // Función principal para cargar todos los datos
+      // Función principal para cargar datos dependientes de filtros globales
       function cargarTodosLosDatos() {
-        cargarEstadisticas();
-        cargarFlujoDiario();
-        cargarComprasPorMaterial();
-        cargarAnalisisPorSucursal();
-        cargarInventarioPorCategoria();
-        // cargarTopProductos(); // Deshabilitado para simplificar vista
-        // cargarEstadoTransacciones(); // Deshabilitado para simplificar vista
+        cargarIndicadoresSistema(); // Fijo
+        cargarEstadisticas();       // Depende de filtros globales
+        cargarFlujoDiario();        // Depende de filtros globales
+        cargarAnalisisPorSucursal();// Depende de filtros globales
+        cargarInventarioPorCategoria(); // Depende de filtros globales
       }
       
-      // Función para formatear números
-      function formatearMoneda(valor) {
-        return '$' + valor.toLocaleString('es-ES', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
-      
-      // Cargar estadísticas globales (sin ID de card específico, usan filtros globales)
-      function cargarEstadisticas() {
-        var params = buildQueryParams();
-
-        // Cargar compras
-        $.ajax({
-          url: 'compras/api.php?action=listar' + params,
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success && response.data && response.data.length > 0) {
-              var totalCompras = 0;
-              response.data.forEach(function(compra) {
-                if (compra.estado !== 'cancelada') {
-                  totalCompras += parseFloat(compra.total || 0);
-                }
-              });
-              $('#statTotalCompras').text(formatearMoneda(totalCompras));
-              $('#statTotalCompras').data('valor', totalCompras);
-            } else {
-              $('#statTotalCompras').text('Sin datos');
-              $('#statTotalCompras').data('valor', 0);
-            }
-          },
-          error: function() { $('#statTotalCompras').text('Sin datos'); $('#statTotalCompras').data('valor', 0); }
-        });
-
-        // Cargar ventas y calcular margen
-        $.ajax({
-          url: 'ventas/api.php?action=listar' + params,
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success && response.data && response.data.length > 0) {
-              var totalVentas = 0;
-              response.data.forEach(function(venta) {
-                if (venta.estado !== 'cancelada') {
-                  totalVentas += parseFloat(venta.total || 0);
-                }
-              });
-              $('#statTotalVentas').text(formatearMoneda(totalVentas));
-              var totalCompras = $('#statTotalCompras').data('valor') || 0;
-              var ganancia = totalVentas - totalCompras;
-              var margen = totalVentas > 0 ? ((ganancia / totalVentas) * 100) : 0;
-              $('#statGanancia').text(formatearMoneda(ganancia));
-              $('#statMargen').text(margen.toFixed(1) + '%');
-              var badgeMargen = $('#badgeMargen');
-              badgeMargen.removeClass('bg-success bg-warning bg-danger');
-              if (margen >= 30) {
-                badgeMargen.addClass('bg-success').text('Excelente').show();
-              } else if (margen >= 15) {
-                badgeMargen.addClass('bg-warning').text('Bueno').show();
-              } else if (margen > 0) {
-                badgeMargen.addClass('bg-danger').text('Bajo').show();
-              } else {
-                badgeMargen.hide();
-              }
-            } else {
-              $('#statTotalVentas').text('Sin datos');
-              $('#statGanancia').text('Sin datos');
-              $('#statMargen').text('Sin datos');
-              $('#badgeMargen').hide();
-            }
-          },
-          error: function() {
-            $('#statTotalVentas').text('Sin datos');
-            $('#statGanancia').text('Sin datos');
-            $('#statMargen').text('Sin datos');
-            $('#badgeMargen').hide();
-          }
-        });
-      }
-
-      // Gráfico 1: Flujo Diario de Compras y Ventas con ECharts
-      function cargarFlujoDiario() {
-        var params = buildQueryParams(false); // Aplica filtro material
-        
-        Promise.all([
-          $.ajax({ url: 'compras/api.php?action=listar' + params, method: 'GET', dataType: 'json' }),
-          $.ajax({ url: 'ventas/api.php?action=listar' + params, method: 'GET', dataType: 'json' })
-        ]).then(function([comprasResp, ventasResp]) {
-          var fechas = [];
-          var comprasPorDia = {};
-          var ventasPorDia = {};
-          
-          // Procesar compras
-          if (comprasResp.success && comprasResp.data) {
-            comprasResp.data.forEach(function(compra) {
-              if (compra.estado !== 'cancelada') {
-                var fecha = compra.fecha_compra;
-                comprasPorDia[fecha] = (comprasPorDia[fecha] || 0) + parseFloat(compra.total || 0);
-                if (!fechas.includes(fecha)) fechas.push(fecha);
-              }
-            });
-          }
-          
-          // Procesar ventas
-          if (ventasResp.success && ventasResp.data) {
-            ventasResp.data.forEach(function(venta) {
-              if (venta.estado !== 'cancelada') {
-                var fecha = venta.fecha_venta;
-                ventasPorDia[fecha] = (ventasPorDia[fecha] || 0) + parseFloat(venta.total || 0);
-                if (!fechas.includes(fecha)) fechas.push(fecha);
-              }
-            });
-          }
-          
-          // Ordenar fechas
-          fechas.sort();
-          
-          var datosCompras = fechas.map(f => comprasPorDia[f] || 0);
-          var datosVentas = fechas.map(f => ventasPorDia[f] || 0);
-          var labels = fechas.map(f => new Date(f).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }));
-          
-          // Inicializar o actualizar gráfico ECharts
-          if (!chartFlujoDiario) {
-            chartFlujoDiario = echarts.init(document.getElementById('flujoDiarioChart'));
-          }
-          
-          var option = {
-            tooltip: {
-              trigger: 'axis',
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              borderWidth: 0,
-              textStyle: {
-                color: '#fff',
-                fontSize: 13
-              },
-              axisPointer: {
-                type: 'cross',
-                label: {
-                  backgroundColor: '#667eea'
-                }
-              },
-              formatter: function(params) {
-                var result = params[0].name + '<br/>';
-                params.forEach(function(item) {
-                  result += item.marker + ' ' + item.seriesName + ': $' + 
-                           item.value.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '<br/>';
-                });
-                return result;
-              }
-            },
-            legend: {
-              data: ['Compras', 'Ventas'],
-              top: 10,
-              textStyle: {
-                fontSize: 13,
-                fontWeight: 600
-              }
-            },
-            grid: {
-              left: '3%',
-              right: '4%',
-              bottom: '3%',
-              top: '15%',
-              containLabel: true
-            },
-            xAxis: {
-              type: 'category',
-              boundaryGap: false,
-              data: labels,
-              axisLine: {
-                lineStyle: {
-                  color: '#e0e0e0'
-                }
-              },
-              axisLabel: {
-                color: '#666',
-                fontSize: 11
-              }
-            },
-            yAxis: {
-              type: 'value',
-              axisLine: {
-                show: false
-              },
-              axisTick: {
-                show: false
-              },
-              axisLabel: {
-                color: '#666',
-                fontSize: 12,
-                formatter: function(value) {
-                  return '$' + value.toLocaleString('es-ES');
-                }
-              },
-              splitLine: {
-                lineStyle: {
-                  color: 'rgba(0, 0, 0, 0.05)'
-                }
-              }
-            },
-            series: [
-              {
-                name: 'Compras',
-                type: 'line',
-                smooth: true,
-                symbol: 'circle',
-                symbolSize: 8,
-                lineStyle: {
-                  width: 3,
-                  color: '#f3545d'
-                },
-                itemStyle: {
-                  color: '#f3545d',
-                  borderWidth: 2,
-                  borderColor: '#fff'
-                },
-                areaStyle: {
-                  color: {
-                    type: 'linear',
-                    x: 0,
-                    y: 0,
-                    x2: 0,
-                    y2: 1,
-                    colorStops: [
-                      { offset: 0, color: 'rgba(243, 84, 93, 0.3)' },
-                      { offset: 1, color: 'rgba(243, 84, 93, 0.01)' }
-                    ]
-                  }
-                },
-                emphasis: {
-                  focus: 'series',
-                  itemStyle: {
-                    shadowBlur: 10,
-                    shadowColor: 'rgba(243, 84, 93, 0.5)'
-                  }
-                },
-                data: datosCompras
-              },
-              {
-                name: 'Ventas',
-                type: 'line',
-                smooth: true,
-                symbol: 'circle',
-                symbolSize: 8,
-                lineStyle: {
-                  width: 3,
-                  color: '#1dce6c'
-                },
-                itemStyle: {
-                  color: '#1dce6c',
-                  borderWidth: 2,
-                  borderColor: '#fff'
-                },
-                areaStyle: {
-                  color: {
-                    type: 'linear',
-                    x: 0,
-                    y: 0,
-                    x2: 0,
-                    y2: 1,
-                    colorStops: [
-                      { offset: 0, color: 'rgba(29, 206, 108, 0.3)' },
-                      { offset: 1, color: 'rgba(29, 206, 108, 0.01)' }
-                    ]
-                  }
-                },
-                emphasis: {
-                  focus: 'series',
-                  itemStyle: {
-                    shadowBlur: 10,
-                    shadowColor: 'rgba(29, 206, 108, 0.5)'
-                  }
-                },
-                data: datosVentas
-              }
-            ]
-          };
-          
-          chartFlujoDiario.setOption(option);
-        });
-      }
-      
-      // NOTA: Las funciones de gráficos ahora están en assets/js/dashboard-echarts.js
-      // Las siguientes funciones son legacy y no se usan (se mantienen por referencia)
-      
-      /*
-      // Gráfico 2: Compras por Material (LEGACY - NO SE USA)
-      function cargarComprasPorMaterial_OLD() {
-        var params = buildQueryParams();
-        
-        $.ajax({
-          url: 'compras/api.php?action=listar' + params,
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success && response.data) {
-              var datosPorMaterial = {};
-              
-              response.data.forEach(function(compra) {
-                if (compra.estado !== 'cancelada' && compra.detalles) {
-                  compra.detalles.forEach(function(detalle) {
-                    var material = detalle.material_nombre || 'Sin especificar';
-                    datosPorMaterial[material] = (datosPorMaterial[material] || 0) + parseFloat(detalle.subtotal || 0);
-                  });
-                }
-              });
-              
-              var labels = Object.keys(datosPorMaterial);
-              var valores = Object.values(datosPorMaterial);
-              
-              if (chartComprasMaterial) {
-                chartComprasMaterial.destroy();
-              }
-              
-              var ctx = document.getElementById('comprasMaterialChart').getContext('2d');
-              chartComprasMaterial = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    data: valores,
-                    backgroundColor: colores.slice(0, labels.length),
-                    borderWidth: 2
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        padding: 10,
-                        usePointStyle: true
-                      }
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                          var value = context.parsed;
-                          var percentage = ((value / total) * 100).toFixed(1);
-                          return context.label + ': $' + value.toFixed(2) + ' (' + percentage + '%)';
-                        }
-                      }
-                    }
-                  }
-                }
-              });
-            }
-          }
-        });
-      }
-      
-      // Gráfico 3: Ventas por Material
-      function cargarVentasPorMaterial() {
-        var params = buildQueryParams();
-        
-        $.ajax({
-          url: 'ventas/api.php?action=listar' + params,
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success && response.data) {
-              var datosPorMaterial = {};
-              
-              response.data.forEach(function(venta) {
-                if (venta.estado !== 'cancelada' && venta.detalles) {
-                  venta.detalles.forEach(function(detalle) {
-                    var material = detalle.material_nombre || 'Sin especificar';
-                    datosPorMaterial[material] = (datosPorMaterial[material] || 0) + parseFloat(detalle.subtotal || 0);
-                  });
-                }
-              });
-              
-              var labels = Object.keys(datosPorMaterial);
-              var valores = Object.values(datosPorMaterial);
-              
-              if (chartVentasMaterial) {
-                chartVentasMaterial.destroy();
-              }
-              
-              var ctx = document.getElementById('ventasMaterialChart').getContext('2d');
-              chartVentasMaterial = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    data: valores,
-                    backgroundColor: colores.slice(0, labels.length),
-                    borderWidth: 2
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        padding: 10,
-                        usePointStyle: true
-                      }
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                          var value = context.parsed;
-                          var percentage = ((value / total) * 100).toFixed(1);
-                          return context.label + ': $' + value.toFixed(2) + ' (' + percentage + '%)';
-                        }
-                      }
-                    }
-                  }
-                }
-              });
-            }
-          }
-        });
-      }
-      
-      // Gráfico 4: Análisis por Sucursal
-      function cargarAnalisisPorSucursal() {
-        var params = buildQueryParams();
-        
-        Promise.all([
-          $.ajax({ url: 'compras/api.php?action=listar' + params, method: 'GET', dataType: 'json' }),
-          $.ajax({ url: 'ventas/api.php?action=listar' + params, method: 'GET', dataType: 'json' })
-        ]).then(function([comprasResp, ventasResp]) {
-          var sucursales = [];
-          var comprasPorSucursal = {};
-          var ventasPorSucursal = {};
-          
-          // Procesar compras
-          if (comprasResp.success && comprasResp.data) {
-            comprasResp.data.forEach(function(compra) {
-              if (compra.estado !== 'cancelada') {
-                var sucursal = compra.sucursal_nombre || 'Sin sucursal';
-                comprasPorSucursal[sucursal] = (comprasPorSucursal[sucursal] || 0) + parseFloat(compra.total || 0);
-                if (!sucursales.includes(sucursal)) sucursales.push(sucursal);
-              }
-            });
-          }
-          
-          // Procesar ventas
-          if (ventasResp.success && ventasResp.data) {
-            ventasResp.data.forEach(function(venta) {
-              if (venta.estado !== 'cancelada') {
-                var sucursal = venta.sucursal_nombre || 'Sin sucursal';
-                ventasPorSucursal[sucursal] = (ventasPorSucursal[sucursal] || 0) + parseFloat(venta.total || 0);
-                if (!sucursales.includes(sucursal)) sucursales.push(sucursal);
-              }
-            });
-          }
-          
-          var datosCompras = sucursales.map(s => comprasPorSucursal[s] || 0);
-          var datosVentas = sucursales.map(s => ventasPorSucursal[s] || 0);
-          var datosGanancia = sucursales.map(s => (ventasPorSucursal[s] || 0) - (comprasPorSucursal[s] || 0));
-          
-          if (chartAnalisisSucursal) {
-            chartAnalisisSucursal.destroy();
-          }
-          
-          var ctx = document.getElementById('analisisSucursalChart').getContext('2d');
-          chartAnalisisSucursal = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: sucursales,
-              datasets: [
-                {
-                  label: 'Compras',
-                  data: datosCompras,
-                  backgroundColor: '#f3545d'
-                },
-                {
-                  label: 'Ventas',
-                  data: datosVentas,
-                  backgroundColor: '#1dce6c'
-                },
-                {
-                  label: 'Ganancia',
-                  data: datosGanancia,
-                  backgroundColor: '#fdaf4b'
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'top'
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
-                    }
-                  }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    callback: function(value) {
-                      return '$' + value.toFixed(0);
-                    }
-                  }
-                }
-              }
-            }
-          });
-        });
-      }
-      
-      // Gráfico 5: Top 5 Productos Vendidos
-      function cargarTopProductos() {
-        var params = buildQueryParams();
-        
-        $.ajax({
-          url: 'ventas/api.php?action=listar' + params,
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success && response.data) {
-              var datosPorProducto = {};
-              
-              response.data.forEach(function(venta) {
-                if (venta.estado !== 'cancelada' && venta.detalles) {
-                  venta.detalles.forEach(function(detalle) {
-                    var producto = detalle.producto_nombre || 'Sin nombre';
-                    datosPorProducto[producto] = (datosPorProducto[producto] || 0) + parseFloat(detalle.cantidad || 0);
-                  });
-                }
-              });
-              
-              // Ordenar y tomar top 5
-              var sorted = Object.entries(datosPorProducto)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5);
-              
-              var labels = sorted.map(item => item[0]);
-              var valores = sorted.map(item => item[1]);
-              
-              if (chartTopProductos) {
-                chartTopProductos.destroy();
-              }
-              
-              var ctx = document.getElementById('topProductosChart').getContext('2d');
-              chartTopProductos = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    label: 'Cantidad Vendida',
-                    data: valores,
-                    backgroundColor: '#177dff'
-                  }]
-                },
-                options: {
-                  indexAxis: 'y',
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      display: false
-                    }
-                  },
-                  scales: {
-                    x: {
-                      beginAtZero: true
-                    }
-                  }
-                }
-              });
-            }
-          }
-        });
-      }
-      
-      // Gráfico 6: Inventario por Categoría
-      function cargarInventarioPorCategoria() {
-        $.ajax({
-          url: 'inventarios/api.php?action=listar',
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success && response.data) {
-              var datosPorCategoria = {};
-              
-              response.data.forEach(function(inventario) {
-                var categoria = inventario.categoria_nombre || 'Sin categoría';
-                datosPorCategoria[categoria] = (datosPorCategoria[categoria] || 0) + parseFloat(inventario.cantidad || 0);
-              });
-              
-              var labels = Object.keys(datosPorCategoria);
-              var valores = Object.values(datosPorCategoria);
-              
-              if (chartInventario) {
-                chartInventario.destroy();
-              }
-              
-              var ctx = document.getElementById('inventarioChart').getContext('2d');
-              chartInventario = new Chart(ctx, {
-                type: 'pie', // Cambio a pie para consistencia con compras/ventas
-                data: {
-                  labels: labels,
-                  datasets: [{
-                    data: valores,
-                    backgroundColor: coloresProfesionales.slice(0, labels.length),
-                    borderWidth: 2
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        padding: 10,
-                        usePointStyle: true
-                      }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                var label = context.label || '';
-                                var value = context.parsed;
-                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                var percentage = ((value / total) * 100).toFixed(1) + "%";
-                                return label + ': ' + value + ' (' + percentage + ')';
-                            }
-                        }
-                    }
-                  }
-                }
-              });
-            }
-          }
-        });
-      }
-      
-      // Gráfico 7: Estado de Transacciones
-      function cargarEstadoTransacciones() {
-        var params = buildQueryParams();
-        
-        Promise.all([
-          $.ajax({ url: 'compras/api.php?action=listar&estado=todos' + params, method: 'GET', dataType: 'json' }),
-          $.ajax({ url: 'ventas/api.php?action=listar&estado=todos' + params, method: 'GET', dataType: 'json' })
-        ]).then(function([comprasResp, ventasResp]) {
-          var completadas = 0, pendientes = 0, canceladas = 0;
-          
-          if (comprasResp.success && comprasResp.data) {
-            comprasResp.data.forEach(function(compra) {
-              if (compra.estado === 'completada') completadas++;
-              else if (compra.estado === 'pendiente') pendientes++;
-              else if (compra.estado === 'cancelada') canceladas++;
-            });
-          }
-          
-          if (ventasResp.success && ventasResp.data) {
-            ventasResp.data.forEach(function(venta) {
-              if (venta.estado === 'completada') completadas++;
-              else if (venta.estado === 'pendiente') pendientes++;
-              else if (venta.estado === 'cancelada') canceladas++;
-            });
-          }
-          
-          if (chartEstadoTransacciones) {
-            chartEstadoTransacciones.destroy();
-          }
-          
-          var ctx = document.getElementById('estadoTransaccionesChart').getContext('2d');
-          chartEstadoTransacciones = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-              labels: ['Completadas', 'Pendientes', 'Canceladas'],
-              datasets: [{
-                data: [completadas, pendientes, canceladas],
-                backgroundColor: ['#1dce6c', '#fdaf4b', '#f3545d']
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  position: 'bottom'
-                }
-              }
-            }
-          });
-        });
-      }
-      */
-      
-      // Inicializar al cargar la página
+      // Inicializar todo
       $(document).ready(function() {
-        console.log('Dashboard con ECharts cargando...');
-        
-        inicializarFechas();
-        cargarMaterialesFiltro();
-        cargarSucursalesFiltro();
-        
-        // Cargar datos iniciales
-        setTimeout(function() {
-          console.log('Cargando datos del dashboard con ECharts...');
+          // 1. Cargar opciones de filtros independientes
+          cargarSucursalesFiltroIC();
+          cargarAniosFiltroIC();
+          // 2. Cargar gráfico independiente
+          setTimeout(cargarIngresosCostosAnio, 500); 
           
-          // Verificar si hay una sucursal preseleccionada (para usuarios con sucursal fija)
-          var sucursalInicial = $('#filtroSucursal').val();
-          if (sucursalInicial) {
-             filtrosActuales.sucursal = sucursalInicial;
-          }
-          actualizarEtiquetasSucursal();
+          // 3. Inicializar filtros globales
+          inicializarFechas();
+          cargarMaterialesFiltro();
+          cargarSucursalesFiltro();
           
-          cargarTodosLosDatos();
-        }, 300);
-        
-        // Hacer los gráficos responsive
-        window.addEventListener('resize', function() {
-          if (chartFlujoDiario) chartFlujoDiario.resize();
-          if (chartComprasMaterial) chartComprasMaterial.resize();
-          if (chartVentasMaterial) chartVentasMaterial.resize();
-          if (chartAnalisisSucursal) chartAnalisisSucursal.resize();
-          if (chartInventario) chartInventario.resize();
-        });
+          // 4. Cargar datos globales iniciales
+          setTimeout(function() {
+            var sucursalInicial = $('#filtroSucursal').val();
+            if (sucursalInicial) {
+               filtrosActuales.sucursal = sucursalInicial;
+            }
+            actualizarEtiquetasSucursal();
+            cargarTodosLosDatos();
+          }, 600);
+          
+          // Responsive
+          window.addEventListener('resize', function() {
+            if (chartFlujoDiario) chartFlujoDiario.resize();
+            if (chartAnalisisSucursal) chartAnalisisSucursal.resize();
+            if (chartInventario) chartInventario.resize();
+            if (chartIngresosCostos) chartIngresosCostos.resize();
+          });
       });
     </script>
   </body>
