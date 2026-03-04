@@ -3,174 +3,6 @@
  * Sistema de Gestión de Reciclaje
  */
 
-// Helper: Construir parámetros de consulta para filtros globales
-function buildQueryParams(includeTime = true) {
-  var params = '';
-  // Usar filtrosActuales si están definidos, sino buscar en el DOM
-  var fechaInicio = (typeof filtrosActuales !== 'undefined' && filtrosActuales.fechaInicio) ? filtrosActuales.fechaInicio : $('#filtroFechaInicio').val();
-  var fechaFin = (typeof filtrosActuales !== 'undefined' && filtrosActuales.fechaFin) ? filtrosActuales.fechaFin : $('#filtroFechaFin').val();
-  var sucursal = (typeof filtrosActuales !== 'undefined' && filtrosActuales.sucursal) ? filtrosActuales.sucursal : $('#filtroSucursal').val();
-
-  if (fechaInicio) params += '&fecha_desde=' + fechaInicio;
-  if (fechaFin) params += '&fecha_hasta=' + fechaFin;
-  if (sucursal) params += '&sucursal_id=' + sucursal;
-  
-  return params;
-}
-
-// Gráfico 1: Estadísticas Generales (Tarjetas KPI)
-function cargarEstadisticas() {
-  var params = buildQueryParams();
-  
-  Promise.all([
-    $.ajax({ url: 'compras/api.php?action=listar&estado=completada' + params, method: 'GET', dataType: 'json' }),
-    $.ajax({ url: 'ventas/api.php?action=listar&estado=completada' + params, method: 'GET', dataType: 'json' })
-  ]).then(function([comprasResp, ventasResp]) {
-     var totalCompras = 0;
-     var totalVentas = 0;
-     
-     if (comprasResp.success && comprasResp.data) {
-       comprasResp.data.forEach(function(c) { totalCompras += parseFloat(c.total || 0); });
-     }
-     if (ventasResp.success && ventasResp.data) {
-       ventasResp.data.forEach(function(v) { totalVentas += parseFloat(v.total || 0); });
-     }
-     
-     var ganancia = totalVentas - totalCompras;
-     var margen = totalVentas > 0 ? (ganancia / totalVentas) * 100 : 0;
-     
-     $('#statTotalCompras').text('$' + totalCompras.toLocaleString('es-ES', {minimumFractionDigits: 2}));
-     $('#statTotalVentas').text('$' + totalVentas.toLocaleString('es-ES', {minimumFractionDigits: 2}));
-     $('#statGanancia').text('$' + ganancia.toLocaleString('es-ES', {minimumFractionDigits: 2}));
-     $('#statMargen').text(margen.toFixed(1) + '%');
-     
-     if (ganancia >= 0) {
-        $('#statGanancia').removeClass('text-danger').addClass('text-success');
-        $('#changeGanancia').removeClass('negative').addClass('positive').html('<i class="fas fa-arrow-up"></i>');
-     } else {
-        $('#statGanancia').removeClass('text-success').addClass('text-danger');
-        $('#changeGanancia').removeClass('positive').addClass('negative').html('<i class="fas fa-arrow-down"></i>');
-     }
-     
-     if (margen >= 20) {
-        $('#badgeMargen').removeClass('bg-warning bg-danger').addClass('bg-info').text('Excelente').show();
-     } else if (margen >= 10) {
-        $('#badgeMargen').removeClass('bg-info bg-danger').addClass('bg-warning').text('Bueno').show();
-     } else {
-        $('#badgeMargen').removeClass('bg-info bg-warning').addClass('bg-danger').text('Bajo').show();
-     }
-  }).catch(function(e) {
-      console.error("Error cargando estadísticas", e);
-  });
-}
-
-// Gráfico: Flujo Diario (Line Chart)
-function cargarFlujoDiario() {
-  var params = buildQueryParams();
-  
-  Promise.all([
-    $.ajax({ url: 'compras/api.php?action=listar&estado=completada' + params, method: 'GET', dataType: 'json' }),
-    $.ajax({ url: 'ventas/api.php?action=listar&estado=completada' + params, method: 'GET', dataType: 'json' })
-  ]).then(function([comprasResp, ventasResp]) {
-     var fechas = {};
-     
-     if (comprasResp.success && comprasResp.data) {
-       comprasResp.data.forEach(function(c) {
-         var fecha = c.fecha_compra ? c.fecha_compra.split(' ')[0] : '';
-         if (fecha) {
-            if (!fechas[fecha]) fechas[fecha] = { compras: 0, ventas: 0 };
-            fechas[fecha].compras += parseFloat(c.total || 0);
-         }
-       });
-     }
-     
-     if (ventasResp.success && ventasResp.data) {
-       ventasResp.data.forEach(function(v) {
-         var fecha = v.fecha_venta ? v.fecha_venta.split(' ')[0] : '';
-         if (fecha) {
-            if (!fechas[fecha]) fechas[fecha] = { compras: 0, ventas: 0 };
-            fechas[fecha].ventas += parseFloat(v.total || 0);
-         }
-       });
-     }
-     
-     var sortedFechas = Object.keys(fechas).sort();
-     var seriesCompras = sortedFechas.map(function(f) { return fechas[f].compras; });
-     var seriesVentas = sortedFechas.map(function(f) { return fechas[f].ventas; });
-     
-     var chartDom = document.getElementById('flujoDiarioChart');
-     if (!chartDom) return;
-     
-     if (!chartFlujoDiario) {
-        chartFlujoDiario = echarts.init(chartDom);
-     }
-     
-     var option = {
-        tooltip: { 
-            trigger: 'axis',
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            textStyle: { color: '#fff' }
-        },
-        legend: { 
-            data: ['Ingresos', 'Costos'], // Etiquetas corregidas
-            bottom: 0 
-        },
-        grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '10%',
-            containLabel: true
-        },
-        xAxis: { 
-            type: 'category', 
-            boundaryGap: false,
-            data: sortedFechas 
-        },
-        yAxis: { 
-            type: 'value',
-            axisLabel: { formatter: '${value}' }
-        },
-        series: [
-             { 
-                 name: 'Ingresos', // Ventas = Ingresos
-                 type: 'line', 
-                 data: seriesVentas, 
-                 smooth: true,
-                 showSymbol: false,
-                 lineStyle: { width: 3, color: '#1dce6c' },
-                 itemStyle: { color: '#1dce6c' },
-                 areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                        offset: 0, color: 'rgba(29, 206, 108, 0.3)'
-                    }, {
-                        offset: 1, color: 'rgba(29, 206, 108, 0.01)'
-                    }])
-                 }
-             },
-             { 
-                 name: 'Costos', // Compras = Costos
-                 type: 'line', 
-                 data: seriesCompras,
-                 smooth: true,
-                 showSymbol: false,
-                 lineStyle: { width: 3, color: '#f3545d' },
-                 itemStyle: { color: '#f3545d' },
-                 areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                        offset: 0, color: 'rgba(243, 84, 93, 0.3)'
-                    }, {
-                        offset: 1, color: 'rgba(243, 84, 93, 0.01)'
-                    }])
-                 }
-             }
-        ]
-     };
-     chartFlujoDiario.setOption(option);
-  }).catch(function(e) {
-      console.error("Error cargando flujo diario", e);
-  });
-}
-
 // Gráfico 2: Compras por Material (Doughnut)
 function cargarComprasPorMaterial() {
   var params = typeof buildQueryParams === 'function' ? buildQueryParams() : '';
@@ -363,8 +195,8 @@ function cargarAnalisisPorSucursal() {
           return result;
         }
       },
-        legend: {
-        data: ['Costos', 'Ingresos', 'Ganancia'],
+      legend: {
+        data: ['Compras', 'Ventas', 'Ganancia'],
         top: 10,
         textStyle: {
           fontSize: 13
@@ -415,7 +247,7 @@ function cargarAnalisisPorSucursal() {
       },
       series: [
         {
-          name: 'Costos',
+          name: 'Compras',
           type: 'bar',
           data: datosCompras,
           itemStyle: {
@@ -440,7 +272,7 @@ function cargarAnalisisPorSucursal() {
           }
         },
         {
-          name: 'Ingresos',
+          name: 'Ventas',
           type: 'bar',
           data: datosVentas,
           itemStyle: {
