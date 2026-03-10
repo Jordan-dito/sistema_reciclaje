@@ -2,10 +2,21 @@
 /**
  * API de Reportes
  * Sistema de Gestión de Reciclaje
+ * Soporta web (sesión) y Flutter (usuario_id / token)
  */
 
 header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 ob_start();
+
+// Preflight CORS (para Flutter/móvil)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    ob_end_clean();
+    http_response_code(200);
+    exit;
+}
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/auth.php';
@@ -13,14 +24,46 @@ require_once __DIR__ . '/../config/ErrorHandler.php';
 
 try {
     $auth = new Auth();
-    if (!$auth->isAuthenticated()) {
+    $currentUser = null;
+    
+    // Web: autenticación por sesión
+    if ($auth->isAuthenticated()) {
+        $currentUser = $auth->getCurrentUser();
+    }
+    // Flutter: autenticación por usuario_id (GET, POST o JSON)
+    if (!$currentUser) {
+        $usuarioId = $_GET['usuario_id'] ?? $_GET['id'] ?? $_POST['usuario_id'] ?? $_POST['id'] ?? null;
+        if (!$usuarioId && strpos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+            $json = json_decode(file_get_contents('php://input'), true);
+            $usuarioId = $json['usuario_id'] ?? $json['id'] ?? null;
+        }
+        if ($usuarioId) {
+            $db = getDB();
+            $stmt = $db->prepare("
+                SELECT u.id, u.nombre, u.email, u.rol_id, u.sucursal_id 
+                FROM usuarios u 
+                WHERE u.id = ? AND u.estado = 'activo'
+            ");
+            $stmt->execute([$usuarioId]);
+            $u = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($u) {
+                $currentUser = [
+                    'id' => $u['id'],
+                    'nombre' => $u['nombre'],
+                    'email' => $u['email'],
+                    'rol' => ''
+                ];
+            }
+        }
+    }
+    
+    if (!$currentUser) {
         ob_end_clean();
-        ErrorHandler::handleAuthError('No autenticado');
+        echo ErrorHandler::handleAuthError('No autenticado. Inicia sesión o proporciona usuario_id.');
         exit;
     }
     
     $db = getDB();
-    $currentUser = $auth->getCurrentUser();
     
     // Detectar sucursal del usuario
     $sucursalId = null;
