@@ -246,8 +246,8 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Descuento</label>
-                    <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0.00" value="0">
+                    <label>Descuento (%)</label>
+                    <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0" value="0" min="0" max="100">
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -675,9 +675,11 @@ if (!$auth->isAuthenticated()) {
           var cantidad = parseFloat($('#cantidad').val()) || 0;
           var precio = parseFloat($('#precio_unitario').val()) || 0;
           var iva = parseFloat($('#iva').val()) || 0;
-          var descuento = parseFloat($('#descuento').val()) || 0;
+          var descuentoPct = parseFloat($('#descuento').val()) || 0;
+          if (descuentoPct > 100) descuentoPct = 100;
           var subtotal = cantidad * precio;
-          var total = subtotal + iva - descuento;
+          var descuentoMonto = (subtotal * descuentoPct) / 100;
+          var total = subtotal + iva - descuentoMonto;
           $('#totalVenta').text('$' + total.toFixed(2));
         }
         
@@ -701,8 +703,10 @@ if (!$auth->isAuthenticated()) {
           var cantidad = parseFloat($('#cantidad').val()) || 0;
           var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
           var iva = parseFloat($('#iva').val()) || 0;
-          var descuento = parseFloat($('#descuento').val()) || 0;
+          var descuentoPct = parseFloat($('#descuento').val()) || 0;
+          if (descuentoPct > 100) descuentoPct = 100;
           var subtotal = cantidad * precio_unitario;
+          var descuento = (subtotal * descuentoPct) / 100;
           var total = subtotal + iva - descuento;
           
           var stockDisponible = parseFloat(inventarioInput.data('cantidad')) || 0;

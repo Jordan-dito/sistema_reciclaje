@@ -235,19 +235,10 @@ try {
                             </select>
                           </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                           <div class="form-group">
-                            <label>Descuento</label>
-                            <select id="tipo_descuento" name="tipo_descuento" class="form-control">
-                              <option value="dinero">En $</option>
-                              <option value="porcentaje">En %</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div class="col-md-2">
-                          <div class="form-group">
-                            <label id="labelDescuento">Valor</label>
-                            <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0.00" value="0" min="0">
+                            <label>Descuento (%)</label>
+                            <input type="number" step="0.01" id="descuento" name="descuento" class="form-control" placeholder="0" value="0" min="0" max="100">
                           </div>
                         </div>
                         <div class="col-md-4">
@@ -903,22 +894,8 @@ try {
         window.limpiarTodosProductos = limpiarTodosProductos;
         
         // Calcular total automáticamente
-        $('#iva, #descuento, #tipo_descuento, #estado, #sucursal_id').on('input change', function() {
+        $('#iva, #descuento, #estado, #sucursal_id').on('input change', function() {
           calcularTotal();
-        });
-        
-        // Cambiar label según tipo de descuento
-        $('#tipo_descuento').on('change', function() {
-          var tipo = $(this).val();
-          if (tipo === 'porcentaje') {
-            $('#labelDescuento').text('% Descuento');
-            $('#descuento').attr('placeholder', '0');
-            $('#descuento').attr('max', '100');
-          } else {
-            $('#labelDescuento').text('$ Descuento');
-            $('#descuento').attr('placeholder', '0.00');
-            $('#descuento').removeAttr('max');
-          }
         });
         
         function calcularTotal() {
@@ -932,18 +909,11 @@ try {
           $('#subtotalProductos').text('$' + subtotalProductos.toFixed(2));
           $('#subtotalProductosResumen').text('$' + subtotalProductos.toFixed(2));
           
-          // Calcular descuento primero (antes del impuesto)
-          var tipoDescuento = $('#tipo_descuento').val();
+          // Calcular descuento (siempre en porcentaje)
           var valorDescuento = parseFloat($('#descuento').val()) || 0;
-          var descuentoMonto = 0;
-          
-          if (tipoDescuento === 'porcentaje') {
-            descuentoMonto = (subtotalProductos * valorDescuento) / 100;
-            $('#descuentoResumen').text(valorDescuento.toFixed(0) + '%');
-          } else {
-            descuentoMonto = valorDescuento;
-            $('#descuentoResumen').text('$' + descuentoMonto.toFixed(2));
-          }
+          if (valorDescuento > 100) valorDescuento = 100;
+          var descuentoMonto = (subtotalProductos * valorDescuento) / 100;
+          $('#descuentoResumen').text(valorDescuento.toFixed(0) + '% ($' + descuentoMonto.toFixed(2) + ')');
 
           var subtotalConDescuento = subtotalProductos - descuentoMonto;
           
@@ -1001,16 +971,10 @@ try {
             subtotal += producto.subtotal;
           });
           
-          // Descuento antes del impuesto
-          var tipoDescuento = $('#tipo_descuento').val();
+          // Descuento antes del impuesto (siempre en porcentaje)
           var valorDescuento = parseFloat($('#descuento').val()) || 0;
-          var descuentoMonto = 0;
-          
-          if (tipoDescuento === 'porcentaje') {
-            descuentoMonto = (subtotal * valorDescuento) / 100;
-          } else {
-            descuentoMonto = valorDescuento;
-          }
+          if (valorDescuento > 100) valorDescuento = 100;
+          var descuentoMonto = (subtotal * valorDescuento) / 100;
 
           var subtotalConDescuento = subtotal - descuentoMonto;
           
