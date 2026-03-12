@@ -152,6 +152,7 @@ function generarHTMLPromedioPonderado($porProducto, $fechaDesde, $fechaHasta, $s
         $html .= '<th style="width: 100px;" class="text-right">Cantidad</th>';
         $html .= '<th style="width: 100px;" class="text-right">Monto</th>';
         $html .= '<th style="width: 120px;" class="text-right">Costo Promedio</th>';
+        $html .= '<th style="width: 110px;" class="text-right">Saldo (Stock)</th>';
         $html .= '</tr></thead><tbody>';
         $stock = 0;
         $costoTotal = 0;
@@ -177,10 +178,23 @@ function generarHTMLPromedioPonderado($porProducto, $fechaDesde, $fechaHasta, $s
             $html .= '<td class="text-right"><strong>' . number_format($mov['cantidad'], 2) . '</strong></td>';
             $html .= '<td class="text-right">$' . number_format($mov['monto'], 2) . '</td>';
             $html .= '<td class="text-right">$' . number_format($costoPromedio, 2) . '</td>';
+            $html .= '<td class="text-right"><strong>' . number_format($stock, 2) . '</strong></td>';
             $html .= '</tr>';
         }
         $html .= '</tbody></table>';
         $html .= '</div>';
+        // Apartado: Stock disponible cuando quedó material en inventario
+        if ($stock > 0) {
+            $valorStock = $stock * $costoPromedio;
+            $html .= '<div class="alert alert-info mt-2 mb-0" style="border-left: 4px solid #17a2b8;">';
+            $html .= '<h6 class="alert-heading mb-2"><i class="fa fa-box-open"></i> Material en stock (no se vendió todo)</h6>';
+            $html .= '<p class="mb-1"><strong>Stock disponible al cierre del período:</strong> ' . number_format($stock, 2) . ' unidades</p>';
+            $html .= '<p class="mb-1"><strong>Costo promedio ponderado:</strong> $' . number_format($costoPromedio, 2) . '</p>';
+            $html .= '<p class="mb-0"><strong>Valor en inventario:</strong> $' . number_format($valorStock, 2) . '</p>';
+            $html .= '</div>';
+        } else {
+            $html .= '<div class="alert alert-secondary mt-2 mb-0"><i class="fa fa-check"></i> Todo el material del período fue vendido. No hay stock disponible.</div>';
+        }
         $html .= '</div>';
     }
     $html .= '</div>';
