@@ -200,6 +200,7 @@ try {
                                           <th style="width: 30px;">#</th>
                                           <th>Producto</th>
                                           <th>Material</th>
+                                          <th>Unidad</th>
                                           <th style="width: 120px;">Cantidad</th>
                                           <th style="width: 130px;">Precio Unitario</th>
                                           <th style="width: 120px;">Subtotal</th>
@@ -211,7 +212,7 @@ try {
                                       </tbody>
                                       <tfoot class="table-info" style="position: sticky; bottom: 0; background: #d1ecf1; z-index: 10;">
                                         <tr>
-                                          <th colspan="5" class="text-end"><strong>Subtotal Productos:</strong></th>
+                                          <th colspan="6" class="text-end"><strong>Subtotal Productos:</strong></th>
                                           <th id="subtotalProductos" style="font-size: 1.1em;">$0.00</th>
                                           <th></th>
                                         </tr>
@@ -336,7 +337,7 @@ try {
                 <thead class="thead-dark" style="position: sticky; top: 0; background: white; z-index: 10;">
                   <tr>
                     <th style="width: 50px;">Seleccionar</th>
-                    <th>Nombre</th>
+                    <th>Código</th>
                     <th>Material</th>
                     <th>Categoría</th>
                     <th>Unidad</th>
@@ -769,6 +770,9 @@ try {
             
             // Material
             fila.append($('<td>').text(producto.material || '-'));
+
+            // Unidad
+            fila.append($('<td>').text(producto.unidad || '-'));
             
             // Cantidad (editable)
             var cantidadInput = $('<input>')
@@ -825,7 +829,7 @@ try {
           if (!producto) return;
           
           var fila = $('#tbodyProductosAgregados tr[data-index="' + index + '"]');
-          fila.find('td:eq(5)').html('<strong>$' + producto.subtotal.toFixed(2) + '</strong>');
+          fila.find('td:eq(6)').html('<strong>$' + producto.subtotal.toFixed(2) + '</strong>');
         }
         
         // Función para eliminar un producto

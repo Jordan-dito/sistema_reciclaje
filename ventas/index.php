@@ -195,19 +195,6 @@ if (!$auth->isAuthenticated()) {
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Inventario <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                      <input type="text" id="producto_seleccionado" class="form-control" placeholder="Seleccione un producto" readonly required style="background-color: #fff;">
-                      <input type="hidden" id="inventario_id" name="inventario_id">
-                      <button class="btn btn-outline-secondary" type="button" id="btnBuscarInventario">
-                        <i class="fa fa-search"></i>
-                      </button>
-                    </div>
-                    <small class="form-text text-muted">Seleccione el producto del inventario que desea vender</small>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
                     <label>Número de Factura</label>
                     <input type="text" id="numero_factura" name="numero_factura" class="form-control" placeholder="Se generará automáticamente" readonly>
                   </div>
@@ -224,20 +211,54 @@ if (!$auth->isAuthenticated()) {
                     </select>
                   </div>
                 </div>
-                <div class="col-md-6">
+
+                <!-- Sección de productos múltiples -->
+                <div class="col-md-12">
                   <div class="form-group">
-                    <label>Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="cantidad" name="cantidad" class="form-control" placeholder="0.00" required>
-                    <small class="form-text text-muted" id="stockDisponible">Stock disponible: -</small>
+                    <label>Productos <span class="text-danger">*</span></label>
+                    <button type="button" class="btn btn-primary mb-3" id="btnBuscarInventario">
+                      <i class="fa fa-plus"></i> Agregar Producto
+                    </button>
+                    <small class="form-text text-muted d-block mb-2"><i class="fa fa-info-circle"></i> Seleccione la sucursal primero. Puede agregar múltiples productos del inventario.</small>
+
+                    <div id="productosVentaAgregados" class="card border-primary" style="display: none;">
+                      <div class="card-header bg-primary text-white py-2 d-flex justify-content-between align-items-center">
+                        <span><i class="fa fa-shopping-cart"></i> Productos seleccionados (<span id="contadorProductosVenta">0</span>)</span>
+                        <button type="button" class="btn btn-sm btn-danger" id="btnLimpiarTodosVenta" style="display: none;">
+                          <i class="fa fa-trash"></i> Limpiar Todo
+                        </button>
+                      </div>
+                      <div class="card-body" style="padding: 15px;">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                          <table class="table table-sm table-hover table-bordered" id="tablaProductosVenta" style="margin-bottom: 0;">
+                            <thead class="thead-light" style="position: sticky; top: 0; background: white; z-index: 10;">
+                              <tr>
+                                <th style="width: 30px;">#</th>
+                                <th>Producto</th>
+                                <th>Material</th>
+                                <th>Unidad</th>
+                                <th style="width: 120px;">Cantidad</th>
+                                <th style="width: 130px;">Precio Unitario</th>
+                                <th style="width: 120px;">Subtotal</th>
+                                <th style="width: 60px;">Acción</th>
+                              </tr>
+                            </thead>
+                            <tbody id="tbodyProductosVenta">
+                            </tbody>
+                            <tfoot class="table-info" style="position: sticky; bottom: 0; background: #d1ecf1; z-index: 10;">
+                              <tr>
+                                <th colspan="6" class="text-end"><strong>Subtotal Productos:</strong></th>
+                                <th id="subtotalProductosVenta" style="font-size: 1.1em;">$0.00</th>
+                                <th></th>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label>Precio Unitario (Venta) <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" placeholder="0.00" required readonly style="background-color: #e9ecef;">
-                    <small class="form-text text-muted">Se cargará automáticamente desde el precio de venta del producto</small>
-                  </div>
-                </div>
+
                 <div class="col-md-4">
                   <div class="form-group">
                     <label>IVA</label>
@@ -311,16 +332,16 @@ if (!$auth->isAuthenticated()) {
               <table class="table table-hover table-striped" id="tablaInventario">
                 <thead>
                   <tr>
-                    <th>Producto</th>
+                    <th style="width: 40px;"><input type="checkbox" id="checkTodosInventario"></th>
+                    <th>Código</th>
                     <th>Material</th>
                     <th>Categoría</th>
+                    <th>Unidad</th>
                     <th>Stock</th>
                     <th>Precio</th>
-                    <th>Acción</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <!-- Los datos se cargarán dinámicamente -->
                 </tbody>
               </table>
             </div>
@@ -335,7 +356,11 @@ if (!$auth->isAuthenticated()) {
             </div>
           </div>
           <div class="modal-footer">
+            <span id="contadorSeleccionadosInventario" class="text-muted me-auto">0 seleccionados</span>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-primary" id="btnAgregarSeleccionados">
+              <i class="fa fa-plus"></i> Agregar Seleccionados
+            </button>
           </div>
         </div>
       </div>
@@ -493,6 +518,7 @@ if (!$auth->isAuthenticated()) {
         }
         
         var inventarioData = [];
+        var productosVentaSeleccionados = [];
 
         $('#btnBuscarInventario').click(function() {
           var sucursal_id = $('#sucursal_id').val();
@@ -505,16 +531,10 @@ if (!$auth->isAuthenticated()) {
         });
 
         $('#sucursal_id').change(function() {
-          limpiarSeleccionProducto();
-        });
-
-        function limpiarSeleccionProducto() {
-          $('#inventario_id').val('');
-          $('#producto_seleccionado').val('');
-          $('#precio_unitario').val('');
-          $('#stockDisponible').text('Stock disponible: -');
+          productosVentaSeleccionados = [];
+          renderizarProductosVenta();
           calcularTotal();
-        }
+        });
 
         function cargarInventarioModal(sucursal_id) {
           var tbody = $('#tablaInventario tbody');
@@ -524,6 +544,7 @@ if (!$auth->isAuthenticated()) {
           tbody.empty();
           mensajeSin.hide();
           mensajeCargando.show();
+          $('#checkTodosInventario').prop('checked', false);
           
           $.ajax({
             url: 'api.php?action=inventarios&sucursal_id=' + sucursal_id,
@@ -557,9 +578,71 @@ if (!$auth->isAuthenticated()) {
           mensajeSin.hide();
           datos.forEach(function(item) {
             var precio = parseFloat(item.precio_unitario || 0).toFixed(2);
-            tbody.append('<tr><td><strong>' + item.producto_nombre + '</strong></td><td>' + (item.material_nombre || '-') + '</td><td>' + (item.categoria_nombre || '-') + '</td><td>' + item.cantidad + ' ' + item.unidad + '</td><td>$' + precio + '</td><td><button type="button" class="btn btn-sm btn-primary" onclick="seleccionarInventario(' + item.inventario_id + ')"><i class="fa fa-check"></i> Seleccionar</button></td></tr>');
+            var yaAgregado = productosVentaSeleccionados.some(function(p) { return p.inventario_id == item.inventario_id; });
+            var checkboxClass = yaAgregado ? 'disabled' : '';
+            var rowClass = yaAgregado ? 'table-success' : '';
+            tbody.append(
+              '<tr class="' + rowClass + '">' +
+              '<td class="text-center"><input type="checkbox" class="check-inventario" data-id="' + item.inventario_id + '" ' + (yaAgregado ? 'disabled checked' : '') + '></td>' +
+              '<td><strong>' + item.producto_nombre + '</strong></td>' +
+              '<td>' + (item.material_nombre || '-') + '</td>' +
+              '<td>' + (item.categoria_nombre || '-') + '</td>' +
+              '<td>' + (item.unidad || '-') + '</td>' +
+              '<td>' + item.cantidad + '</td>' +
+              '<td>$' + precio + '</td>' +
+              '</tr>'
+            );
           });
+          actualizarContadorSeleccionados();
         }
+
+        function actualizarContadorSeleccionados() {
+          var count = $('#tablaInventario .check-inventario:checked:not(:disabled)').length;
+          $('#contadorSeleccionadosInventario').text(count + ' seleccionados');
+        }
+
+        $('#tablaInventario').on('change', '.check-inventario', function() {
+          actualizarContadorSeleccionados();
+          var allChecks = $('#tablaInventario .check-inventario:not(:disabled)');
+          var allChecked = allChecks.length > 0 && allChecks.filter(':checked').length === allChecks.length;
+          $('#checkTodosInventario').prop('checked', allChecked);
+        });
+
+        $('#checkTodosInventario').change(function() {
+          var checked = $(this).is(':checked');
+          $('#tablaInventario .check-inventario:not(:disabled)').prop('checked', checked);
+          actualizarContadorSeleccionados();
+        });
+
+        $('#btnAgregarSeleccionados').click(function() {
+          var checksSeleccionados = $('#tablaInventario .check-inventario:checked:not(:disabled)');
+          if (checksSeleccionados.length === 0) {
+            swal("Atención", "Seleccione al menos un producto", "warning");
+            return;
+          }
+          checksSeleccionados.each(function() {
+            var invId = $(this).data('id');
+            var item = inventarioData.find(function(i) { return i.inventario_id == invId; });
+            if (item) {
+              productosVentaSeleccionados.push({
+                inventario_id: item.inventario_id,
+                producto_id: item.producto_id,
+                precio_id: item.precio_id,
+                nombre: item.producto_nombre,
+                material: item.material_nombre || '',
+                categoria: item.categoria_nombre || '',
+                unidad: item.unidad || '',
+                stock: parseFloat(item.cantidad),
+                precio: parseFloat(item.precio_unitario) || 0,
+                cantidad: 0,
+                subtotal: 0
+              });
+            }
+          });
+          renderizarProductosVenta();
+          calcularTotal();
+          $('#modalBuscarInventario').modal('hide');
+        });
 
         $('#filtroInventario').on('keyup', function() {
           var valor = $(this).val().toLowerCase();
@@ -571,29 +654,122 @@ if (!$auth->isAuthenticated()) {
           renderizarTablaInventario(datosFiltrados);
         });
 
-        window.seleccionarInventario = function(id) {
-          var item = inventarioData.find(function(i) { return i.inventario_id == id; });
-          if (item) {
-            $('#inventario_id').val(item.inventario_id);
-            $('#producto_seleccionado').val(item.producto_nombre);
-            $('#inventario_id').data('producto-id', item.producto_id);
-            $('#inventario_id').data('precio-id', item.precio_id);
-            $('#inventario_id').data('cantidad', item.cantidad);
-            $('#precio_unitario').val(item.precio_unitario || 0);
-            $('#stockDisponible').text('Stock disponible: ' + item.cantidad + ' ' + item.unidad);
+        function renderizarProductosVenta() {
+          var tbody = $('#tbodyProductosVenta');
+          tbody.empty();
+
+          if (productosVentaSeleccionados.length === 0) {
+            $('#productosVentaAgregados').hide();
+            $('#btnLimpiarTodosVenta').hide();
+            $('#contadorProductosVenta').text('0');
             calcularTotal();
-            $('#modalBuscarInventario').modal('hide');
+            return;
           }
-        };
+
+          $('#productosVentaAgregados').fadeIn(300);
+          $('#btnLimpiarTodosVenta').show();
+          $('#contadorProductosVenta').text(productosVentaSeleccionados.length);
+
+          productosVentaSeleccionados.forEach(function(producto, index) {
+            var fila = $('<tr>').attr('data-index', index);
+
+            fila.append($('<td>').html('<strong>' + (index + 1) + '</strong>'));
+            fila.append($('<td>').html('<strong>' + producto.nombre + '</strong><br><small class="text-muted">' + producto.categoria + '</small>'));
+            fila.append($('<td>').text(producto.material || '-'));
+            fila.append($('<td>').text(producto.unidad || '-'));
+
+            var cantidadInput = $('<input>')
+              .attr('type', 'number')
+              .attr('step', '0.01')
+              .attr('min', '0')
+              .attr('max', producto.stock)
+              .addClass('form-control form-control-sm')
+              .val(producto.cantidad)
+              .on('change input', function() {
+                var nuevaCantidad = parseFloat($(this).val()) || 0;
+                if (nuevaCantidad > producto.stock) {
+                  nuevaCantidad = producto.stock;
+                  $(this).val(nuevaCantidad);
+                  swal("Atención", "Stock máximo: " + producto.stock + " " + producto.unidad, "warning");
+                }
+                producto.cantidad = nuevaCantidad;
+                producto.subtotal = producto.cantidad * producto.precio;
+                actualizarFilaVenta(index);
+                calcularTotal();
+              });
+            fila.append($('<td>').append(cantidadInput).append('<small class="text-muted">Stock: ' + producto.stock + '</small>'));
+
+            var precioInput = $('<input>')
+              .attr('type', 'number')
+              .attr('step', '0.01')
+              .attr('min', '0')
+              .attr('readonly', true)
+              .css({ 'background-color': '#f8f9fa', 'cursor': 'not-allowed' })
+              .addClass('form-control form-control-sm')
+              .val(producto.precio.toFixed(2));
+            fila.append($('<td>').append(precioInput));
+
+            fila.append($('<td>').html('<strong>$' + producto.subtotal.toFixed(2) + '</strong>'));
+
+            var btnEliminar = $('<button>')
+              .addClass('btn btn-sm btn-danger')
+              .html('<i class="fa fa-times"></i>')
+              .on('click', function() { eliminarProductoVenta(index); });
+            fila.append($('<td>').append(btnEliminar));
+
+            tbody.append(fila);
+          });
+        }
+
+        function actualizarFilaVenta(index) {
+          var producto = productosVentaSeleccionados[index];
+          if (!producto) return;
+          var fila = $('#tbodyProductosVenta tr[data-index="' + index + '"]');
+          fila.find('td:eq(6)').html('<strong>$' + producto.subtotal.toFixed(2) + '</strong>');
+        }
+
+        function eliminarProductoVenta(index) {
+          var producto = productosVentaSeleccionados[index];
+          swal({
+            title: "¿Eliminar producto?",
+            text: "¿Desea quitar \"" + producto.nombre + "\" de la lista?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+          }).then(function(willDelete) {
+            if (willDelete) {
+              productosVentaSeleccionados.splice(index, 1);
+              renderizarProductosVenta();
+              calcularTotal();
+            }
+          });
+        }
+
+        $('#btnLimpiarTodosVenta').click(function() {
+          swal({
+            title: "¿Limpiar todos?",
+            text: "Se quitarán todos los productos de la lista",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+          }).then(function(willDelete) {
+            if (willDelete) {
+              productosVentaSeleccionados = [];
+              renderizarProductosVenta();
+              calcularTotal();
+            }
+          });
+        });
 
         $('#modalNuevaVenta').on('show.bs.modal', function() {
           cargarSiguienteNumeroFactura();
-          // Resetear fecha a hoy al abrir
           $('#fecha_venta').val(new Date().toISOString().split('T')[0]);
         });
 
         $('#modalNuevaVenta').on('hidden.bs.modal', function() {
-           limpiarSeleccionProducto();
+          productosVentaSeleccionados = [];
+          renderizarProductosVenta();
+          calcularTotal();
         });
 
         // Función para cargar el siguiente número de factura
@@ -667,53 +843,77 @@ if (!$auth->isAuthenticated()) {
           });
         }
         
-        $('#cantidad, #precio_unitario, #iva, #descuento').on('input', function() {
+        $('#iva, #descuento').on('input', function() {
           calcularTotal();
         });
         
         function calcularTotal() {
-          var cantidad = parseFloat($('#cantidad').val()) || 0;
-          var precio = parseFloat($('#precio_unitario').val()) || 0;
+          var subtotalProductos = 0;
+          productosVentaSeleccionados.forEach(function(p) {
+            subtotalProductos += p.subtotal;
+          });
+          $('#subtotalProductosVenta').text('$' + subtotalProductos.toFixed(2));
+
           var iva = parseFloat($('#iva').val()) || 0;
           var descuentoPct = parseFloat($('#descuento').val()) || 0;
           if (descuentoPct > 100) descuentoPct = 100;
-          var subtotal = cantidad * precio;
-          var descuentoMonto = (subtotal * descuentoPct) / 100;
-          var total = subtotal + iva - descuentoMonto;
+          var descuentoMonto = (subtotalProductos * descuentoPct) / 100;
+          var total = subtotalProductos + iva - descuentoMonto;
           $('#totalVenta').text('$' + total.toFixed(2));
         }
         
         $('#btnGuardarVenta').click(function() {
-          var form = $('#formNuevaVenta')[0];
-          if (!form.checkValidity()) {
-            form.reportValidity();
+          if (!$('#sucursal_id').val()) {
+            swal("Error", "Debe seleccionar una sucursal", "error");
             return;
           }
-          
-          var inventario_id = $('#inventario_id').val();
-          if (!inventario_id) {
-            swal("Error", "Debe seleccionar un producto del inventario", "error");
+          if (!$('#cliente_id').val()) {
+            swal("Error", "Debe seleccionar un cliente", "error");
             return;
           }
-          
-          var inventarioInput = $('#inventario_id');
-          var producto_id = inventarioInput.data('producto-id');
-          var precio_id = inventarioInput.data('precio-id') || null;
-          
-          var cantidad = parseFloat($('#cantidad').val()) || 0;
-          var precio_unitario = parseFloat($('#precio_unitario').val()) || 0;
+          if (!$('#fecha_venta').val()) {
+            swal("Error", "Debe ingresar la fecha de venta", "error");
+            return;
+          }
+
+          if (productosVentaSeleccionados.length === 0) {
+            swal("Error", "Debe agregar al menos un producto", "error");
+            return;
+          }
+
+          var hayError = false;
+          productosVentaSeleccionados.forEach(function(p) {
+            if (p.cantidad <= 0) {
+              hayError = true;
+            }
+            if (p.cantidad > p.stock) {
+              hayError = true;
+            }
+          });
+          if (hayError) {
+            swal("Error", "Verifique las cantidades de los productos. Deben ser mayores a 0 y no exceder el stock disponible.", "error");
+            return;
+          }
+
+          var subtotalProductos = 0;
+          var detalles = [];
+          productosVentaSeleccionados.forEach(function(p) {
+            subtotalProductos += p.subtotal;
+            detalles.push({
+              inventario_id: p.inventario_id,
+              producto_id: p.producto_id,
+              precio_id: p.precio_id,
+              cantidad: p.cantidad,
+              precio_unitario: p.precio,
+              subtotal: p.subtotal
+            });
+          });
+
           var iva = parseFloat($('#iva').val()) || 0;
           var descuentoPct = parseFloat($('#descuento').val()) || 0;
           if (descuentoPct > 100) descuentoPct = 100;
-          var subtotal = cantidad * precio_unitario;
-          var descuento = (subtotal * descuentoPct) / 100;
-          var total = subtotal + iva - descuento;
-          
-          var stockDisponible = parseFloat(inventarioInput.data('cantidad')) || 0;
-          if (cantidad > stockDisponible) {
-            swal("Error", "La cantidad solicitada (" + cantidad + ") excede el stock disponible (" + stockDisponible + ")", "error");
-            return;
-          }
+          var descuento = (subtotalProductos * descuentoPct) / 100;
+          var total = subtotalProductos + iva - descuento;
           
           var formData = {
             cliente_id: $('#cliente_id').val(),
@@ -722,21 +922,14 @@ if (!$auth->isAuthenticated()) {
             fecha_venta: $('#fecha_venta').val(),
             numero_factura: $('#numero_factura').val(),
             tipo_comprobante: $('#tipo_comprobante').val(),
-            subtotal: subtotal,
+            subtotal: subtotalProductos,
             iva: iva,
             descuento: descuento,
             total: total,
             metodo_pago: $('#metodo_pago').val(),
             estado: $('#estado').val(),
             notas: $('#notas').val(),
-            detalles: JSON.stringify([{
-              inventario_id: inventario_id,
-              producto_id: producto_id,
-              precio_id: precio_id,
-              cantidad: cantidad,
-              precio_unitario: precio_unitario,
-              subtotal: subtotal
-            }]),
+            detalles: JSON.stringify(detalles),
             action: 'crear'
           };
           
@@ -751,6 +944,8 @@ if (!$auth->isAuthenticated()) {
                 $('#modalNuevaVenta').modal('hide');
                 $('#formNuevaVenta')[0].reset();
                 $('#fecha_venta').val(new Date().toISOString().split('T')[0]);
+                productosVentaSeleccionados = [];
+                renderizarProductosVenta();
                 calcularTotal();
                 cargarVentas();
               } else {
