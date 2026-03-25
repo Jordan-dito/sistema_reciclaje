@@ -791,15 +791,28 @@ function generarPDFAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId = null,
             e.cedula,
             e.cargo,
             s.nombre as sucursal,
-            COUNT(CASE WHEN a.estado = 'asistio' THEN 1 END) as dias_asistidos,
-            COUNT(CASE WHEN a.estado = 'falta' THEN 1 END) as dias_falta,
-            COUNT(a.id) as total_registros
+            COALESCE(a.dias_asistidos, 0) as dias_asistidos,
+            COALESCE(a.dias_falta, 0) as dias_falta,
+            COALESCE(pd.sueldo_acumulado, 0) as sueldo_acumulado
         FROM empleados e
         LEFT JOIN sucursales s ON e.sucursal_id = s.id
-        LEFT JOIN asistencias a ON a.empleado_id = e.id AND a.fecha BETWEEN ? AND ?
+        LEFT JOIN (
+            SELECT empleado_id,
+                   COUNT(CASE WHEN estado = 'asistio' THEN 1 END) as dias_asistidos,
+                   COUNT(CASE WHEN estado = 'falta' THEN 1 END) as dias_falta
+            FROM asistencias
+            WHERE fecha BETWEEN ? AND ?
+            GROUP BY empleado_id
+        ) a ON a.empleado_id = e.id
+        LEFT JOIN (
+            SELECT empleado_id, SUM(monto) as sueldo_acumulado
+            FROM pagos_diarios
+            WHERE fecha_laborada BETWEEN ? AND ?
+            GROUP BY empleado_id
+        ) pd ON pd.empleado_id = e.id
         WHERE e.estado = 'ACTIVO'
     ";
-    $params = [$fechaDesde, $fechaHasta];
+    $params = [$fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta];
 
     if ($sucursalId) {
         $sql .= " AND e.sucursal_id = ?";
@@ -840,7 +853,7 @@ function generarPDFAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId = null,
         echo '<th style="padding: 10px; text-align: left; border: 1px solid #dee2e6;">Sucursal</th>';
         echo '<th style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">Días Asistidos</th>';
         echo '<th style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">Días Falta</th>';
-        echo '<th style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">Total Registros</th>';
+        echo '<th style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">Sueldo Acumulado</th>';
         echo '</tr>';
         echo '</thead>';
         echo '<tbody>';
@@ -854,7 +867,7 @@ function generarPDFAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId = null,
             echo '<td style="padding: 8px; border: 1px solid #dee2e6;">' . htmlspecialchars($emp['sucursal'] ?? '-') . '</td>';
             echo '<td style="padding: 8px; text-align: right; border: 1px solid #dee2e6;">' . $emp['dias_asistidos'] . '</td>';
             echo '<td style="padding: 8px; text-align: right; border: 1px solid #dee2e6;">' . $emp['dias_falta'] . '</td>';
-            echo '<td style="padding: 8px; text-align: right; border: 1px solid #dee2e6;">' . $emp['total_registros'] . '</td>';
+            echo '<td style="padding: 8px; text-align: right; border: 1px solid #dee2e6;">$' . number_format($emp['sueldo_acumulado'], 2) . '</td>';
             echo '</tr>';
         }
 

@@ -984,15 +984,28 @@ function generarVistaPreviaAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId
             e.cedula,
             e.cargo,
             s.nombre as sucursal,
-            COUNT(CASE WHEN a.estado = 'asistio' THEN 1 END) as dias_asistidos,
-            COUNT(CASE WHEN a.estado = 'falta' THEN 1 END) as dias_falta,
-            COUNT(a.id) as total_registros
+            COALESCE(a.dias_asistidos, 0) as dias_asistidos,
+            COALESCE(a.dias_falta, 0) as dias_falta,
+            COALESCE(pd.sueldo_acumulado, 0) as sueldo_acumulado
         FROM empleados e
         LEFT JOIN sucursales s ON e.sucursal_id = s.id
-        LEFT JOIN asistencias a ON a.empleado_id = e.id AND a.fecha BETWEEN ? AND ?
+        LEFT JOIN (
+            SELECT empleado_id,
+                   COUNT(CASE WHEN estado = 'asistio' THEN 1 END) as dias_asistidos,
+                   COUNT(CASE WHEN estado = 'falta' THEN 1 END) as dias_falta
+            FROM asistencias
+            WHERE fecha BETWEEN ? AND ?
+            GROUP BY empleado_id
+        ) a ON a.empleado_id = e.id
+        LEFT JOIN (
+            SELECT empleado_id, SUM(monto) as sueldo_acumulado
+            FROM pagos_diarios
+            WHERE fecha_laborada BETWEEN ? AND ?
+            GROUP BY empleado_id
+        ) pd ON pd.empleado_id = e.id
         WHERE e.estado = 'ACTIVO'
     ";
-    $params = [$fechaDesde, $fechaHasta];
+    $params = [$fechaDesde, $fechaHasta, $fechaDesde, $fechaHasta];
 
     if ($sucursalId) {
         $sql .= " AND e.sucursal_id = ?";
@@ -1030,7 +1043,7 @@ function generarVistaPreviaAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId
     $html .= '<th>Sucursal</th>';
     $html .= '<th>Días Asistidos</th>';
     $html .= '<th>Días Falta</th>';
-    $html .= '<th>Total Registros</th>';
+    $html .= '<th>Sueldo Acumulado</th>';
     $html .= '</tr></thead><tbody>';
 
     foreach ($empleados as $emp) {
@@ -1042,7 +1055,7 @@ function generarVistaPreviaAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId
         $html .= '<td>' . htmlspecialchars($emp['sucursal'] ?? '-') . '</td>';
         $html .= '<td><span class="badge badge-success">' . $emp['dias_asistidos'] . '</span></td>';
         $html .= '<td><span class="badge badge-danger">' . $emp['dias_falta'] . '</span></td>';
-        $html .= '<td>' . $emp['total_registros'] . '</td>';
+        $html .= '<td>$' . number_format($emp['sueldo_acumulado'], 2) . '</td>';
         $html .= '</tr>';
     }
 
