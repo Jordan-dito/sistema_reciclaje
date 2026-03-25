@@ -83,6 +83,7 @@ try {
         $rolId = $_GET['rol_id'] ?? '';
         $sucursalIdFiltro = $_GET['sucursal_id'] ?? $sucursalId; // Si no viene filtro, usar la del usuario
         $material = $_GET['material'] ?? '';
+        $nombreEmpleado = $_GET['nombre_empleado'] ?? '';
         
         if (empty($tipo)) {
             throw new Exception('Tipo de reporte no especificado');
@@ -125,6 +126,9 @@ try {
                 break;
             case 'materiales':
                 $resultado = generarVistaPreviaMateriales($db);
+                break;
+            case 'asistencia':
+                $resultado = generarVistaPreviaAsistencia($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $nombreEmpleado);
                 break;
             case 'sucursales':
                 $resultado = generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro);
@@ -964,7 +968,88 @@ function generarVistaPreviaMateriales($db) {
     $html .= '<p><strong>Total de materiales:</strong> ' . count($materiales) . '</p>';
     $html .= '<p><strong>Total de categorías:</strong> ' . count($porCategoria) . '</p>';
     $html .= '</div>';
-    
+
     return ['html' => $html, 'tieneDatos' => true, 'datos' => $materiales];
+}
+
+/**
+ * Genera vista previa HTML para reporte de asistencia
+ */
+function generarVistaPreviaAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId = null, $nombreEmpleado = '') {
+    $sql = "
+        SELECT
+            e.id,
+            e.nombres,
+            e.apellidos,
+            e.cedula,
+            e.cargo,
+            s.nombre as sucursal,
+            COUNT(CASE WHEN a.estado = 'asistio' THEN 1 END) as dias_asistidos,
+            COUNT(CASE WHEN a.estado = 'falta' THEN 1 END) as dias_falta,
+            COUNT(a.id) as total_registros
+        FROM empleados e
+        LEFT JOIN sucursales s ON e.sucursal_id = s.id
+        LEFT JOIN asistencias a ON a.empleado_id = e.id AND a.fecha BETWEEN ? AND ?
+        WHERE e.estado = 'ACTIVO'
+    ";
+    $params = [$fechaDesde, $fechaHasta];
+
+    if ($sucursalId) {
+        $sql .= " AND e.sucursal_id = ?";
+        $params[] = $sucursalId;
+    }
+
+    if (!empty($nombreEmpleado)) {
+        $sql .= " AND CONCAT(e.nombres, ' ', e.apellidos) LIKE ?";
+        $params[] = '%' . $nombreEmpleado . '%';
+    }
+
+    $sql .= " GROUP BY e.id ORDER BY s.nombre, e.apellidos, e.nombres";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $empleados = $stmt->fetchAll();
+
+    $tieneDatos = count($empleados) > 0;
+
+    $html = '<div class="table-responsive">';
+    $html .= '<h4>Reporte de Asistencia</h4>';
+    $html .= '<p><strong>Período:</strong> ' . date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta)) . '</p>';
+
+    if (!$tieneDatos) {
+        $html .= '<div class="alert alert-warning">No se encontraron empleados con registros en el período seleccionado.</div>';
+        return ['html' => $html, 'tieneDatos' => false, 'datos' => []];
+    }
+
+    $html .= '<table class="table table-bordered table-striped">';
+    $html .= '<thead><tr>';
+    $html .= '<th>Nombres</th>';
+    $html .= '<th>Apellidos</th>';
+    $html .= '<th>Cédula</th>';
+    $html .= '<th>Cargo</th>';
+    $html .= '<th>Sucursal</th>';
+    $html .= '<th>Días Asistidos</th>';
+    $html .= '<th>Días Falta</th>';
+    $html .= '<th>Total Registros</th>';
+    $html .= '</tr></thead><tbody>';
+
+    foreach ($empleados as $emp) {
+        $html .= '<tr>';
+        $html .= '<td>' . htmlspecialchars($emp['nombres']) . '</td>';
+        $html .= '<td>' . htmlspecialchars($emp['apellidos']) . '</td>';
+        $html .= '<td>' . htmlspecialchars($emp['cedula'] ?? '-') . '</td>';
+        $html .= '<td>' . htmlspecialchars($emp['cargo'] ?? '-') . '</td>';
+        $html .= '<td>' . htmlspecialchars($emp['sucursal'] ?? '-') . '</td>';
+        $html .= '<td><span class="badge badge-success">' . $emp['dias_asistidos'] . '</span></td>';
+        $html .= '<td><span class="badge badge-danger">' . $emp['dias_falta'] . '</span></td>';
+        $html .= '<td>' . $emp['total_registros'] . '</td>';
+        $html .= '</tr>';
+    }
+
+    $html .= '</tbody></table>';
+    $html .= '<p><strong>Total de empleados:</strong> ' . count($empleados) . '</p>';
+    $html .= '</div>';
+
+    return ['html' => $html, 'tieneDatos' => true, 'datos' => $empleados];
 }
 

@@ -32,6 +32,7 @@ try {
     $rolId = $_GET['rol_id'] ?? '';
     $sucursalIdFiltro = $_GET['sucursal_id'] ?? $sucursalId;
     $material = $_GET['material'] ?? '';
+    $nombreEmpleado = $_GET['nombre_empleado'] ?? '';
     
     if (empty($tipo)) {
         throw new Exception('Tipo de reporte no especificado');
@@ -70,6 +71,9 @@ try {
             break;
         case 'materiales':
             generarPDFMateriales($db);
+            break;
+        case 'asistencia':
+            generarPDFAsistencia($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $nombreEmpleado);
             break;
         case 'sucursales':
             generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro);
@@ -773,6 +777,90 @@ function generarPDFMateriales($db) {
         
         echo '<p style="margin-top: 30px;"><strong>Total de materiales:</strong> ' . count($materiales) . '</p>';
         echo '<p><strong>Total de categorías:</strong> ' . count($porCategoria) . '</p>';
+    });
+}
+
+/**
+ * Genera PDF para reporte de asistencia
+ */
+function generarPDFAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId = null, $nombreEmpleado = '') {
+    $sql = "
+        SELECT
+            e.nombres,
+            e.apellidos,
+            e.cedula,
+            e.cargo,
+            s.nombre as sucursal,
+            COUNT(CASE WHEN a.estado = 'asistio' THEN 1 END) as dias_asistidos,
+            COUNT(CASE WHEN a.estado = 'falta' THEN 1 END) as dias_falta,
+            COUNT(a.id) as total_registros
+        FROM empleados e
+        LEFT JOIN sucursales s ON e.sucursal_id = s.id
+        LEFT JOIN asistencias a ON a.empleado_id = e.id AND a.fecha BETWEEN ? AND ?
+        WHERE e.estado = 'ACTIVO'
+    ";
+    $params = [$fechaDesde, $fechaHasta];
+
+    if ($sucursalId) {
+        $sql .= " AND e.sucursal_id = ?";
+        $params[] = $sucursalId;
+    }
+
+    if (!empty($nombreEmpleado)) {
+        $sql .= " AND CONCAT(e.nombres, ' ', e.apellidos) LIKE ?";
+        $params[] = '%' . $nombreEmpleado . '%';
+    }
+
+    $sql .= " GROUP BY e.id ORDER BY s.nombre, e.apellidos, e.nombres";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $empleados = $stmt->fetchAll();
+
+    $titulo = "Reporte de Asistencia";
+    $periodo = date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta));
+
+    generarHTMLPDF($titulo, $periodo, function() use ($empleados, $nombreEmpleado) {
+        if (!empty($nombreEmpleado)) {
+            echo '<p><strong>Empleado filtrado:</strong> ' . htmlspecialchars($nombreEmpleado) . '</p>';
+        }
+
+        if (empty($empleados)) {
+            echo '<p>No se encontraron empleados con registros en el período seleccionado.</p>';
+            return;
+        }
+
+        echo '<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">';
+        echo '<thead>';
+        echo '<tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">';
+        echo '<th style="padding: 10px; text-align: left; border: 1px solid #dee2e6;">Nombres</th>';
+        echo '<th style="padding: 10px; text-align: left; border: 1px solid #dee2e6;">Apellidos</th>';
+        echo '<th style="padding: 10px; text-align: left; border: 1px solid #dee2e6;">Cédula</th>';
+        echo '<th style="padding: 10px; text-align: left; border: 1px solid #dee2e6;">Cargo</th>';
+        echo '<th style="padding: 10px; text-align: left; border: 1px solid #dee2e6;">Sucursal</th>';
+        echo '<th style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">Días Asistidos</th>';
+        echo '<th style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">Días Falta</th>';
+        echo '<th style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">Total Registros</th>';
+        echo '</tr>';
+        echo '</thead>';
+        echo '<tbody>';
+
+        foreach ($empleados as $emp) {
+            echo '<tr style="border-bottom: 1px solid #dee2e6;">';
+            echo '<td style="padding: 8px; border: 1px solid #dee2e6;">' . htmlspecialchars($emp['nombres']) . '</td>';
+            echo '<td style="padding: 8px; border: 1px solid #dee2e6;">' . htmlspecialchars($emp['apellidos']) . '</td>';
+            echo '<td style="padding: 8px; border: 1px solid #dee2e6;">' . htmlspecialchars($emp['cedula'] ?? '-') . '</td>';
+            echo '<td style="padding: 8px; border: 1px solid #dee2e6;">' . htmlspecialchars($emp['cargo'] ?? '-') . '</td>';
+            echo '<td style="padding: 8px; border: 1px solid #dee2e6;">' . htmlspecialchars($emp['sucursal'] ?? '-') . '</td>';
+            echo '<td style="padding: 8px; text-align: right; border: 1px solid #dee2e6;">' . $emp['dias_asistidos'] . '</td>';
+            echo '<td style="padding: 8px; text-align: right; border: 1px solid #dee2e6;">' . $emp['dias_falta'] . '</td>';
+            echo '<td style="padding: 8px; text-align: right; border: 1px solid #dee2e6;">' . $emp['total_registros'] . '</td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody>';
+        echo '</table>';
+        echo '<p style="margin-top: 20px;"><strong>Total de empleados:</strong> ' . count($empleados) . '</p>';
     });
 }
 

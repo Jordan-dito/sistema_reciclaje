@@ -161,6 +161,7 @@ $basePath = '';
                                 <option value="compras">Reporte de Compras</option>
                                 <option value="ventas">Reporte de Ventas</option>
                                 <option value="productos">Reporte de Productos</option>
+                                <option value="asistencia">Reporte de Asistencia</option>
                               </select>
                             </div>
                           </div>
@@ -201,6 +202,12 @@ $basePath = '';
                                 <i class="fas fa-info-circle"></i> 
                                 Puedes escribir o seleccionar de la lista
                               </small>
+                            </div>
+                          </div>
+                          <div class="col-md-3" id="filtro_empleado_container" style="display: none;">
+                            <div class="form-group">
+                              <label>Nombre Empleado</label>
+                              <input type="text" id="nombre_empleado" name="nombre_empleado" class="form-control" placeholder="Buscar por nombre...">
                             </div>
                           </div>
                           <div class="col-md-2">
@@ -430,7 +437,7 @@ $basePath = '';
           }
 
           // Controlar visibilidad de filtros según el reporte
-          if (tipo === 'sucursales' || tipo === 'usuarios') {
+          if (tipo === 'sucursales' || tipo === 'usuarios' || tipo === 'asistencia') {
             $('#filtro_material_container').hide();
           } else {
             $('#filtro_material_container').show();
@@ -440,6 +447,13 @@ $basePath = '';
             $('#filtro_sucursal_container').hide();
           } else {
             $('#filtro_sucursal_container').show();
+          }
+
+          if (tipo === 'asistencia') {
+            $('#filtro_empleado_container').show();
+          } else {
+            $('#filtro_empleado_container').hide();
+            $('#nombre_empleado').val('');
           }
         });
         
@@ -489,7 +503,8 @@ $basePath = '';
           var rolId = $('#rol_id').val() || '';
           var sucursalId = $('#sucursal_id_reporte').val() || '';
           var material = $('#material_reporte').val() || '';
-          
+          var nombreEmpleado = $('#nombre_empleado').val() || '';
+
           // Validar fechas solo si son requeridas
           var reportesSinFechas = ['productos', 'materiales'];
           if (!reportesSinFechas.includes(tipo)) {
@@ -502,14 +517,15 @@ $basePath = '';
               return;
             }
           }
-          
+
           // Cargar vista previa
           var dataParams = {
             action: 'vista_previa',
             tipo: tipo,
             rol_id: rolId,
             sucursal_id: sucursalId,
-            material: material
+            material: material,
+            nombre_empleado: nombreEmpleado
           };
           
           if (fechaDesde) dataParams.fecha_desde = fechaDesde;
@@ -581,7 +597,8 @@ $basePath = '';
           var rolId = $('#rol_id').val() || '';
           var sucursalId = $('#sucursal_id_reporte').val() || '';
           var material = $('#material_reporte').val() || '';
-          
+          var nombreEmpleado = $('#nombre_empleado').val() || '';
+
           // Validar fechas solo si son requeridas
           var reportesSinFechas = ['productos', 'materiales'];
           if (!reportesSinFechas.includes(tipo)) {
@@ -594,7 +611,7 @@ $basePath = '';
               return;
             }
           }
-          
+
           // Construir URL para generar PDF
           var url = 'pdf.php?tipo=' + tipo;
           if (fechaDesde) url += '&fecha_desde=' + fechaDesde;
@@ -602,6 +619,7 @@ $basePath = '';
           if (rolId) url += '&rol_id=' + rolId;
           if (sucursalId) url += '&sucursal_id=' + sucursalId;
           if (material) url += '&material=' + encodeURIComponent(material);
+          if (nombreEmpleado) url += '&nombre_empleado=' + encodeURIComponent(nombreEmpleado);
           
           // Abrir en nueva ventana para descargar PDF
           window.open(url, '_blank');
