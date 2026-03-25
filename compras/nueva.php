@@ -943,11 +943,12 @@ try {
           }
         }
         
-        // Guardar nueva compra
+        var guardandoCompra = false;
         $('#btnGuardarCompra').click(function() {
+          if (guardandoCompra) return;
+
           var form = $('#formNuevaCompra')[0];
           
-          // Validar que hay productos seleccionados
           if (productosSeleccionados.length === 0) {
             swal("Error", "Debe agregar al menos un producto haciendo clic en 'Agregar Producto'", "error");
             return;
@@ -1023,6 +1024,10 @@ try {
             action: 'crear'
           };
           
+          guardandoCompra = true;
+          var btn = $('#btnGuardarCompra');
+          btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
+
           $.ajax({
             url: 'api.php',
             method: 'POST',
@@ -1058,6 +1063,10 @@ try {
             error: function(xhr) {
               var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar la compra';
               swal("Error", error, "error");
+            },
+            complete: function() {
+              guardandoCompra = false;
+              btn.prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Compra');
             }
           });
         });

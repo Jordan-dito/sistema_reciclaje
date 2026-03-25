@@ -862,7 +862,10 @@ if (!$auth->isAuthenticated()) {
           $('#totalVenta').text('$' + total.toFixed(2));
         }
         
+        var guardandoVenta = false;
         $('#btnGuardarVenta').click(function() {
+          if (guardandoVenta) return;
+
           if (!$('#sucursal_id').val()) {
             swal("Error", "Debe seleccionar una sucursal", "error");
             return;
@@ -933,6 +936,10 @@ if (!$auth->isAuthenticated()) {
             action: 'crear'
           };
           
+          guardandoVenta = true;
+          var btn = $('#btnGuardarVenta');
+          btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
+
           $.ajax({
             url: 'api.php',
             method: 'POST',
@@ -955,6 +962,10 @@ if (!$auth->isAuthenticated()) {
             error: function(xhr) {
               var error = xhr.responseJSON ? xhr.responseJSON.message : 'Error al guardar la venta';
               swal("Error", error, "error");
+            },
+            complete: function() {
+              guardandoVenta = false;
+              btn.prop('disabled', false).html('Registrar Venta');
             }
           });
         });

@@ -179,7 +179,7 @@ try {
                 $sucursal_id = $_GET['sucursal_id'] ?? null;
                 
                 $sql = "
-                    SELECT i.id as inventario_id,
+                    SELECT MIN(i.id) as inventario_id,
                            SUM(i.cantidad) as cantidad,
                            p.id as producto_id,
                            p.nombre as producto_nombre,
@@ -548,13 +548,13 @@ try {
                         $stmtSaldo->execute([$venta['total'], $venta['sucursal_id']]);
                     }
                     
-                    if (in_array($venta['estado'], ['pendiente', 'completada', 'devuelta'])) {
+                    if ($venta['estado'] === 'completada') {
                         $stmt = $db->prepare("SELECT inventario_id, cantidad FROM ventas_detalle WHERE venta_id = ?");
                         $stmt->execute([$id]);
                         $detalles = $stmt->fetchAll();
                         
                         foreach ($detalles as $detalle) {
-                            if (!empty($detalle['inventario_id'])) {
+                            if (!empty($detalle['inventario_id']) && floatval($detalle['cantidad']) > 0) {
                                 $stmt = $db->prepare("UPDATE inventarios SET cantidad = cantidad + ? WHERE id = ?");
                                 $stmt->execute([$detalle['cantidad'], $detalle['inventario_id']]);
                             }
