@@ -161,9 +161,6 @@ $basePath = '';
                                 <option value="compras">Reporte de Compras</option>
                                 <option value="ventas">Reporte de Ventas</option>
                                 <option value="productos">Reporte de Productos</option>
-                                <option value="materiales">Reporte de Materiales por Categoría</option>
-                                <option value="sucursales">Reporte de Sucursales</option>
-                                <option value="usuarios">Reporte de Usuarios por Rol</option>
                               </select>
                             </div>
                           </div>
