@@ -167,18 +167,6 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
               });
             }
 
-            // Validación: no permitir seleccionar mes sin año
-            $(document).on('change', '#filtroSucursalIC, #filtroAnioIC, #filtroMesIC', function() {
-              var anio = $('#filtroAnioIC').val();
-              var mes = $('#filtroMesIC').val();
-              if (!anio && mes) {
-                // Resetear mes y advertir
-                $('#filtroMesIC').val('');
-                swal('Advertencia', 'Debe seleccionar un año antes de elegir un mes.', 'warning');
-                return;
-              }
-                cargarIngresosCostosAnio();
-            });
       WebFont.load({
         google: { families: ["Public Sans:300,400,500,600,700"] },
         custom: {
@@ -1720,8 +1708,19 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
       // Inicializar al cargar la página
       $(document).ready(function() {
           cargarSucursalesFiltroIC();
-            cargarIngresosCostosAnio();
           cargarIngresosCostosAnio();
+
+          // Validación: no permitir seleccionar mes sin año
+          $(document).on('change', '#filtroSucursalIC, #filtroAnioIC, #filtroMesIC', function() {
+            var anio = $('#filtroAnioIC').val();
+            var mes = $('#filtroMesIC').val();
+            if (!anio && mes) {
+              $('#filtroMesIC').val('');
+              swal('Advertencia', 'Debe seleccionar un año antes de elegir un mes.', 'warning');
+              return;
+            }
+            cargarIngresosCostosAnio();
+          });
         console.log('Dashboard con ECharts cargando...');
 
         inicializarFechas();
