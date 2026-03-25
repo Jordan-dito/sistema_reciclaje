@@ -500,7 +500,7 @@ function generarVistaPreviaInventarios($db, $fechaDesde, $fechaHasta, $sucursalI
     $html .= '<table class="table table-bordered table-striped">';
     $html .= '<thead><tr>';
     $html .= '<th>Sucursal</th>';
-    $html .= '<th>Producto</th>';
+    $html .= '<th>Código</th>';
     $html .= '<th>Material</th>';
     $html .= '<th>Categoría</th>';
     $html .= '<th>Cantidad</th>';

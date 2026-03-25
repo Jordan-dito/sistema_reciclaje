@@ -316,7 +316,7 @@ function generarPDFInventarios($db, $fechaDesde, $fechaHasta, $sucursalId = null
         echo '<thead>';
         echo '<tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">';
         echo '<th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">Sucursal</th>';
-        echo '<th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">Producto</th>';
+        echo '<th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">Código</th>';
         echo '<th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">Material</th>';
         echo '<th style="padding: 8px; text-align: left; border: 1px solid #dee2e6;">Categoría</th>';
         echo '<th style="padding: 8px; text-align: right; border: 1px solid #dee2e6;">Cantidad</th>';
