@@ -229,9 +229,6 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
         background: #fff !important;
         color: #23272f !important;
       }
-      .sidebar {
-        background: #f8f9fa !important;
-      }
       .btn, .btn-modern {
         background: #e3e6ea !important;
         color: #23272f !important;
