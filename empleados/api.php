@@ -200,6 +200,15 @@ function obtenerDatosSemana($db, $filtroSucursalId) {
         $semanaCerrada = $stmtCerrada->fetch() ? true : false;
     } catch (Exception $e) {}
 
+    // 7. Hora mínima de cierre del sábado (parametrizable)
+    $horaCierre = 17; // default 5pm
+    try {
+        $stmtHora = $db->prepare("SELECT valor FROM configuracion_sistema WHERE clave = 'hora_cierre_sabado'");
+        $stmtHora->execute();
+        $row = $stmtHora->fetch();
+        if ($row) $horaCierre = intval($row['valor']);
+    } catch (Exception $e) {}
+
     // Estructurar respuesta
     $dataEmpleados = [];
     $fechasCalculadas = [];
@@ -240,6 +249,7 @@ function obtenerDatosSemana($db, $filtroSucursalId) {
         'dias_laborables' => $diasLaborables,
         'empleados' => $dataEmpleados,
         'semana_cerrada' => $semanaCerrada,
+        'hora_cierre' => $horaCierre,
         'sucursal_id' => $filtroSucursalId
     ]);
 }

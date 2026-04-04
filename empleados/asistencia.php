@@ -334,6 +334,7 @@ for($i = 0; $i < 7; $i++) {
 
         let hayCambiosSinGuardar = false;
         let semanaCerrada = false;
+        let horaCierre = 17;
 
         $(document).ready(function() {
             // Cargar datos vía AJAX
@@ -501,6 +502,7 @@ for($i = 0; $i < 7; $i++) {
                 success: function(resp) {
                     if(resp.success) {
                         semanaCerrada = resp.semana_cerrada || false;
+                        horaCierre = resp.hora_cierre || 17;
                         renderConfigDias(resp.dias_laborables);
                         renderTablaEmpleados(resp.empleados, resp.dias_laborables);
                         checkAutoProcess();
@@ -677,10 +679,11 @@ for($i = 0; $i < 7; $i++) {
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
 
-            // Solo procesar exactamente el sábado de esa semana
+            // Solo procesar exactamente el sábado de esa semana y después de la hora configurada
             const sabadoStr = sabado.toISOString().split('T')[0];
             const hoyStr = hoy.toISOString().split('T')[0];
-            if (hoyStr === sabadoStr) {
+            const horaActual = new Date().getHours();
+            if (hoyStr === sabadoStr && horaActual >= horaCierre) {
                 procesarSemanaAuto();
             }
         }
