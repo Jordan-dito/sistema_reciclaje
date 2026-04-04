@@ -677,8 +677,10 @@ for($i = 0; $i < 7; $i++) {
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
 
-            // Si ya es sábado o posterior de esa semana → procesar automáticamente
-            if (hoy >= sabado) {
+            // Solo procesar exactamente el sábado de esa semana
+            const sabadoStr = sabado.toISOString().split('T')[0];
+            const hoyStr = hoy.toISOString().split('T')[0];
+            if (hoyStr === sabadoStr) {
                 procesarSemanaAuto();
             }
         }
