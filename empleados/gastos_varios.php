@@ -69,6 +69,7 @@ if (!$auth->isAuthenticated()) {
                     <div class="d-flex align-items-center justify-content-between">
                       <div>
                         <h3 class="fw-bold mb-2">Gastos Operativos de Sucursal</h3>
+                        <label class="text-success fw-bold">prueba exito de subida automaticamente</label>
                         <p class="text-muted mb-0">Gestión de servicios básicos y mantenimiento (Descontado de Caja).</p>
                       </div>
                       <div class="text-end">
