@@ -368,15 +368,12 @@ function pagarDia($db, $userId) {
             $stmtIns->execute([$empleadoId, $fecha, $userId]);
         }
 
-        $sqlPago = "INSERT INTO pagos_diarios (empleado_id, fecha_laborada, monto, registrado_por) 
-                    VALUES (?, ?, ?, ?)
+        $sqlPago = "INSERT INTO pagos_diarios (empleado_id, fecha_laborada, monto, registrado_por, descontado)
+                    VALUES (?, ?, ?, ?, 0)
                     ON DUPLICATE KEY UPDATE monto = VALUES(monto), registrado_por = VALUES(registrado_por)";
         $stmtPago = $db->prepare($sqlPago);
         $stmtPago->execute([$empleadoId, $fecha, $monto, $userId]);
-
-        $diferencia = $monto - $montoAnterior;
-        $stmtUpdSuc = $db->prepare("UPDATE sucursales SET saldo = saldo - ? WHERE id = ?");
-        $stmtUpdSuc->execute([$diferencia, $sucursalId]);
+        // El descuento de caja ocurre el sábado automáticamente, no aquí
 
         $db->commit();
         echo json_encode(['success' => true]);
@@ -393,12 +390,13 @@ function eliminarPagoDia($db) {
 
     $db->beginTransaction();
     try {
-        $stmtGet = $db->prepare("SELECT monto FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada = ?");
+        $stmtGet = $db->prepare("SELECT monto, descontado FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada = ?");
         $stmtGet->execute([$empleadoId, $fecha]);
         $pago = $stmtGet->fetch();
 
         if (!$pago) throw new Exception("El pago no existe");
         $monto = $pago['monto'];
+        $yaDescontado = $pago['descontado'];
 
         $stmtSuc = $db->prepare("SELECT sucursal_id FROM empleados WHERE id = ?");
         $stmtSuc->execute([$empleadoId]);
@@ -407,7 +405,8 @@ function eliminarPagoDia($db) {
         $stmtDel = $db->prepare("DELETE FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada = ?");
         $stmtDel->execute([$empleadoId, $fecha]);
 
-        if ($sucursalId) {
+        // Solo devolver a caja si ya fue descontado el sábado
+        if ($yaDescontado && $sucursalId) {
             $stmtUpd = $db->prepare("UPDATE sucursales SET saldo = saldo + ? WHERE id = ?");
             $stmtUpd->execute([$monto, $sucursalId]);
         }
@@ -447,26 +446,32 @@ function procesarSemana($db, $userId) {
 
         $stmtAsist  = $db->prepare("SELECT fecha FROM asistencias WHERE empleado_id = ? AND fecha BETWEEN ? AND ? AND estado = 'asistio'");
         $stmtYaPago = $db->prepare("SELECT id FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada = ?");
-        $stmtPago   = $db->prepare("INSERT INTO pagos_diarios (empleado_id, fecha_laborada, monto, registrado_por) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE monto = VALUES(monto), registrado_por = VALUES(registrado_por)");
+        $stmtPago   = $db->prepare("INSERT INTO pagos_diarios (empleado_id, fecha_laborada, monto, registrado_por, descontado) VALUES (?, ?, ?, ?, 0) ON DUPLICATE KEY UPDATE monto = VALUES(monto), registrado_por = VALUES(registrado_por)");
         $stmtSuc    = $db->prepare("UPDATE sucursales SET saldo = saldo - ? WHERE id = ?");
+        $stmtMarcar = $db->prepare("UPDATE pagos_diarios SET descontado = 1 WHERE empleado_id = ? AND fecha_laborada BETWEEN ? AND ? AND descontado = 0");
 
         foreach ($empleados as $emp) {
             $stmtAsist->execute([$emp['id'], $lunes, $domingo]);
             $asistencias = $stmtAsist->fetchAll();
 
-            $totalEmp = 0;
+            // Crear registros para días asistidos sin pago aún
             foreach ($asistencias as $asist) {
                 $stmtYaPago->execute([$emp['id'], $asist['fecha']]);
                 if (!$stmtYaPago->fetch()) {
-                    // tarifa diaria + alimentación ($2.50) + pasaje ($1.00)
                     $monto = floatval($emp['tarifa_diaria']) + 2.50 + 1.00;
                     $stmtPago->execute([$emp['id'], $asist['fecha'], $monto, $userId]);
-                    $totalEmp += $monto;
                 }
             }
 
+            // Sumar todos los pagos pendientes de descuento de esta semana
+            $stmtSum = $db->prepare("SELECT SUM(monto) as total FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada BETWEEN ? AND ? AND descontado = 0");
+            $stmtSum->execute([$emp['id'], $lunes, $domingo]);
+            $totalEmp = floatval($stmtSum->fetchColumn());
+
             if ($totalEmp > 0) {
+                // Descontar de caja y marcar como descontados
                 $stmtSuc->execute([$totalEmp, $emp['sucursal_id']]);
+                $stmtMarcar->execute([$emp['id'], $lunes, $domingo]);
                 $totalGeneral += $totalEmp;
             }
         }
