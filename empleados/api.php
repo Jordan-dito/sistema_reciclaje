@@ -63,7 +63,11 @@ try {
         case 'eliminar_pago_dia':
             eliminarPagoDia($db);
             break;
-            
+
+        case 'procesar_semana':
+            procesarSemana($db, $currentUser['id']);
+            break;
+
         default:
             throw new Exception("Acción no válida");
     }
@@ -179,6 +183,23 @@ function obtenerDatosSemana($db, $filtroSucursalId) {
         }
     } catch (Exception $e) { }
 
+    // 5. Obtener Acumulados (total histórico por empleado)
+    $acumuladosMap = [];
+    try {
+        $stmtAcum = $db->query("SELECT empleado_id, SUM(monto) as total FROM pagos_diarios GROUP BY empleado_id");
+        foreach ($stmtAcum->fetchAll() as $row) {
+            $acumuladosMap[$row['empleado_id']] = $row['total'];
+        }
+    } catch (Exception $e) {}
+
+    // 6. Verificar si la semana ya fue procesada automáticamente
+    $semanaCerrada = false;
+    try {
+        $stmtCerrada = $db->prepare("SELECT id FROM semanas_cerradas WHERE semana_inicio = ?");
+        $stmtCerrada->execute([$lunes]);
+        $semanaCerrada = $stmtCerrada->fetch() ? true : false;
+    } catch (Exception $e) {}
+
     // Estructurar respuesta
     $dataEmpleados = [];
     $fechasCalculadas = [];
@@ -208,7 +229,8 @@ function obtenerDatosSemana($db, $filtroSucursalId) {
             'saldo_sucursal' => $emp['saldo_sucursal'],
             'tarifa' => $emp['tarifa'] ?? 18.00,
             'dias' => $diasData,
-            'total_pagado' => $totalPagadoSemana
+            'total_pagado' => $totalPagadoSemana,
+            'acumulado' => $acumuladosMap[$emp['id']] ?? 0
         ];
     }
 
@@ -217,7 +239,8 @@ function obtenerDatosSemana($db, $filtroSucursalId) {
         'lunes' => $lunes,
         'dias_laborables' => $diasLaborables,
         'empleados' => $dataEmpleados,
-        'sucursal_id' => $filtroSucursalId // Para debug
+        'semana_cerrada' => $semanaCerrada,
+        'sucursal_id' => $filtroSucursalId
     ]);
 }
 
@@ -391,6 +414,69 @@ function eliminarPagoDia($db) {
 
         $db->commit();
         echo json_encode(['success' => true]);
+
+    } catch (Exception $e) {
+        $db->rollBack();
+        throw $e;
+    }
+}
+
+function procesarSemana($db, $userId) {
+    $lunes = $_POST['semana_inicio'];
+    $domingo = date('Y-m-d', strtotime($lunes . ' +6 days'));
+
+    // Verificar si ya fue procesada
+    try {
+        $stmtCheck = $db->prepare("SELECT id FROM semanas_cerradas WHERE semana_inicio = ?");
+        $stmtCheck->execute([$lunes]);
+        if ($stmtCheck->fetch()) {
+            echo json_encode(['success' => true, 'ya_procesada' => true]);
+            return;
+        }
+    } catch (Exception $e) {
+        throw new Exception("Tabla semanas_cerradas no existe. Ejecuta el SQL de instalación.");
+    }
+
+    // Obtener empleados activos con sucursal asignada
+    $stmtEmp = $db->query("SELECT e.id, e.tarifa_diaria, e.sucursal_id FROM empleados e WHERE e.estado = 'ACTIVO' AND e.sucursal_id IS NOT NULL");
+    $empleados = $stmtEmp->fetchAll();
+
+    $db->beginTransaction();
+    try {
+        $totalGeneral = 0;
+
+        $stmtAsist  = $db->prepare("SELECT fecha FROM asistencias WHERE empleado_id = ? AND fecha BETWEEN ? AND ? AND estado = 'asistio'");
+        $stmtYaPago = $db->prepare("SELECT id FROM pagos_diarios WHERE empleado_id = ? AND fecha_laborada = ?");
+        $stmtPago   = $db->prepare("INSERT INTO pagos_diarios (empleado_id, fecha_laborada, monto, registrado_por) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE monto = VALUES(monto), registrado_por = VALUES(registrado_por)");
+        $stmtSuc    = $db->prepare("UPDATE sucursales SET saldo = saldo - ? WHERE id = ?");
+
+        foreach ($empleados as $emp) {
+            $stmtAsist->execute([$emp['id'], $lunes, $domingo]);
+            $asistencias = $stmtAsist->fetchAll();
+
+            $totalEmp = 0;
+            foreach ($asistencias as $asist) {
+                $stmtYaPago->execute([$emp['id'], $asist['fecha']]);
+                if (!$stmtYaPago->fetch()) {
+                    // tarifa diaria + alimentación ($2.50) + pasaje ($1.00)
+                    $monto = floatval($emp['tarifa_diaria']) + 2.50 + 1.00;
+                    $stmtPago->execute([$emp['id'], $asist['fecha'], $monto, $userId]);
+                    $totalEmp += $monto;
+                }
+            }
+
+            if ($totalEmp > 0) {
+                $stmtSuc->execute([$totalEmp, $emp['sucursal_id']]);
+                $totalGeneral += $totalEmp;
+            }
+        }
+
+        // Marcar semana como cerrada
+        $stmtCerrar = $db->prepare("INSERT INTO semanas_cerradas (semana_inicio, procesado_en, procesado_por, total_pagado) VALUES (?, NOW(), ?, ?)");
+        $stmtCerrar->execute([$lunes, $userId, $totalGeneral]);
+
+        $db->commit();
+        echo json_encode(['success' => true, 'ya_procesada' => false, 'total' => $totalGeneral]);
 
     } catch (Exception $e) {
         $db->rollBack();

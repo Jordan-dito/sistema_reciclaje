@@ -246,11 +246,12 @@ for($i = 0; $i < 7; $i++) {
                                                             <span class="col-fecha"><?php echo $f['n']; ?></span>
                                                         </th>
                                                     <?php endforeach; ?>
-                                                    <th class="text-center">Pagado Total</th>
+                                                    <th class="text-center">Pagado Semana</th>
+                                                    <th class="text-center">Acumulado</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="tabla-body">
-                                                <tr><td colspan="9" class="text-center p-4">Cargando datos...</td></tr>
+                                                <tr><td colspan="10" class="text-center p-4">Cargando datos...</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -332,6 +333,7 @@ for($i = 0; $i < 7; $i++) {
         const diasKeys = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
 
         let hayCambiosSinGuardar = false;
+        let semanaCerrada = false;
 
         $(document).ready(function() {
             // Cargar datos vía AJAX
@@ -498,8 +500,10 @@ for($i = 0; $i < 7; $i++) {
                 dataType: 'json',
                 success: function(resp) {
                     if(resp.success) {
+                        semanaCerrada = resp.semana_cerrada || false;
                         renderConfigDias(resp.dias_laborables);
                         renderTablaEmpleados(resp.empleados, resp.dias_laborables);
+                        checkAutoProcess();
                     } else {
                         swal('Error', resp.message, 'error');
                     }
@@ -601,6 +605,9 @@ for($i = 0; $i < 7; $i++) {
                         <td class="text-center">
                             <span class="total-money fw-bold" style="font-size: 1.1em;">$${parseFloat(emp.total_pagado).toFixed(2)}</span>
                         </td>
+                        <td class="text-center">
+                            <span class="fw-bold" style="font-size: 1.1em; color: #1572e8;">$${parseFloat(emp.acumulado || 0).toFixed(2)}</span>
+                        </td>
                     </tr>
                 `;
                 tbody.append(tr);
@@ -657,6 +664,47 @@ for($i = 0; $i < 7; $i++) {
                 } else {
                     swal('Error', resp.message, 'error');
                 }
+            });
+        }
+
+        function checkAutoProcess() {
+            if (semanaCerrada) return;
+
+            // Calcular el sábado de la semana mostrada
+            const sabado = new Date(lunesSemana + 'T00:00:00');
+            sabado.setDate(sabado.getDate() + 5);
+
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+
+            // Si ya es sábado o posterior de esa semana → procesar automáticamente
+            if (hoy >= sabado) {
+                procesarSemanaAuto();
+            }
+        }
+
+        function procesarSemanaAuto() {
+            $.post('api.php', {
+                action: 'procesar_semana',
+                semana_inicio: lunesSemana
+            }, function(resp) {
+                if (!resp.success) {
+                    swal('Error al procesar pagos', resp.message, 'error');
+                    return;
+                }
+                if (!resp.ya_procesada) {
+                    semanaCerrada = true;
+                    swal({
+                        title: '¡Pagos del sábado procesados!',
+                        text: 'Se pagaron automáticamente los días trabajados. Total descontado: $' + parseFloat(resp.total).toFixed(2),
+                        icon: 'success',
+                        timer: 4000,
+                        buttons: false
+                    });
+                    cargarDatosSemana();
+                }
+            }, 'json').fail(function() {
+                console.warn('No se pudo verificar el proceso automático del sábado.');
             });
         }
 
