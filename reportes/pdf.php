@@ -33,6 +33,9 @@ try {
     $sucursalIdFiltro = $_GET['sucursal_id'] ?? $sucursalId;
     $material = $_GET['material'] ?? '';
     $nombreEmpleado = $_GET['nombre_empleado'] ?? '';
+    $cajaInicial = floatval($_GET['caja_inicial'] ?? 0);
+    $otrosIngresos = floatval($_GET['otros_ingresos'] ?? 0);
+    $dineroContado = floatval($_GET['dinero_contado'] ?? 0);
     
     if (empty($tipo)) {
         throw new Exception('Tipo de reporte no especificado');
@@ -74,6 +77,9 @@ try {
             break;
         case 'asistencia':
             generarPDFAsistencia($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $nombreEmpleado);
+            break;
+        case 'cierre_caja':
+            generarPDFCierreCaja($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $cajaInicial, $otrosIngresos, $dineroContado);
             break;
         case 'sucursales':
             generarPDFSucursales($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro);
@@ -911,8 +917,131 @@ function generarHTMLPDF($titulo, $periodo, $callback) {
     echo '<p><strong>Fecha de generación:</strong> ' . date('d/m/Y H:i:s') . '</p>';
     
     call_user_func($callback);
-    
+
     echo '</body>';
     echo '</html>';
+}
+
+/**
+ * Genera PDF para Cierre de Caja
+ */
+function generarPDFCierreCaja($db, $fechaDesde, $fechaHasta, $sucursalId = null, $cajaInicial = 0, $otrosIngresos = 0, $dineroContado = 0) {
+    $params = [$fechaDesde, $fechaHasta];
+    $whereSucursal = $sucursalId ? " AND sucursal_id = ?" : "";
+    if ($sucursalId) $params[] = $sucursalId;
+
+    // Ingresos: ventas
+    $stmtV = $db->prepare("SELECT COALESCE(SUM(total), 0) FROM ventas WHERE fecha_venta BETWEEN ? AND ? AND estado = 'completada'" . $whereSucursal);
+    $stmtV->execute($params);
+    $totalVentas = floatval($stmtV->fetchColumn());
+
+    // Egresos: compras de material
+    $stmtC = $db->prepare("SELECT COALESCE(SUM(total), 0) FROM compras WHERE fecha_compra BETWEEN ? AND ? AND estado = 'completada'" . $whereSucursal);
+    $stmtC->execute($params);
+    $totalCompras = floatval($stmtC->fetchColumn());
+
+    // Egresos: gastos varios
+    $paramsG = [$fechaDesde, $fechaHasta];
+    $whereG = $sucursalId ? " AND sucursal_id = ?" : "";
+    if ($sucursalId) $paramsG[] = $sucursalId;
+    $stmtG = $db->prepare("SELECT COALESCE(SUM(monto), 0) FROM gastos_varios WHERE fecha BETWEEN ? AND ? AND estado = 'completado'" . $whereG);
+    $stmtG->execute($paramsG);
+    $totalGastos = floatval($stmtG->fetchColumn());
+
+    // Control de material: comprado
+    $sqlMC = "SELECT m.nombre as material, COALESCE(SUM(cd.cantidad), 0) as cantidad FROM compras_detalle cd JOIN compras c ON cd.compra_id = c.id JOIN productos p ON cd.producto_id = p.id JOIN materiales m ON p.material_id = m.id WHERE c.fecha_compra BETWEEN ? AND ? AND c.estado = 'completada'";
+    $pMC = [$fechaDesde, $fechaHasta];
+    if ($sucursalId) { $sqlMC .= " AND c.sucursal_id = ?"; $pMC[] = $sucursalId; }
+    $sqlMC .= " GROUP BY m.id, m.nombre ORDER BY m.nombre";
+    $stmtMC = $db->prepare($sqlMC); $stmtMC->execute($pMC);
+    $matComprado = [];
+    foreach ($stmtMC->fetchAll() as $r) { $matComprado[$r['material']] = floatval($r['cantidad']); }
+
+    // Control de material: vendido
+    $sqlMV = "SELECT m.nombre as material, COALESCE(SUM(vd.cantidad), 0) as cantidad FROM ventas_detalle vd JOIN ventas v ON vd.venta_id = v.id JOIN productos p ON vd.producto_id = p.id JOIN materiales m ON p.material_id = m.id WHERE v.fecha_venta BETWEEN ? AND ? AND v.estado = 'completada'";
+    $pMV = [$fechaDesde, $fechaHasta];
+    if ($sucursalId) { $sqlMV .= " AND v.sucursal_id = ?"; $pMV[] = $sucursalId; }
+    $sqlMV .= " GROUP BY m.id, m.nombre ORDER BY m.nombre";
+    $stmtMV = $db->prepare($sqlMV); $stmtMV->execute($pMV);
+    $matVendido = [];
+    foreach ($stmtMV->fetchAll() as $r) { $matVendido[$r['material']] = floatval($r['cantidad']); }
+
+    // Control de material: stock actual
+    $sqlS = "SELECT m.nombre as material, COALESCE(SUM(i.cantidad), 0) as cantidad FROM inventarios i JOIN productos p ON i.producto_id = p.id JOIN materiales m ON p.material_id = m.id";
+    $pS = [];
+    if ($sucursalId) { $sqlS .= " WHERE i.sucursal_id = ?"; $pS[] = $sucursalId; }
+    $sqlS .= " GROUP BY m.id, m.nombre ORDER BY m.nombre";
+    $stmtS = $db->prepare($sqlS); $stmtS->execute($pS);
+    $matStock = [];
+    foreach ($stmtS->fetchAll() as $r) { $matStock[$r['material']] = floatval($r['cantidad']); }
+
+    $todosMateriales = array_unique(array_merge(array_keys($matComprado), array_keys($matVendido), array_keys($matStock)));
+    sort($todosMateriales);
+
+    $totalIngresos = $totalVentas + $otrosIngresos;
+    $totalEgresos  = $totalCompras + $totalGastos;
+    $totalEsperado = $cajaInicial + $totalIngresos - $totalEgresos;
+    $diferencia    = $dineroContado - $totalEsperado;
+    $periodo = date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta));
+    $difSigno = $diferencia >= 0 ? '+' : '';
+
+    generarHTMLPDF('Cierre de Caja', $periodo, function() use (
+        $cajaInicial, $totalVentas, $otrosIngresos, $totalIngresos,
+        $totalCompras, $totalGastos, $totalEgresos,
+        $totalEsperado, $dineroContado, $diferencia, $difSigno,
+        $todosMateriales, $matComprado, $matVendido, $matStock
+    ) {
+        $s = 'padding: 10px; border: 1px solid #dee2e6;';
+        $sr = $s . ' text-align: right;';
+        $th = 'padding: 10px; border: 1px solid #dee2e6; background-color: #f8f9fa;';
+        $thr = $th . ' text-align: right;';
+
+        echo '<table style="width: 500px; border-collapse: collapse; margin-top: 20px;">';
+
+        // Caja inicial
+        echo '<tr style="background-color:#e9ecef;"><td style="' . $s . '"><strong>Caja Inicial</strong></td><td style="' . $sr . '"><strong>$' . number_format($cajaInicial, 2) . '</strong></td></tr>';
+
+        // Ingresos
+        echo '<tr style="background-color:#d4edda;"><td colspan="2" style="' . $s . '"><strong>INGRESOS</strong></td></tr>';
+        echo '<tr><td style="' . $s . '">- Ventas</td><td style="' . $sr . '">$' . number_format($totalVentas, 2) . '</td></tr>';
+        echo '<tr><td style="' . $s . '">- Otros</td><td style="' . $sr . '">$' . number_format($otrosIngresos, 2) . '</td></tr>';
+        echo '<tr style="background-color:#d4edda;"><td style="' . $s . '"><strong>Total Ingresos</strong></td><td style="' . $sr . '"><strong>$' . number_format($totalIngresos, 2) . '</strong></td></tr>';
+
+        // Egresos
+        echo '<tr style="background-color:#f8d7da;"><td colspan="2" style="' . $s . '"><strong>EGRESOS</strong></td></tr>';
+        echo '<tr><td style="' . $s . '">- Compra material</td><td style="' . $sr . '">$' . number_format($totalCompras, 2) . '</td></tr>';
+        echo '<tr><td style="' . $s . '">- Otros</td><td style="' . $sr . '">$' . number_format($totalGastos, 2) . '</td></tr>';
+        echo '<tr style="background-color:#f8d7da;"><td style="' . $s . '"><strong>Total Egresos</strong></td><td style="' . $sr . '"><strong>$' . number_format($totalEgresos, 2) . '</strong></td></tr>';
+
+        // Totales
+        echo '<tr style="background-color:#cce5ff;"><td style="' . $s . '"><strong>Total Esperado</strong></td><td style="' . $sr . '"><strong>$' . number_format($totalEsperado, 2) . '</strong></td></tr>';
+        echo '<tr><td style="' . $s . '"><strong>Dinero Contado</strong></td><td style="' . $sr . '"><strong>$' . number_format($dineroContado, 2) . '</strong></td></tr>';
+
+        $difBg = $diferencia >= 0 ? '#d4edda' : '#f8d7da';
+        echo '<tr style="background-color:' . $difBg . ';"><td style="' . $s . '"><strong>Diferencia</strong></td><td style="' . $sr . '"><strong>' . $difSigno . '$' . number_format(abs($diferencia), 2) . ($diferencia < 0 ? ' (faltante)' : '') . '</strong></td></tr>';
+
+        echo '</table>';
+
+        // Control de material
+        if (!empty($todosMateriales)) {
+            echo '<h2 style="margin-top: 40px; font-size: 16px; border-bottom: 2px solid #007bff; padding-bottom: 5px;">CONTROL DE MATERIAL</h2>';
+            echo '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
+            echo '<thead><tr>';
+            echo '<th style="' . $th . '">Material</th>';
+            echo '<th style="' . $thr . '">Comprado (kg)</th>';
+            echo '<th style="' . $thr . '">Vendido (kg)</th>';
+            echo '<th style="' . $thr . '">Stock (kg)</th>';
+            echo '</tr></thead><tbody>';
+            foreach ($todosMateriales as $mat) {
+                echo '<tr style="border-bottom: 1px solid #dee2e6;">';
+                echo '<td style="' . $s . '">' . htmlspecialchars($mat) . '</td>';
+                echo '<td style="' . $sr . '">' . number_format($matComprado[$mat] ?? 0, 2) . '</td>';
+                echo '<td style="' . $sr . '">' . number_format($matVendido[$mat] ?? 0, 2) . '</td>';
+                echo '<td style="' . $sr . '">' . number_format($matStock[$mat] ?? 0, 2) . '</td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+        }
+    });
 }
 

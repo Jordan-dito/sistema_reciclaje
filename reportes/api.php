@@ -84,7 +84,10 @@ try {
         $sucursalIdFiltro = $_GET['sucursal_id'] ?? $sucursalId; // Si no viene filtro, usar la del usuario
         $material = $_GET['material'] ?? '';
         $nombreEmpleado = $_GET['nombre_empleado'] ?? '';
-        
+        $cajaInicial = floatval($_GET['caja_inicial'] ?? 0);
+        $otrosIngresos = floatval($_GET['otros_ingresos'] ?? 0);
+        $dineroContado = floatval($_GET['dinero_contado'] ?? 0);
+
         if (empty($tipo)) {
             throw new Exception('Tipo de reporte no especificado');
         }
@@ -129,6 +132,9 @@ try {
                 break;
             case 'asistencia':
                 $resultado = generarVistaPreviaAsistencia($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $nombreEmpleado);
+                break;
+            case 'cierre_caja':
+                $resultado = generarVistaPreviaCierreCaja($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro, $cajaInicial, $otrosIngresos, $dineroContado);
                 break;
             case 'sucursales':
                 $resultado = generarVistaPreviaSucursales($db, $fechaDesde, $fechaHasta, $sucursalIdFiltro);
@@ -1064,5 +1070,141 @@ function generarVistaPreviaAsistencia($db, $fechaDesde, $fechaHasta, $sucursalId
     $html .= '</div>';
 
     return ['html' => $html, 'tieneDatos' => true, 'datos' => $empleados];
+}
+
+/**
+ * Genera vista previa HTML para Cierre de Caja
+ */
+function generarVistaPreviaCierreCaja($db, $fechaDesde, $fechaHasta, $sucursalId = null, $cajaInicial = 0, $otrosIngresos = 0, $dineroContado = 0) {
+    $params = [$fechaDesde, $fechaHasta];
+    $whereSucursal = $sucursalId ? " AND sucursal_id = ?" : "";
+    if ($sucursalId) $params[] = $sucursalId;
+
+    // INGRESOS: ventas completadas
+    $sqlVentas = "SELECT COALESCE(SUM(total), 0) as total FROM ventas WHERE fecha_venta BETWEEN ? AND ? AND estado = 'completada'" . $whereSucursal;
+    $stmtV = $db->prepare($sqlVentas);
+    $stmtV->execute($params);
+    $totalVentas = floatval($stmtV->fetchColumn());
+
+    // EGRESOS: compras completadas (compra de material)
+    $sqlCompras = "SELECT COALESCE(SUM(total), 0) as total FROM compras WHERE fecha_compra BETWEEN ? AND ? AND estado = 'completada'" . $whereSucursal;
+    $stmtC = $db->prepare($sqlCompras);
+    $stmtC->execute($params);
+    $totalCompras = floatval($stmtC->fetchColumn());
+
+    // EGRESOS: gastos varios (otros egresos)
+    $paramsGastos = [$fechaDesde, $fechaHasta];
+    $whereSucursalGastos = $sucursalId ? " AND sucursal_id = ?" : "";
+    if ($sucursalId) $paramsGastos[] = $sucursalId;
+    $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as total FROM gastos_varios WHERE fecha BETWEEN ? AND ? AND estado = 'completado'" . $whereSucursalGastos;
+    $stmtG = $db->prepare($sqlGastos);
+    $stmtG->execute($paramsGastos);
+    $totalGastos = floatval($stmtG->fetchColumn());
+
+    // CONTROL DE MATERIAL: comprado por material
+    $sqlMatComprado = "
+        SELECT m.nombre as material, COALESCE(SUM(cd.cantidad), 0) as cantidad
+        FROM compras_detalle cd
+        JOIN compras c ON cd.compra_id = c.id
+        JOIN productos p ON cd.producto_id = p.id
+        JOIN materiales m ON p.material_id = m.id
+        WHERE c.fecha_compra BETWEEN ? AND ? AND c.estado = 'completada'";
+    $paramsMatC = [$fechaDesde, $fechaHasta];
+    if ($sucursalId) { $sqlMatComprado .= " AND c.sucursal_id = ?"; $paramsMatC[] = $sucursalId; }
+    $sqlMatComprado .= " GROUP BY m.id, m.nombre ORDER BY m.nombre";
+    $stmtMC = $db->prepare($sqlMatComprado);
+    $stmtMC->execute($paramsMatC);
+    $matComprado = [];
+    foreach ($stmtMC->fetchAll() as $r) { $matComprado[$r['material']] = floatval($r['cantidad']); }
+
+    // CONTROL DE MATERIAL: vendido por material
+    $sqlMatVendido = "
+        SELECT m.nombre as material, COALESCE(SUM(vd.cantidad), 0) as cantidad
+        FROM ventas_detalle vd
+        JOIN ventas v ON vd.venta_id = v.id
+        JOIN productos p ON vd.producto_id = p.id
+        JOIN materiales m ON p.material_id = m.id
+        WHERE v.fecha_venta BETWEEN ? AND ? AND v.estado = 'completada'";
+    $paramsMatV = [$fechaDesde, $fechaHasta];
+    if ($sucursalId) { $sqlMatVendido .= " AND v.sucursal_id = ?"; $paramsMatV[] = $sucursalId; }
+    $sqlMatVendido .= " GROUP BY m.id, m.nombre ORDER BY m.nombre";
+    $stmtMV = $db->prepare($sqlMatVendido);
+    $stmtMV->execute($paramsMatV);
+    $matVendido = [];
+    foreach ($stmtMV->fetchAll() as $r) { $matVendido[$r['material']] = floatval($r['cantidad']); }
+
+    // CONTROL DE MATERIAL: stock actual por material
+    $sqlStock = "
+        SELECT m.nombre as material, COALESCE(SUM(i.cantidad), 0) as cantidad
+        FROM inventarios i
+        JOIN productos p ON i.producto_id = p.id
+        JOIN materiales m ON p.material_id = m.id";
+    $paramsStock = [];
+    if ($sucursalId) { $sqlStock .= " WHERE i.sucursal_id = ?"; $paramsStock[] = $sucursalId; }
+    $sqlStock .= " GROUP BY m.id, m.nombre ORDER BY m.nombre";
+    $stmtS = $db->prepare($sqlStock);
+    $stmtS->execute($paramsStock);
+    $matStock = [];
+    foreach ($stmtS->fetchAll() as $r) { $matStock[$r['material']] = floatval($r['cantidad']); }
+
+    // Unir todos los materiales que aparecen
+    $todosMateriales = array_unique(array_merge(array_keys($matComprado), array_keys($matVendido), array_keys($matStock)));
+    sort($todosMateriales);
+
+    // Cálculos de caja
+    $totalIngresos = $totalVentas + $otrosIngresos;
+    $totalEgresos = $totalCompras + $totalGastos;
+    $totalEsperado = $cajaInicial + $totalIngresos - $totalEgresos;
+    $diferencia = $dineroContado - $totalEsperado;
+    $periodo = date('d/m/Y', strtotime($fechaDesde)) . ' - ' . date('d/m/Y', strtotime($fechaHasta));
+
+    $tieneDatos = ($totalVentas > 0 || $totalCompras > 0 || $totalGastos > 0 || !empty($todosMateriales));
+
+    $html = '<div style="max-width:700px;">';
+    $html .= '<h4>Cierre de Caja</h4>';
+    $html .= '<p><strong>Período:</strong> ' . $periodo . '</p>';
+
+    // Resumen de caja
+    $html .= '<table class="table table-bordered" style="margin-top:15px;">';
+
+    $html .= '<tr class="table-secondary"><td colspan="2"><strong>Caja inicial</strong></td><td class="text-right"><strong>$' . number_format($cajaInicial, 2) . '</strong></td></tr>';
+
+    $html .= '<tr class="table-success"><td colspan="3"><strong style="color:#155724;">INGRESOS</strong></td></tr>';
+    $html .= '<tr><td></td><td>Ventas</td><td class="text-right">$' . number_format($totalVentas, 2) . '</td></tr>';
+    $html .= '<tr><td></td><td>Otros</td><td class="text-right">$' . number_format($otrosIngresos, 2) . '</td></tr>';
+    $html .= '<tr class="table-success"><td colspan="2"><strong>Total Ingresos</strong></td><td class="text-right"><strong>$' . number_format($totalIngresos, 2) . '</strong></td></tr>';
+
+    $html .= '<tr class="table-danger"><td colspan="3"><strong style="color:#721c24;">EGRESOS</strong></td></tr>';
+    $html .= '<tr><td></td><td>Compra material</td><td class="text-right">$' . number_format($totalCompras, 2) . '</td></tr>';
+    $html .= '<tr><td></td><td>Otros</td><td class="text-right">$' . number_format($totalGastos, 2) . '</td></tr>';
+    $html .= '<tr class="table-danger"><td colspan="2"><strong>Total Egresos</strong></td><td class="text-right"><strong>$' . number_format($totalEgresos, 2) . '</strong></td></tr>';
+
+    $html .= '<tr class="table-info"><td colspan="2"><strong>Total Esperado</strong></td><td class="text-right"><strong>$' . number_format($totalEsperado, 2) . '</strong></td></tr>';
+    $html .= '<tr><td colspan="2"><strong>Dinero Contado</strong></td><td class="text-right"><strong>$' . number_format($dineroContado, 2) . '</strong></td></tr>';
+
+    $difColor = $diferencia >= 0 ? 'table-success' : 'table-danger';
+    $difSigno = $diferencia >= 0 ? '+' : '';
+    $html .= '<tr class="' . $difColor . '"><td colspan="2"><strong>Diferencia</strong></td><td class="text-right"><strong>' . $difSigno . '$' . number_format($diferencia, 2) . '</strong></td></tr>';
+
+    $html .= '</table>';
+
+    // Control de material
+    if (!empty($todosMateriales)) {
+        $html .= '<h5 style="margin-top:20px;">Control de Material</h5>';
+        $html .= '<table class="table table-bordered table-striped">';
+        $html .= '<thead class="thead-dark"><tr><th>Material</th><th class="text-right">Comprado (kg)</th><th class="text-right">Vendido (kg)</th><th class="text-right">Stock (kg)</th></tr></thead>';
+        $html .= '<tbody>';
+        foreach ($todosMateriales as $mat) {
+            $comp = number_format($matComprado[$mat] ?? 0, 2);
+            $vend = number_format($matVendido[$mat] ?? 0, 2);
+            $stk  = number_format($matStock[$mat] ?? 0, 2);
+            $html .= '<tr><td>' . htmlspecialchars($mat) . '</td><td class="text-right">' . $comp . '</td><td class="text-right">' . $vend . '</td><td class="text-right">' . $stk . '</td></tr>';
+        }
+        $html .= '</tbody></table>';
+    }
+
+    $html .= '</div>';
+
+    return ['html' => $html, 'tieneDatos' => true, 'datos' => []];
 }
 

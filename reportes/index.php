@@ -162,6 +162,7 @@ $basePath = '';
                                 <option value="ventas">Reporte de Ventas</option>
                                 <option value="productos">Reporte de Productos</option>
                                 <option value="asistencia">Reporte de Asistencia</option>
+                                <option value="cierre_caja">Cierre de Caja</option>
                               </select>
                             </div>
                           </div>
@@ -208,6 +209,24 @@ $basePath = '';
                             <div class="form-group">
                               <label>Nombre Empleado</label>
                               <input type="text" id="nombre_empleado" name="nombre_empleado" class="form-control" placeholder="Buscar por nombre...">
+                            </div>
+                          </div>
+                          <div class="col-md-3" id="filtro_caja_inicial_container" style="display: none;">
+                            <div class="form-group">
+                              <label>Caja Inicial ($)</label>
+                              <input type="number" id="caja_inicial" name="caja_inicial" class="form-control" placeholder="0.00" min="0" step="0.01" value="0">
+                            </div>
+                          </div>
+                          <div class="col-md-3" id="filtro_otros_ingresos_container" style="display: none;">
+                            <div class="form-group">
+                              <label>Otros Ingresos ($)</label>
+                              <input type="number" id="otros_ingresos" name="otros_ingresos" class="form-control" placeholder="0.00" min="0" step="0.01" value="0">
+                            </div>
+                          </div>
+                          <div class="col-md-3" id="filtro_dinero_contado_container" style="display: none;">
+                            <div class="form-group">
+                              <label>Dinero Contado ($)</label>
+                              <input type="number" id="dinero_contado" name="dinero_contado" class="form-control" placeholder="0.00" min="0" step="0.01" value="0">
                             </div>
                           </div>
                           <div class="col-md-2">
@@ -437,7 +456,7 @@ $basePath = '';
           }
 
           // Controlar visibilidad de filtros según el reporte
-          if (tipo === 'sucursales' || tipo === 'usuarios' || tipo === 'asistencia') {
+          if (tipo === 'sucursales' || tipo === 'usuarios' || tipo === 'asistencia' || tipo === 'cierre_caja') {
             $('#filtro_material_container').hide();
           } else {
             $('#filtro_material_container').show();
@@ -454,6 +473,16 @@ $basePath = '';
           } else {
             $('#filtro_empleado_container').hide();
             $('#nombre_empleado').val('');
+          }
+
+          if (tipo === 'cierre_caja') {
+            $('#filtro_caja_inicial_container').show();
+            $('#filtro_otros_ingresos_container').show();
+            $('#filtro_dinero_contado_container').show();
+          } else {
+            $('#filtro_caja_inicial_container').hide();
+            $('#filtro_otros_ingresos_container').hide();
+            $('#filtro_dinero_contado_container').hide();
           }
         });
         
@@ -504,6 +533,9 @@ $basePath = '';
           var sucursalId = $('#sucursal_id_reporte').val() || '';
           var material = $('#material_reporte').val() || '';
           var nombreEmpleado = $('#nombre_empleado').val() || '';
+          var cajaInicial = $('#caja_inicial').val() || '0';
+          var otrosIngresos = $('#otros_ingresos').val() || '0';
+          var dineroContado = $('#dinero_contado').val() || '0';
 
           // Validar fechas solo si son requeridas
           var reportesSinFechas = ['productos', 'materiales'];
@@ -525,7 +557,10 @@ $basePath = '';
             rol_id: rolId,
             sucursal_id: sucursalId,
             material: material,
-            nombre_empleado: nombreEmpleado
+            nombre_empleado: nombreEmpleado,
+            caja_inicial: cajaInicial,
+            otros_ingresos: otrosIngresos,
+            dinero_contado: dineroContado
           };
           
           if (fechaDesde) dataParams.fecha_desde = fechaDesde;
@@ -598,6 +633,9 @@ $basePath = '';
           var sucursalId = $('#sucursal_id_reporte').val() || '';
           var material = $('#material_reporte').val() || '';
           var nombreEmpleado = $('#nombre_empleado').val() || '';
+          var cajaInicial = $('#caja_inicial').val() || '0';
+          var otrosIngresos = $('#otros_ingresos').val() || '0';
+          var dineroContado = $('#dinero_contado').val() || '0';
 
           // Validar fechas solo si son requeridas
           var reportesSinFechas = ['productos', 'materiales'];
@@ -620,6 +658,11 @@ $basePath = '';
           if (sucursalId) url += '&sucursal_id=' + sucursalId;
           if (material) url += '&material=' + encodeURIComponent(material);
           if (nombreEmpleado) url += '&nombre_empleado=' + encodeURIComponent(nombreEmpleado);
+          if (tipo === 'cierre_caja') {
+            url += '&caja_inicial=' + cajaInicial;
+            url += '&otros_ingresos=' + otrosIngresos;
+            url += '&dinero_contado=' + dineroContado;
+          }
           
           // Abrir en nueva ventana para descargar PDF
           window.open(url, '_blank');
