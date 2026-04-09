@@ -46,7 +46,7 @@ try {
                 $params[] = $mes;
                 $params[] = $anio;
 
-                $whereClauseCompras = "WHERE s.estado = 'activa' AND MONTH(c.fecha) = ? AND YEAR(c.fecha) = ?";
+                $whereClauseCompras = "WHERE s.estado = 'activa' AND MONTH(c.fecha_compra) = ? AND YEAR(c.fecha_compra) = ?";
                 $paramsCompras = [$mes, $anio];
             } else {
                 $whereClauseCompras = "WHERE s.estado = 'activa'";
@@ -74,7 +74,7 @@ try {
                 SELECT
                     s.id AS sucursal_id,
                     s.nombre AS sucursal_nombre,
-                    COALESCE(SUM(c.monto_total), 0) AS total_compras
+                    COALESCE(SUM(c.total), 0) AS total_compras
                 FROM sucursales s
                 LEFT JOIN compras c ON s.id = c.sucursal_id
                 " . $whereClauseCompras . "
