@@ -53,9 +53,9 @@ if (file_exists($envPath)) {
 // Valores por defecto (si no existe .env)
 $dbHost = 'localhost';
 $dbPort = '3306';
-$dbName = 'hermanosyanez_base';
-$dbUser = 'root';
-$dbPass = '';
+$dbName = 'u511298299_hermanosyanez';
+$dbUser = 'u511298299_hermanosyanez';
+$dbPass = '3Jj+q7/#';
 
 // Sobrescribir con valores de .env si existen
 if ($envLoaded) {
