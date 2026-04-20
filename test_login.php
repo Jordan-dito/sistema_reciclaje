@@ -27,13 +27,16 @@ try {
     exit;
 }
 
-// --- 3. Test conexión BD ---
+// --- 3. Test conexión BD (raw PDO para ver error real) ---
 echo "<h3>3. Conexión a Base de Datos</h3>";
 try {
-    $db = getDB();
+    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     echo "<p style='color:green'>✓ Conexión exitosa a la BD</p>";
-} catch (Exception $e) {
-    echo "<p style='color:red'>✗ Error de conexión: " . $e->getMessage() . "</p>";
+    $db = $pdo;
+} catch (PDOException $e) {
+    echo "<p style='color:red'>✗ Error PDO real: " . $e->getMessage() . "</p>";
+    echo "<p>DSN usado: mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . "</p>";
     exit;
 }
 
