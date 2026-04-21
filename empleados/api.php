@@ -22,13 +22,28 @@ $db = getDB();
 $action = $_REQUEST['action'] ?? '';
 $currentUser = $auth->getCurrentUser();
 
-// DETECCIÓN AUTOMÁTICA DE SUCURSAL DEL USUARIO - DESHABILITADO PARA VER TODOS
-// Buscamos si el usuario es responsable de alguna sucursal
-// $stmtSuc = $db->prepare("SELECT id, nombre FROM sucursales WHERE responsable_id = ?");
-// $stmtSuc->execute([$currentUser['id']]);
-// $miSucursal = $stmtSuc->fetch();
-// $sucursalId = $miSucursal ? $miSucursal['id'] : null;
-$sucursalId = null; // Mostrar todos los empleados
+// Filtrar por sucursal según el rol del usuario
+// El Gerente ve todos; los demás solo ven su sucursal
+$rolUsuario = strtolower($currentUser['rol'] ?? '');
+$sucursalId = null; // Por defecto ve todo (Gerente)
+
+if ($rolUsuario !== 'gerente') {
+    // Buscar sucursal asignada al usuario
+    $stmtSuc = $db->prepare("SELECT sucursal_id FROM usuarios WHERE id = ?");
+    $stmtSuc->execute([$currentUser['id']]);
+    $rowSuc = $stmtSuc->fetch();
+    if ($rowSuc && $rowSuc['sucursal_id']) {
+        $sucursalId = (int)$rowSuc['sucursal_id'];
+    } else {
+        // También verificar si es responsable de una sucursal
+        $stmtResp = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? AND estado = 'activa' LIMIT 1");
+        $stmtResp->execute([$currentUser['id']]);
+        $rowResp = $stmtResp->fetch();
+        if ($rowResp) {
+            $sucursalId = (int)$rowResp['id'];
+        }
+    }
+}
 
 try {
     switch ($action) {
