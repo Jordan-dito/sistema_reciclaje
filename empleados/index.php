@@ -538,51 +538,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           $('#modalEmpleado button[type="submit"]').text('Guardar');
         });
 
-        // Validación antes de enviar el formulario
+        // Handler único de submit para crear y editar
         $('#formEmpleado').on('submit', function(e) {
+          e.preventDefault();
           var action = $('#formAction').val();
-          
-          // Solo validar cédula al crear nuevo empleado (no al editar)
+
           if (action === 'create') {
             var cedula = $('#cedula').val();
-            
-            // Verificar que la cédula tenga 10 dígitos
+
             if (cedula.length !== 10) {
-              e.preventDefault();
-              swal({
-                title: 'Error',
-                text: 'La cédula debe tener exactamente 10 dígitos',
-                icon: 'error',
-                button: 'OK'
-              });
+              swal({ title: 'Error', text: 'La cédula debe tener exactamente 10 dígitos', icon: 'error', button: 'OK' });
               return false;
             }
-            
-            // Validar formato ecuatoriano con validación detallada
+
             var resultado = validarCedulaEcuatorianaDetallada(cedula);
             if (!resultado.valid) {
-              e.preventDefault();
-              swal({
-                title: 'Cédula inválida',
-                text: resultado.message || 'Por favor, ingrese una cédula ecuatoriana válida',
-                icon: 'error',
-                button: 'OK'
-              });
+              swal({ title: 'Cédula inválida', text: resultado.message || 'Por favor, ingrese una cédula ecuatoriana válida', icon: 'error', button: 'OK' });
               return false;
             }
-            
-            // Verificar que no esté marcada como inválida (por duplicado u otro motivo)
+
             if ($cedula.hasClass('invalid')) {
-              e.preventDefault();
-              var mensajeError = $cedulaError.text() || 'La cédula ingresada no es válida';
-              swal({
-                title: 'Error de validación',
-                text: mensajeError,
-                icon: 'warning',
-                button: 'OK'
-              });
+              swal({ title: 'Error de validación', text: $cedulaError.text() || 'La cédula ingresada no es válida', icon: 'warning', button: 'OK' });
               return false;
             }
+
+            // Envío normal del formulario para crear
+            this.submit();
+            return;
+          }
+
+          if (action === 'update') {
+            var payload = {
+              action: 'update',
+              id: $('#empleado_id').val(),
+              sucursal_id: $('#sucursal_id').val(),
+              nombres: $('#nombres').val(),
+              apellidos: $('#apellidos').val(),
+              cargo: $('#cargo').val(),
+              tipo_contrato: $('#tipo_contrato').val(),
+              estado: $('#estado').val()
+            };
+            $.ajax({
+              url: 'index.php',
+              method: 'POST',
+              data: payload,
+              dataType: 'json',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              success: function(resp) {
+                if (resp.success) {
+                  if (currentEditRow) {
+                    var node = currentEditRow.node();
+                    var $cells = $(node).find('td');
+                    $cells.eq(0).text(resp.data.nombres);
+                    $cells.eq(1).text(resp.data.apellidos);
+                    $cells.eq(4).text(resp.data.cargo);
+                    $cells.eq(5).text(resp.data.tipo_contrato);
+                    if (resp.data.estado === 'ACTIVO') {
+                      $cells.eq(6).html('<span class="badge badge-success">Activo</span>');
+                    } else {
+                      $cells.eq(6).html('<span class="badge badge-danger">Inactivo</span>');
+                    }
+                    var sucText = $('#sucursal_id option:selected').text() || '';
+                    $cells.eq(7).text(sucText);
+
+                    var $editBtn = $(node).find('.btn-open-edit');
+                    if ($editBtn.length) {
+                      $editBtn.attr('data-nombres', resp.data.nombres);
+                      $editBtn.attr('data-apellidos', resp.data.apellidos);
+                      $editBtn.attr('data-cargo', resp.data.cargo);
+                      $editBtn.attr('data-tipo_contrato', resp.data.tipo_contrato);
+                      $editBtn.attr('data-estado', resp.data.estado);
+                      if (typeof resp.data.sucursal_id !== 'undefined') {
+                        $editBtn.attr('data-sucursal_id', resp.data.sucursal_id);
+                      }
+                      $editBtn.data('nombres', resp.data.nombres);
+                      $editBtn.data('apellidos', resp.data.apellidos);
+                      $editBtn.data('cargo', resp.data.cargo);
+                      $editBtn.data('tipo_contrato', resp.data.tipo_contrato);
+                      $editBtn.data('estado', resp.data.estado);
+                      if (typeof resp.data.sucursal_id !== 'undefined') $editBtn.data('sucursal_id', resp.data.sucursal_id);
+                    }
+                    currentEditRow = null;
+                  }
+                  var modalEl = document.getElementById('modalEmpleado');
+                  if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                  } else if ($('#modalEmpleado').modal) {
+                    $('#modalEmpleado').modal('hide');
+                  }
+                  swal('¡Éxito!', resp.message, 'success');
+                } else {
+                  swal('Error', resp.message || 'No se pudo actualizar', 'error');
+                }
+              },
+              error: function() {
+                swal('Error', 'Error en la petición al servidor', 'error');
+              }
+            });
           }
         });
 
@@ -768,88 +820,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           $('#cedulaError').text('');
         });
 
-        // Intercept form submit to perform AJAX update when editing
-        $('#modalEmpleado form').on('submit', function(e){
-          var action = $('#formAction').val();
-          if (action === 'update') {
-            e.preventDefault();
-            var payload = {
-              action: 'update',
-              id: $('#empleado_id').val(),
-              sucursal_id: $('#sucursal_id').val(),
-              nombres: $('#nombres').val(),
-              apellidos: $('#apellidos').val(),
-              cargo: $('#cargo').val(),
-              tipo_contrato: $('#tipo_contrato').val(),
-              estado: $('#estado').val()
-            };
-            $.ajax({
-              url: '',
-              method: 'POST',
-              data: payload,
-              dataType: 'json',
-              success: function(resp) {
-                if (resp.success) {
-                  // update table row in place
-                  if (currentEditRow) {
-                    var node = currentEditRow.node();
-                    var $cells = $(node).find('td');
-                    $cells.eq(0).text(resp.data.nombres);
-                    $cells.eq(1).text(resp.data.apellidos);
-                    $cells.eq(4).text(resp.data.cargo);
-                    $cells.eq(5).text(resp.data.tipo_contrato);
-                    // Actualizar badge de estado
-                    if (resp.data.estado === 'ACTIVO') {
-                      $cells.eq(6).html('<span class="badge badge-success">Activo</span>');
-                    } else {
-                      $cells.eq(6).html('<span class="badge badge-danger">Inactivo</span>');
-                    }
-                    // update sucursal name by looking up select option text
-                    var sucText = $('#sucursal_id option:selected').text() || '';
-                    $cells.eq(7).text(sucText);
-
-                    // also update the edit button's data-* attributes so future edits use latest values
-                    var $editBtn = $(node).find('.btn-open-edit');
-                    if ($editBtn.length) {
-                      $editBtn.attr('data-nombres', resp.data.nombres);
-                      $editBtn.attr('data-apellidos', resp.data.apellidos);
-                      $editBtn.attr('data-cargo', resp.data.cargo);
-                      $editBtn.attr('data-tipo_contrato', resp.data.tipo_contrato);
-                      $editBtn.attr('data-estado', resp.data.estado);
-                      // update sucursal id too
-                      if (typeof resp.data.sucursal_id !== 'undefined') {
-                        $editBtn.attr('data-sucursal_id', resp.data.sucursal_id);
-                      }
-                      // keep jQuery's internal data cache in sync
-                      $editBtn.data('nombres', resp.data.nombres);
-                      $editBtn.data('apellidos', resp.data.apellidos);
-                      $editBtn.data('cargo', resp.data.cargo);
-                      $editBtn.data('tipo_contrato', resp.data.tipo_contrato);
-                      $editBtn.data('estado', resp.data.estado);
-                      if (typeof resp.data.sucursal_id !== 'undefined') $editBtn.data('sucursal_id', resp.data.sucursal_id);
-                    }
-                    // clear remembered row
-                    currentEditRow = null;
-                  }
-                  // close modal
-                  var modalEl = document.getElementById('modalEmpleado');
-                  if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                    var m = bootstrap.Modal.getOrCreateInstance(modalEl);
-                    m.hide();
-                  } else if ($('#modalEmpleado').modal) {
-                    $('#modalEmpleado').modal('hide');
-                  }
-                  swal('¡Éxito!', resp.message, 'success');
-                } else {
-                  swal('Error', resp.message || 'No se pudo actualizar', 'error');
-                }
-              },
-              error: function() {
-                swal('Error', 'Error en la petición', 'error');
-              }
-            });
-          }
-        });
       });
     </script>
     <!-- Modal: Nuevo Empleado -->
