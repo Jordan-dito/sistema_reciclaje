@@ -107,9 +107,6 @@ if (!$auth->isAuthenticated()) {
                   <div class="card-header">
                     <div class="card-head-row">
                       <div class="card-title">Historial de Ventas</div>
-                      <div class="card-tools">
-                        <input type="date" class="form-control form-control-sm" id="filtroFecha" style="width: 200px; display: inline-block;">
-                      </div>
                     </div>
                   </div>
                   <div class="card-body">
@@ -173,8 +170,8 @@ if (!$auth->isAuthenticated()) {
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Fecha de Venta <span class="text-danger">*</span></label>
-                    <input type="date" id="fecha_venta" name="fecha_venta" class="form-control" required>
+                    <label>Fecha de Venta</label>
+                    <input type="date" id="fecha_venta" name="fecha_venta" class="form-control" readonly style="background-color: #e9ecef; cursor: not-allowed;">
                   </div>
                 </div>
                 <div class="col-md-6">
