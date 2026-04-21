@@ -4,7 +4,7 @@
 <footer class="footer">
   <div class="container-fluid d-flex justify-content-between">
     <div class="copyright">
-      Belen todos los derechos reservados 2025
+      Hermanos Yanez 2026
     </div>
   </div>
 </footer>
