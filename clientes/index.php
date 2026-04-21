@@ -147,8 +147,8 @@ if (!$auth->isAuthenticated()) {
       </div>
     </div>
 
-    <!-- Modal Editar Cliente -->
-    <div class="modal fade" id="modalEditarCliente" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <!-- Modal Agregar/Editar Cliente -->
+    <div class="modal fade" id="modalAgregarCliente" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -156,61 +156,69 @@ if (!$auth->isAuthenticated()) {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form id="formEditarCliente">
+            <form id="formAgregarCliente">
+              <input type="hidden" id="cliente_id" name="cliente_id" value="">
               <div class="row">
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Nombre / Razón Social <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" value="Industrias ABC" required>
+                    <input type="text" id="nombre" name="nombre" class="form-control" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Cédula / RUC <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" value="0998765432001" required>
+                    <input type="text" id="cedula_ruc" name="cedula_ruc" class="form-control" required>
                     <small class="form-text text-muted">Cédula (10 dígitos) o RUC (13 dígitos)</small>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Tipo</label>
-                    <select class="form-control">
-                      <option value="empresa" selected>Empresa</option>
-                      <option value="persona_natural">Persona Natural</option>
+                    <label>Tipo Documento</label>
+                    <select id="tipo_documento" name="tipo_documento" class="form-control">
+                      <option value="cedula">Cédula</option>
+                      <option value="ruc">RUC</option>
+                      <option value="pasaporte">Pasaporte</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Email</label>
-                    <input type="email" class="form-control" value="contacto@industriasabc.com">
+                    <input type="email" id="email" name="email" class="form-control">
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
                     <label>Teléfono</label>
-                    <input type="tel" class="form-control" value="02-2345678">
+                    <input type="tel" id="telefono" name="telefono" class="form-control">
                   </div>
                 </div>
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Dirección</label>
-                    <textarea class="form-control" rows="2">Av. Principal 123, Quito</textarea>
+                    <textarea id="direccion" name="direccion" class="form-control" rows="2"></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Ciudad</label>
-                    <input type="text" class="form-control" value="Quito">
+                    <label>Contacto</label>
+                    <input type="text" id="contacto" name="contacto" class="form-control">
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Estado</label>
-                    <select class="form-control">
-                      <option value="activo" selected>Activo</option>
-                      <option value="inactivo">Inactivo</option>
+                    <label>Tipo Cliente</label>
+                    <select id="tipo_cliente" name="tipo_cliente" class="form-control">
+                      <option value="empresa">Empresa</option>
+                      <option value="persona_natural">Persona Natural</option>
                     </select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label>Notas</label>
+                    <textarea id="notas" name="notas" class="form-control" rows="2"></textarea>
                   </div>
                 </div>
               </div>
@@ -218,7 +226,7 @@ if (!$auth->isAuthenticated()) {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary">Actualizar Cliente</button>
+            <button type="button" class="btn btn-primary" id="btnGuardarCliente">Guardar Cliente</button>
           </div>
         </div>
       </div>
