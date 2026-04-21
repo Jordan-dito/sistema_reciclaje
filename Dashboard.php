@@ -167,6 +167,18 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
               });
             }
 
+            // Validación: no permitir seleccionar mes sin año
+            $(document).on('change', '#filtroSucursalIC, #filtroAnioIC, #filtroMesIC', function() {
+              var anio = $('#filtroAnioIC').val();
+              var mes = $('#filtroMesIC').val();
+              if (!anio && mes) {
+                // Resetear mes y advertir
+                $('#filtroMesIC').val('');
+                swal('Advertencia', 'Debe seleccionar un año antes de elegir un mes.', 'warning');
+                return;
+              }
+                cargarIngresosCostosAnio();
+            });
       WebFont.load({
         google: { families: ["Public Sans:300,400,500,600,700"] },
         custom: {
@@ -216,6 +228,9 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
       .navbar, .main-header {
         background: #fff !important;
         color: #23272f !important;
+      }
+      .sidebar {
+        background: #f8f9fa !important;
       }
       .btn, .btn-modern {
         background: #e3e6ea !important;
@@ -469,7 +484,8 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
               </div>
             </div>
 
-            <!-- Distribución de Datos - COMENTADO
+            <!-- Fila de Distribución: Compras e Inventario -->
+            <!-- Sección de Distribución con Filtro Específico -->
             <div class="row mb-4">
               <div class="col-md-12">
                 <div class="card border-0 shadow bg-dark-card rounded">
@@ -502,7 +518,6 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                 </div>
               </div>
             </div>
-            -->
 
             <!-- Análisis por Sucursal -->
             <div class="row mb-4">
@@ -514,60 +529,6 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
                   </div>
                   <div class="card-body">
                     <div id="analisisSucursalChart" style="height: 350px;"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Gráfico: Material más Comprado / Vendido por Sucursal -->
-            <div class="row mb-4">
-              <div class="col-md-12">
-                <div class="card border-0 shadow-lg bg-dark-card rounded">
-                  <div class="card-header bg-success text-white d-flex align-items-center">
-                    <i class="fas fa-recycle me-2"></i>
-                    <h5 class="mb-0">Material más Comprado / Vendido por Sucursal</h5>
-                  </div>
-                  <div class="card-body">
-                    <div class="row g-2 align-items-end mb-3">
-                      <div class="col-md-3">
-                        <label class="form-label mb-0">Tipo</label>
-                        <select id="filtroTipoMaterial" class="form-control">
-                          <option value="compras">Compras</option>
-                          <option value="ventas">Ventas</option>
-                        </select>
-                      </div>
-                      <div class="col-md-3">
-                        <label class="form-label mb-0">Sucursal</label>
-                        <select id="filtroSucursalMaterial" class="form-control">
-                          <option value="">Todas</option>
-                        </select>
-                      </div>
-                      <div class="col-md-3">
-                        <label class="form-label mb-0">Mes</label>
-                        <select id="filtroMesMaterial" class="form-control">
-                          <option value="">Todos</option>
-                          <option value="1">Enero</option>
-                          <option value="2">Febrero</option>
-                          <option value="3">Marzo</option>
-                          <option value="4">Abril</option>
-                          <option value="5">Mayo</option>
-                          <option value="6">Junio</option>
-                          <option value="7">Julio</option>
-                          <option value="8">Agosto</option>
-                          <option value="9">Septiembre</option>
-                          <option value="10">Octubre</option>
-                          <option value="11">Noviembre</option>
-                          <option value="12">Diciembre</option>
-                        </select>
-                      </div>
-                      <div class="col-md-3">
-                        <label class="form-label mb-0">Año</label>
-                        <select id="filtroAnioMaterial" class="form-control">
-                          <option value="">Todos</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div id="materialTopChart" style="height: 380px;"></div>
                   </div>
                 </div>
               </div>
@@ -1604,148 +1565,31 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
       }
       */
       
-      // -------------------------------------------------------
-      // Gráfico: Material más Comprado / Vendido por Sucursal
-      // -------------------------------------------------------
-      var chartMaterialTop = null;
-
-      function cargarAniosMaterialTop() {
-        var anioSelect = $('#filtroAnioMaterial');
-        anioSelect.empty().append('<option value="">Todos</option>');
-        var anioActual = new Date().getFullYear();
-        for (var a = anioActual; a >= anioActual - 4; a--) {
-          anioSelect.append('<option value="' + a + '">' + a + '</option>');
-        }
-      }
-
-      function cargarSucursalesMaterialTop() {
-        $.ajax({
-          url: 'sucursales/api.php?action=activas',
-          method: 'GET',
-          dataType: 'json',
-          success: function(response) {
-            if (response.success && response.data) {
-              var select = $('#filtroSucursalMaterial');
-              select.empty().append('<option value="">Todas</option>');
-              response.data.forEach(function(s) {
-                select.append('<option value="' + s.id + '">' + s.nombre + '</option>');
-              });
-            }
-          }
-        });
-      }
-
-      function cargarMaterialTop() {
-        var tipo      = $('#filtroTipoMaterial').val();
-        var sucursal  = $('#filtroSucursalMaterial').val();
-        var mes       = $('#filtroMesMaterial').val();
-        var anio      = $('#filtroAnioMaterial').val();
-
-        $.ajax({
-          url: 'dashboard/api_material_top.php',
-          method: 'GET',
-          data: { tipo: tipo, sucursal_id: sucursal, mes: mes, anio: anio },
-          dataType: 'json',
-          success: function(response) {
-            if (!response.success || !response.data || response.data.length === 0) {
-              if (chartMaterialTop) {
-                chartMaterialTop.setOption({ title: { text: 'Sin datos para el filtro seleccionado', left: 'center', top: 'middle', textStyle: { color: '#999', fontSize: 14 } }, series: [] });
-              }
-              return;
-            }
-
-            var labels  = response.data.map(function(d) { return d.material; });
-            var montos  = response.data.map(function(d) { return d.total_monto; });
-            var titulo  = tipo === 'ventas' ? 'Material más Vendido' : 'Material más Comprado';
-            var color   = tipo === 'ventas' ? '#43e97b' : '#667eea';
-
-            if (!chartMaterialTop) {
-              chartMaterialTop = echarts.init(document.getElementById('materialTopChart'));
-            }
-
-            chartMaterialTop.setOption({
-              title: { text: titulo, left: 'center', textStyle: { fontSize: 16, color: '#2c3e50', fontWeight: 600 } },
-              tooltip: {
-                trigger: 'axis',
-                axisPointer: { type: 'shadow' },
-                formatter: function(params) {
-                  return params[0].name + '<br/><strong>$' + params[0].value.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + '</strong>';
-                }
-              },
-              grid: { left: '3%', right: '4%', bottom: '10%', containLabel: true },
-              xAxis: {
-                type: 'category',
-                data: labels,
-                axisLabel: { rotate: 30, color: '#666', fontSize: 11 }
-              },
-              yAxis: {
-                type: 'value',
-                axisLabel: { formatter: function(v) { return '$' + v.toLocaleString('es-ES'); }, color: '#666' },
-                splitLine: { lineStyle: { color: 'rgba(0,0,0,0.05)' } }
-              },
-              series: [{
-                name: titulo,
-                type: 'bar',
-                data: montos,
-                itemStyle: {
-                  color: color,
-                  borderRadius: [6, 6, 0, 0]
-                },
-                emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } },
-                label: { show: true, position: 'top', formatter: function(p) { return '$' + p.value.toLocaleString('es-ES', { minimumFractionDigits: 0 }); }, color: '#333', fontSize: 11 }
-              }]
-            });
-
-            window.addEventListener('resize', function() { if (chartMaterialTop) chartMaterialTop.resize(); });
-          }
-        });
-      }
-
-      $('#filtroTipoMaterial, #filtroSucursalMaterial, #filtroMesMaterial, #filtroAnioMaterial').on('change', function() {
-        cargarMaterialTop();
-      });
-
       // Inicializar al cargar la página
       $(document).ready(function() {
           cargarSucursalesFiltroIC();
-          cargarIngresosCostosAnio();
-
-          // Validación: no permitir seleccionar mes sin año
-          $(document).on('change', '#filtroSucursalIC, #filtroAnioIC, #filtroMesIC', function() {
-            var anio = $('#filtroAnioIC').val();
-            var mes = $('#filtroMesIC').val();
-            if (!anio && mes) {
-              $('#filtroMesIC').val('');
-              swal('Advertencia', 'Debe seleccionar un año antes de elegir un mes.', 'warning');
-              return;
-            }
             cargarIngresosCostosAnio();
-          });
+          cargarIngresosCostosAnio();
         console.log('Dashboard con ECharts cargando...');
-
+        
         inicializarFechas();
         cargarMaterialesFiltro();
         cargarSucursalesFiltro();
-
-        // Inicializar filtros del gráfico de materiales
-        cargarAniosMaterialTop();
-        cargarSucursalesMaterialTop();
-
+        
         // Cargar datos iniciales
         setTimeout(function() {
           console.log('Cargando datos del dashboard con ECharts...');
-
+          
           // Verificar si hay una sucursal preseleccionada (para usuarios con sucursal fija)
           var sucursalInicial = $('#filtroSucursal').val();
           if (sucursalInicial) {
              filtrosActuales.sucursal = sucursalInicial;
           }
           actualizarEtiquetasSucursal();
-
+          
           cargarTodosLosDatos();
-          cargarMaterialTop();
         }, 300);
-
+        
         // Hacer los gráficos responsive
         window.addEventListener('resize', function() {
           if (chartFlujoDiario) chartFlujoDiario.resize();
@@ -1753,7 +1597,6 @@ $usuarioRol = $usuario['rol'] ?? 'Usuario';
           if (chartVentasMaterial) chartVentasMaterial.resize();
           if (chartAnalisisSucursal) chartAnalisisSucursal.resize();
           if (chartInventario) chartInventario.resize();
-          if (chartMaterialTop) chartMaterialTop.resize();
         });
       });
     </script>

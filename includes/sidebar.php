@@ -62,10 +62,9 @@ $modulosConfig = [
             ['nombre' => 'Categorías de Materiales', 'ruta' => 'categorias/index.php', 'route' => 'categorias'],
             ['nombre' => 'Materiales Reciclables', 'ruta' => 'materiales/index.php', 'route' => 'materiales'],
             ['nombre' => 'Unidades de Medida', 'ruta' => 'unidades/index.php', 'route' => 'unidades'],
-            ['nombre' => 'Material Comercializable', 'ruta' => 'productos/index.php', 'route' => 'productos'],
-            ['nombre' => 'Configuración del Sistema', 'ruta' => 'configuracion/index.php', 'route' => 'configuracion_sistema']
+            ['nombre' => 'Material Comercializable', 'ruta' => 'productos/index.php', 'route' => 'productos']
         ],
-        'routes' => ['categorias', 'materiales', 'unidades', 'productos', 'configuracion_sistema']
+        'routes' => ['categorias', 'materiales', 'unidades', 'productos']
     ],
     'Control de Sucursales' => [
         'ruta' => '#',
