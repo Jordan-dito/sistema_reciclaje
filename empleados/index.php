@@ -562,8 +562,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
               return false;
             }
 
-            // Envío normal del formulario para crear
-            this.submit();
+            // Envío normal del formulario para crear (sin trigger submit para evitar loop)
+            $('#formEmpleado').off('submit').submit();
             return;
           }
 
@@ -808,7 +808,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? '') === 'upda
           $('#row-estado').show(); // Mostrar estado en modo editar
 
           // remember current row for later update
-          currentEditRow = table.row(btn.closest('tr'));
+          var activeTable = btn.closest('#empleadosActivosTable').length ? tableActivos : tableInactivos;
+          currentEditRow = activeTable.row(btn.closest('tr'));
 
           // set action to update
           $('#formAction').val('update');
