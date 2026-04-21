@@ -33,89 +33,64 @@ try {
 
     switch ($action) {
         case 'gastos_compras_por_sucursal':
-            // Obtener el mes y año para filtrar (opcional)
-            $mes = $_GET['mes'] ?? null;
-            $anio = $_GET['anio'] ?? null;
+            $mes        = $_GET['mes']        ?? null;
+            $anio       = $_GET['anio']       ?? null;
+            $sucursalId = $_GET['sucursal_id'] ?? null;
 
-            // Construir las cláusulas WHERE para el filtro de fecha
-            $whereClause = "WHERE s.estado = 'activa'";
-            $params = [];
+            // Parámetros de fecha para agregación condicional
+            $filtroMes  = ($mes  !== null && $anio !== null);
 
-            if ($mes !== null && $anio !== null) {
-                $whereClause .= " AND MONTH(g.fecha) = ? AND YEAR(g.fecha) = ?";
-                $params[] = $mes;
-                $params[] = $anio;
-
-                $whereClauseCompras = "WHERE s.estado = 'activa' AND MONTH(c.fecha_compra) = ? AND YEAR(c.fecha_compra) = ?";
-                $paramsCompras = [$mes, $anio];
-            } else {
-                $whereClauseCompras = "WHERE s.estado = 'activa'";
-                $paramsCompras = [];
+            // Construir filtro de sucursal
+            $whereSucursal = "";
+            $paramsSuc = [];
+            if ($sucursalId !== null && $sucursalId !== '' && $sucursalId !== '0') {
+                $whereSucursal = " AND s.id = ?";
+                $paramsSuc[] = (int)$sucursalId;
             }
 
-
-            // Consulta para obtener el total de gastos por sucursal
-            $stmtGastos = $db->prepare("
-                SELECT 
-                    s.id AS sucursal_id,
-                    s.nombre AS sucursal_nombre,
-                    COALESCE(SUM(g.monto), 0) AS total_gastos
-                FROM sucursales s
-                LEFT JOIN gastos_varios g ON s.id = g.sucursal_id
-                " . $whereClause . "
-                GROUP BY s.id, s.nombre
-                ORDER BY s.nombre ASC
-            ");
-            $stmtGastos->execute($params);
-            $gastosPorSucursal = $stmtGastos->fetchAll(PDO::FETCH_ASSOC);
-
-            // Consulta para obtener el total de compras por sucursal
-            $stmtCompras = $db->prepare("
+            // Una sola consulta con agregación condicional para evitar problemas de LEFT JOIN + WHERE
+            $sql = "
                 SELECT
                     s.id AS sucursal_id,
                     s.nombre AS sucursal_nombre,
-                    COALESCE(SUM(c.total), 0) AS total_compras
+                    COALESCE(SUM(CASE WHEN " . ($filtroMes ? "MONTH(c.fecha_compra) = ? AND YEAR(c.fecha_compra) = ?" : "1=1") . " THEN c.total ELSE 0 END), 0) AS total_compras,
+                    COALESCE(SUM(CASE WHEN " . ($filtroMes ? "MONTH(v.fecha_venta) = ? AND YEAR(v.fecha_venta) = ?"   : "1=1") . " THEN v.total ELSE 0 END), 0) AS total_ventas,
+                    COALESCE(SUM(CASE WHEN " . ($filtroMes ? "MONTH(g.fecha) = ? AND YEAR(g.fecha) = ?"              : "1=1") . " THEN g.monto ELSE 0 END), 0) AS total_gastos
                 FROM sucursales s
-                LEFT JOIN compras c ON s.id = c.sucursal_id
-                " . $whereClauseCompras . "
+                LEFT JOIN compras c     ON s.id = c.sucursal_id
+                LEFT JOIN ventas v      ON s.id = v.sucursal_id
+                LEFT JOIN gastos_varios g ON s.id = g.sucursal_id
+                WHERE s.estado = 'activa'" . $whereSucursal . "
                 GROUP BY s.id, s.nombre
                 ORDER BY s.nombre ASC
-            ");
-            $stmtCompras->execute($paramsCompras);
-            $comprasPorSucursal = $stmtCompras->fetchAll(PDO::FETCH_ASSOC);
+            ";
 
-            // Combinar los resultados
-            $datosGrafico = [];
-            $sucursales = [];
-
-            // Inicializar datos con todas las sucursales activas
-            $stmtSucursales = $db->query("SELECT id, nombre FROM sucursales WHERE estado = 'activa' ORDER BY nombre ASC");
-            $sucursalesActivas = $stmtSucursales->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($sucursalesActivas as $s) {
-                $datosGrafico[$s['id']] = [
-                    'sucursal_id' => $s['id'],
-                    'sucursal_nombre' => $s['nombre'],
-                    'total_gastos' => 0,
-                    'total_compras' => 0
-                ];
+            $params = [];
+            if ($filtroMes) {
+                $params[] = (int)$mes; $params[] = (int)$anio; // compras
+                $params[] = (int)$mes; $params[] = (int)$anio; // ventas
+                $params[] = (int)$mes; $params[] = (int)$anio; // gastos
             }
+            $params = array_merge($params, $paramsSuc);
 
-            foreach ($gastosPorSucursal as $gasto) {
-                $datosGrafico[$gasto['sucursal_id']]['total_gastos'] = $gasto['total_gastos'];
-            }
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            foreach ($comprasPorSucursal as $compra) {
-                $datosGrafico[$compra['sucursal_id']]['total_compras'] = $compra['total_compras'];
+            // Calcular ganancia
+            foreach ($rows as &$row) {
+                $row['total_compras'] = floatval($row['total_compras']);
+                $row['total_ventas']  = floatval($row['total_ventas']);
+                $row['total_gastos']  = floatval($row['total_gastos']);
+                $row['ganancia']      = $row['total_ventas'] - $row['total_compras'] - $row['total_gastos'];
             }
-            
-            // Convertir a array indexado para la respuesta JSON
-            $response = array_values($datosGrafico);
+            unset($row);
 
             ob_end_clean();
             echo json_encode([
                 'success' => true,
-                'message' => 'Datos de gastos y compras por sucursal obtenidos exitosamente',
-                'data' => $response
+                'message' => 'Datos obtenidos exitosamente',
+                'data'    => $rows
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             break;
 
