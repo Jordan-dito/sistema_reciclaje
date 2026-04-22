@@ -170,8 +170,8 @@ if (!$auth->isAuthenticated()) {
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
-                    <label>Fecha de Venta</label>
-                    <input type="date" id="fecha_venta" name="fecha_venta" class="form-control" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                    <label for="fecha_venta">Fecha de Venta <span class="text-danger">*</span></label>
+                    <input type="date" id="fecha_venta" name="fecha_venta" class="form-control" required>
                   </div>
                 </div>
                 <div class="col-md-6">

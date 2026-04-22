@@ -131,12 +131,8 @@ try {
                       <div class="row">
                         <div class="col-md-6">
                           <div class="form-group">
-                            <label>Fecha de Compra <span class="text-danger">*</span></label>
-                            <div class="d-flex gap-2">
-                              <input type="text" class="form-control" style="max-width: 60px;" value="<?php echo date('d'); ?>" readonly placeholder="Día">
-                              <input type="text" class="form-control" style="max-width: 80px;" value="<?php echo date('m'); ?>" readonly placeholder="Mes">
-                              <input type="text" class="form-control" style="max-width: 90px;" value="<?php echo date('Y'); ?>" readonly placeholder="Año">
-                            </div>
+                            <label for="fecha_compra">Fecha de Compra <span class="text-danger">*</span></label>
+                            <input type="date" id="fecha_compra" name="fecha_compra" class="form-control" value="<?php echo htmlspecialchars(date('Y-m-d'), ENT_QUOTES, 'UTF-8'); ?>" required>
                           </div>
                         </div>
                         <div class="col-md-6">
