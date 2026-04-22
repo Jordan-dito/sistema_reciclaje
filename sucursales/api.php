@@ -193,15 +193,14 @@ try {
                 }
                 
                 if ($responsable_id) {
-                    $stmt = $db->prepare("SELECT id, sucursal_id FROM usuarios WHERE id = ?");
+                    $stmt = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
                     $stmt->execute([$responsable_id]);
-                    $usuario = $stmt->fetch();
-                    if (!$usuario) {
+                    if (!$stmt->fetch()) {
                         throw new Exception('Responsable inválido');
                     }
-                    if ($usuario['sucursal_id'] !== null) {
-                        throw new Exception('Este usuario ya es responsable de otra sucursal');
-                    }
+                    // Permitir mover el mismo usuario a otra sucursal/recicladora: quitarlo como responsable previo
+                    $stmt = $db->prepare("UPDATE sucursales SET responsable_id = NULL WHERE responsable_id = ?");
+                    $stmt->execute([$responsable_id]);
                 }
                 
                 $stmt = $db->prepare("
@@ -298,16 +297,14 @@ try {
                 }
                 
                 if ($responsable_id) {
-                    $stmt = $db->prepare("SELECT id, sucursal_id FROM usuarios WHERE id = ?");
+                    $stmt = $db->prepare("SELECT id FROM usuarios WHERE id = ?");
                     $stmt->execute([$responsable_id]);
-                    $usuario = $stmt->fetch();
-                    if (!$usuario) {
+                    if (!$stmt->fetch()) {
                         throw new Exception('Responsable inválido');
                     }
-                    // Si tiene sucursal_id y no es la actual sucursal que estamos editando
-                    if ($usuario['sucursal_id'] !== null && $usuario['sucursal_id'] != $id) {
-                        throw new Exception('Este usuario ya es responsable de otra sucursal');
-                    }
+                    // Mismo criterio que en crear: puede cambiar de sucursal; liberar otras filas de sucursales
+                    $stmt = $db->prepare("UPDATE sucursales SET responsable_id = NULL WHERE responsable_id = ? AND id != ?");
+                    $stmt->execute([$responsable_id, $id]);
                 }
 
                 // Obtener el responsable actual antes de actualizar para gestionar el cambio
