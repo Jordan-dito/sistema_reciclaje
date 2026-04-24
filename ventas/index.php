@@ -200,11 +200,7 @@ if (!$auth->isAuthenticated()) {
                   <div class="form-group">
                     <label>Tipo de Comprobante</label>
                     <select id="tipo_comprobante" name="tipo_comprobante" class="form-control">
-                      <option value="factura">Factura</option>
-                      <option value="boleta">Boleta</option>
-                      <option value="recibo">Recibo</option>
-                      <option value="nota_credito">Nota de Crédito</option>
-                      <option value="otro">Otro</option>
+                      <option value="comprobante_venta">Comprobante de Venta</option>
                     </select>
                   </div>
                 </div>

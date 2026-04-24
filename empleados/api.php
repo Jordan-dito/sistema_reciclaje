@@ -166,8 +166,8 @@ function obtenerDatosSemana($db, $filtroSucursalId) {
     // 2. Obtener Empleados (Filtrado por sucursal si corresponde)
     $sqlEmp = "
         SELECT e.id, e.nombres, e.apellidos, e.tarifa_diaria as tarifa, s.nombre as sucursal, s.saldo as saldo_sucursal
-        FROM empleados e 
-        LEFT JOIN sucursales s ON e.sucursal_id = s.id 
+        FROM empleados e
+        INNER JOIN sucursales s ON e.sucursal_id = s.id AND s.estado = 'activa'
         WHERE e.estado = 'ACTIVO'
     ";
     
