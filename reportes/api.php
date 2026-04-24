@@ -64,7 +64,7 @@ try {
     }
     
     $db = getDB();
-    
+
     // Detectar sucursal del usuario
     $sucursalId = null;
     $stmtSuc = $db->prepare("SELECT id FROM sucursales WHERE responsable_id = ? OR id = (SELECT sucursal_id FROM usuarios WHERE id = ?)");
@@ -73,20 +73,22 @@ try {
     if ($resSuc) {
         $sucursalId = $resSuc['id'];
     }
-    
-    $action = $_GET['action'] ?? '';
-    
+
+    // Unir GET y POST para soportar tanto peticiones web como Flutter (POST form-urlencoded)
+    $input = array_merge($_GET, $_POST);
+    $action = $input['action'] ?? '';
+
     if ($action === 'vista_previa') {
-        $tipo = $_GET['tipo'] ?? '';
-        $fechaDesde = $_GET['fecha_desde'] ?? '';
-        $fechaHasta = $_GET['fecha_hasta'] ?? '';
-        $rolId = $_GET['rol_id'] ?? '';
-        $sucursalIdFiltro = $_GET['sucursal_id'] ?? $sucursalId; // Si no viene filtro, usar la del usuario
-        $material = $_GET['material'] ?? '';
-        $nombreEmpleado = $_GET['nombre_empleado'] ?? '';
-        $cajaInicial = floatval($_GET['caja_inicial'] ?? 0);
-        $otrosIngresos = floatval($_GET['otros_ingresos'] ?? 0);
-        $dineroContado = floatval($_GET['dinero_contado'] ?? 0);
+        $tipo = $input['tipo'] ?? '';
+        $fechaDesde = $input['fecha_desde'] ?? '';
+        $fechaHasta = $input['fecha_hasta'] ?? '';
+        $rolId = $input['rol_id'] ?? '';
+        $sucursalIdFiltro = $input['sucursal_id'] ?? $sucursalId; // Si no viene filtro, usar la del usuario
+        $material = $input['material'] ?? '';
+        $nombreEmpleado = $input['nombre_empleado'] ?? '';
+        $cajaInicial = floatval($input['caja_inicial'] ?? 0);
+        $otrosIngresos = floatval($input['otros_ingresos'] ?? 0);
+        $dineroContado = floatval($input['dinero_contado'] ?? 0);
 
         if (empty($tipo)) {
             throw new Exception('Tipo de reporte no especificado');
@@ -162,7 +164,11 @@ try {
     
 } catch (Exception $e) {
     ob_end_clean();
-    ErrorHandler::handleException($e);
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
 }
 
 /**
@@ -1151,6 +1157,15 @@ function generarVistaPreviaCierreCaja($db, $fechaDesde, $fechaHasta, $sucursalId
     $todosMateriales = array_unique(array_merge(array_keys($matComprado), array_keys($matVendido), array_keys($matStock)));
     sort($todosMateriales);
 
+    // Saldo actual de la sucursal (informativo)
+    $saldoActual = null;
+    if ($sucursalId) {
+        $stmtSaldo = $db->prepare("SELECT saldo, nombre FROM sucursales WHERE id = ?");
+        $stmtSaldo->execute([$sucursalId]);
+        $sucursalRow = $stmtSaldo->fetch();
+        if ($sucursalRow) $saldoActual = floatval($sucursalRow['saldo']);
+    }
+
     // Cálculos de caja
     $totalIngresos = $totalVentas + $otrosIngresos;
     $totalEgresos = $totalCompras + $totalGastos;
@@ -1185,6 +1200,10 @@ function generarVistaPreviaCierreCaja($db, $fechaDesde, $fechaHasta, $sucursalId
     $difColor = $diferencia >= 0 ? 'table-success' : 'table-danger';
     $difSigno = $diferencia >= 0 ? '+' : '';
     $html .= '<tr class="' . $difColor . '"><td colspan="2"><strong>Diferencia</strong></td><td class="text-right"><strong>' . $difSigno . '$' . number_format($diferencia, 2) . '</strong></td></tr>';
+
+    if ($saldoActual !== null) {
+        $html .= '<tr style="border-top:2px solid #aaa;background:#f8f9fa;"><td colspan="2"><strong>Saldo actual en caja</strong> <small class="text-muted">(acumulado total)</small></td><td class="text-right"><strong style="color:#0056b3;">$' . number_format($saldoActual, 2) . '</strong></td></tr>';
+    }
 
     $html .= '</table>';
 
