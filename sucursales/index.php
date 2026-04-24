@@ -329,8 +329,7 @@ if (!$auth->isAuthenticated()) {
                 var select = $('#responsable_id');
                 select.empty().append('<option value="">Seleccione un responsable</option>');
                 response.data.forEach(function(usuario) {
-                  // Filtro: Solo activos y que NO tengan sucursal_id asignado
-                  if (usuario.estado === 'activo' && !usuario.sucursal_id) {
+                  if (usuario.estado === 'activo') {
                     select.append('<option value="' + usuario.id + '">' + usuario.nombre + '</option>');
                   }
                 });
