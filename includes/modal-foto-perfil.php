@@ -77,7 +77,7 @@ $basePath = $basePath !== '' ? $basePath . '/' : '';
       }
       var file = fileInput.files[0];
       var formData = new FormData();
-      formData.append('nueva_foto_perfil', file);
+      formData.append('foto_perfil', file);
       formData.append('action', 'upload_foto_perfil');
       
       var btn = $(this); var originalText = btn.html();
